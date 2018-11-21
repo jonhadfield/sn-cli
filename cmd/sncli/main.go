@@ -15,9 +15,9 @@ import (
 	"github.com/jonhadfield/sncli"
 
 	"fmt"
-
 	"github.com/spf13/viper"
-	"github.com/urfave/cli"
+	"gopkg.in/urfave/cli.v1"
+	"gopkg.in/yaml.v2"
 )
 
 // overwritten at build time
@@ -83,6 +83,7 @@ func startCLI(args []string) error {
 	app.HelpName = "-"
 	app.Usage = "Standard Notes CLI"
 	app.Description = ""
+
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{Name: "debug"},
 	}
