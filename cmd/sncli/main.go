@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"gopkg.in/urfave/cli.v1"
+	"gopkg.in/yaml.v2"
 	"os"
 	"sort"
 	"strings"
@@ -16,8 +18,6 @@ import (
 
 	"fmt"
 	"github.com/spf13/viper"
-	"gopkg.in/urfave/cli.v1"
-	"gopkg.in/yaml.v2"
 )
 
 // overwritten at build time
