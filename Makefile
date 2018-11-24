@@ -14,7 +14,7 @@ cover: test
 	go tool cover -html=coverage.txt
 
 fmt:
-	find . -name '*.go' -not -wholename './vendor/*' | while read -r file; do gofmt -w -s "$$file"; goimports -w "$$file"; done
+	goimports -w .
 
 lint:
 	gometalinter -e testing.go -e validation_test.go --vendor --disable-all \
@@ -44,10 +44,10 @@ BUILD_TAG := $(shell git describe --tags 2>/dev/null)
 BUILD_SHA := $(shell git rev-parse --short HEAD)
 BUILD_DATE := $(shell date -u '+%Y/%m/%d:%H:%M:%S')
 
-build: fmt
+build:
 	GOOS=darwin CGO_ENABLED=0 GOARCH=amd64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_darwin_amd64" cmd/sncli/main.go
 
-build-all: fmt
+build-all:
 	GOOS=darwin  CGO_ENABLED=0 GOARCH=amd64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_darwin_amd64"  cmd/sncli/main.go
 	GOOS=linux   CGO_ENABLED=0 GOARCH=amd64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_linux_amd64"   cmd/sncli/main.go
 	GOOS=linux   CGO_ENABLED=0 GOARCH=arm   go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_linux_arm"     cmd/sncli/main.go
