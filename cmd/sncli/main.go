@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"sort"
 	"strings"
@@ -20,15 +21,23 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	msgAddSuccess    = "added."
+	msgDeleteSuccess = "deleted."
+	msgCreateSuccess = "created."
+	msgRegisterSuccess = "registered."
+)
+
 // overwritten at build time
 var version, versionOutput, tag, sha, buildDate string
 
 func main() {
 	err := startCLI(os.Args)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("error: %+v\n", err)
 		os.Exit(1)
 	}
+	os.Exit(0)
 }
 
 func commaSplit(input string) []string {
@@ -103,34 +112,30 @@ func startCLI(args []string) error {
 					Action: func(c *cli.Context) error {
 						tagInput := c.String("title")
 						if strings.TrimSpace(tagInput) == "" {
-							fmt.Print("\nerror: tag title not defined\n\n")
-							return cli.ShowSubcommandHelp(c)
+							cli.ShowSubcommandHelp(c)
+							return errors.New("tag title not defined")
 						}
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							fmt.Printf("\failed to authenticate: %+v\n\n", err)
-							os.Exit(1)
+							return fmt.Errorf("failed to authenticate. %+v", err)
 						}
 						if errMsg != "" {
-							fmt.Printf("\nerror: %s\n\n", errMsg)
-							return cli.ShowSubcommandHelp(c)
+							cli.ShowSubcommandHelp(c)
+							return errors.New(errMsg)
 						}
 
 						tags := commaSplit(tagInput)
-
 						appAddTagConfig := sncli.AddTagConfig{
 							Session: session,
 							Tags:    tags,
 							Debug:   c.GlobalBool("debug"),
 						}
 						if err = appAddTagConfig.Run(); err != nil {
-							fmt.Printf("\failed to add tag: %+v\n\n", err)
-							os.Exit(1)
-						} else {
-							fmt.Println("added.")
+							return fmt.Errorf("failed to add tag: %+v", err)
 						}
+						fmt.Println(msgAddSuccess)
 						return nil
 					},
 				},
@@ -159,24 +164,24 @@ func startCLI(args []string) error {
 						title := c.String("title")
 						text := c.String("text")
 						if strings.TrimSpace(title) == "" {
-							fmt.Print("\nerror: note title not defined\n\n")
-							return cli.ShowSubcommandHelp(c)
+							cli.ShowSubcommandHelp(c)
+							return errors.New("note title not defined")
 						}
 						if strings.TrimSpace(text) == "" {
-							fmt.Print("\nerror: note text not defined\n\n")
-							return cli.ShowSubcommandHelp(c)
+							cli.ShowSubcommandHelp(c)
+							return errors.New("note text not defined")
+
 						}
 
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						if errMsg != "" {
-							fmt.Printf("\nerror: %s\n\n", errMsg)
-							return cli.ShowSubcommandHelp(c)
+							cli.ShowSubcommandHelp(c)
+							return errors.New(errMsg)
 						}
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
+							return err
 						}
 
 						processedTags := commaSplit(c.String("tag"))
@@ -190,10 +195,9 @@ func startCLI(args []string) error {
 							Debug:   c.GlobalBool("debug"),
 						}
 						if err = AddNoteConfig.Run(); err != nil {
-							fmt.Printf("\failed to add note: %+v\n\n", err)
-							os.Exit(1)
+							return fmt.Errorf("failed to add note. %+v", err)
 						} else {
-							fmt.Println("added.")
+							fmt.Println(msgAddSuccess)
 						}
 						return nil
 					},
@@ -221,19 +225,18 @@ func startCLI(args []string) error {
 						titleIn := strings.TrimSpace(c.String("title"))
 						uuidIn := strings.Replace(c.String("uuid"), " ", "", -1)
 						if titleIn == "" && uuidIn == "" {
-							fmt.Printf("\nerror: titleIn or uuidIn required\n\n")
-							return cli.ShowSubcommandHelp(c)
+							cli.ShowSubcommandHelp(c)
+							return errors.New("title or uuid required")
 						}
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						if errMsg != "" {
-							fmt.Printf("\nerror: %s\n\n", errMsg)
-							return cli.ShowSubcommandHelp(c)
+							cli.ShowSubcommandHelp(c)
+							return errors.New(errMsg)
 						}
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
+							return err
 						}
 						tags := commaSplit(titleIn)
 						uuids := commaSplit(uuidIn)
@@ -242,17 +245,14 @@ func startCLI(args []string) error {
 							Session:   session,
 							TagTitles: tags,
 							TagUUIDs:  uuids,
-
-							Debug: c.GlobalBool("debug"),
+							Debug:     c.GlobalBool("debug"),
 						}
 						if err = DeleteTagConfig.Run(); err != nil {
-							fmt.Printf("\failed to delete tag: %+v\n\n", err)
-							os.Exit(1)
+							return fmt.Errorf("failed to delete tag. %+v", err)
 						} else {
-							fmt.Println("deleted.")
+							fmt.Println(msgDeleteSuccess)
 						}
 						return nil
-
 					},
 				},
 				{
@@ -278,8 +278,7 @@ func startCLI(args []string) error {
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
+							return err
 						}
 						processedNotes := commaSplit(title)
 
@@ -289,11 +288,9 @@ func startCLI(args []string) error {
 							Debug:      c.GlobalBool("debug"),
 						}
 						if err = DeleteNoteConfig.Run(); err != nil {
-							fmt.Printf("\failed to delete note: %+v\n\n", err)
-							os.Exit(1)
-						} else {
-							fmt.Println("deleted.")
+							return fmt.Errorf("failed to delete note. %+v", err)
 						}
+						fmt.Println(msgDeleteSuccess)
 						return nil
 					},
 				},
@@ -305,12 +302,12 @@ func startCLI(args []string) error {
 
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "find-text",
-					Usage: "match text",
+					Name:  "find-title",
+					Usage: "match title",
 				},
 				cli.StringFlag{
-					Name:  "find-text-ignore-case",
-					Usage: "match text - case insensitive",
+					Name:  "find-text",
+					Usage: "match text",
 				},
 				cli.StringFlag{
 					Name:  "find-tag",
@@ -330,6 +327,7 @@ func startCLI(args []string) error {
 				},
 			},
 			Action: func(c *cli.Context) error {
+				findTitle := c.String("find-title")
 				findText := c.String("find-text")
 				findTag := c.String("find-tag")
 				newTags := c.String("title")
@@ -341,11 +339,10 @@ func startCLI(args []string) error {
 				var session gosn.Session
 				session, err = sncli.CliSignIn(email, password, apiServer)
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					return err
 				}
-				if findTag == "" && findText == "" {
-					fmt.Println("you must provide either text or tag to search for")
+				if findText == "" && findTitle == "" && findTag == "" {
+					fmt.Println("you must provide either text, title, or tag to search for")
 					return cli.ShowSubcommandHelp(c)
 				}
 				processedTags := commaSplit(newTags)
@@ -353,13 +350,19 @@ func startCLI(args []string) error {
 				appConfig := sncli.TagItemsConfig{
 					Session:    session,
 					FindText:   findText,
+					FindTitle:  findTitle,
 					FindTag:    findTag,
 					NewTags:    processedTags,
 					Replace:    c.Bool("replace"),
 					IgnoreCase: c.Bool("ignore-case"),
 					Debug:      c.GlobalBool("debug"),
 				}
-				return appConfig.Run()
+				err = appConfig.Run()
+				if err != nil {
+					return err
+				}
+				fmt.Println(msgAddSuccess)
+				return nil
 			},
 		},
 		{
@@ -385,7 +388,6 @@ func startCLI(args []string) error {
 						},
 					},
 					OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
-						//fmt.Fprintf(c.App.Writer, "pants\n")
 						return err
 					},
 					Action: func(c *cli.Context) error {
@@ -432,8 +434,7 @@ func startCLI(args []string) error {
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
+							return err
 						}
 
 						processedTags := commaSplit(newTags)
@@ -565,8 +566,7 @@ func startCLI(args []string) error {
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
+							return err
 						}
 
 						getNoteConfig := sncli.GetNoteConfig{
@@ -621,8 +621,8 @@ func startCLI(args []string) error {
 					apiServer = sncli.SNServerURL
 				}
 				if strings.TrimSpace(c.String("email")) == "" {
-					_ = cli.ShowCommandHelp(c, "register")
-					os.Exit(1)
+					cli.ShowCommandHelp(c, "register")
+					return errors.New("email required")
 				}
 				var password string
 				fmt.Print("password: ")
@@ -632,23 +632,25 @@ func startCLI(args []string) error {
 					password = string(bytePassword)
 				}
 				if len(password) == 0 {
-					fmt.Println("password cannot be empty")
-					os.Exit(1)
+					return errors.New("password cannot be empty")
 				}
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					return err
 				}
 				if strings.TrimSpace(password) == "" {
-					fmt.Println("password not defined")
-					os.Exit(1)
+					return errors.New("password not defined")
 				}
 				registerConfig := sncli.RegisterConfig{
 					Email:     c.String("email"),
 					Password:  password,
 					APIServer: apiServer,
 				}
-				return registerConfig.Run()
+				err = registerConfig.Run()
+				if err != nil {
+					return err
+				}
+				fmt.Println(msgRegisterSuccess)
+				return nil
 			},
 		},
 
@@ -664,8 +666,7 @@ func startCLI(args []string) error {
 				var session gosn.Session
 				session, err = sncli.CliSignIn(email, password, apiServer)
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					return err
 				}
 
 				statsConfig := sncli.StatsConfig{
@@ -689,8 +690,7 @@ func startCLI(args []string) error {
 				var session gosn.Session
 				session, err = sncli.CliSignIn(email, password, apiServer)
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					return err
 				}
 
 				wipeConfig := sncli.WipeConfig{
@@ -721,13 +721,16 @@ func startCLI(args []string) error {
 				var session gosn.Session
 				session, err = sncli.CliSignIn(email, password, apiServer)
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					return err
 				}
 				fixupConfig := sncli.FixupConfig{
 					Session: session,
 				}
-				return fixupConfig.Run()
+				err = fixupConfig.Run()
+				if err != nil {
+					return fmt.Errorf("fixup failed. %+v", err)
+				}
+				return nil
 			},
 		},
 		{
@@ -757,8 +760,7 @@ func startCLI(args []string) error {
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
+							return err
 						}
 
 						appTestDataCreateTagsConfig := sncli.TestDataCreateTagsConfig{
@@ -766,8 +768,11 @@ func startCLI(args []string) error {
 							NumTags: numTags,
 							Debug:   c.GlobalBool("debug"),
 						}
-						err = appTestDataCreateTagsConfig.Run()
-						return err
+						if appTestDataCreateTagsConfig.Run() != nil {
+							return err
+						}
+						fmt.Println(msgCreateSuccess)
+						return nil
 
 					},
 				},
@@ -797,14 +802,13 @@ func startCLI(args []string) error {
 						}
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						if errMsg != "" {
-							fmt.Printf("\nerror: %s\n\n", errMsg)
-							return cli.ShowSubcommandHelp(c)
+							cli.ShowSubcommandHelp(c)
+							return errors.New(errMsg)
 						}
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							fmt.Println(err)
-							os.Exit(1)
+							return err
 						}
 
 						appTestDataCreateNotesConfig := sncli.TestDataCreateNotesConfig{

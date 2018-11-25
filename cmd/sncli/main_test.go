@@ -11,6 +11,13 @@ func TestAddTag(t *testing.T) {
 	}
 }
 
+func TestAddTagErrorMissingTitle(t *testing.T) {
+	err := startCLI([]string{"sncli", "add", "tag"})
+	if err == nil {
+		t.Errorf("%+v", err)
+	}
+}
+
 func TestDeleteTag(t *testing.T) {
 	err := startCLI([]string{"sncli", "delete", "tag", "--title", "testTag"})
 	if err != nil {

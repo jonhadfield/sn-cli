@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+
 	"github.com/jonhadfield/gosn"
 )
 
@@ -15,6 +16,7 @@ const (
 
 type TagItemsConfig struct {
 	Session    gosn.Session
+	FindTitle  string
 	FindText   string
 	FindTag    string
 	NewTags    []string
