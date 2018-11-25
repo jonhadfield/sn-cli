@@ -60,6 +60,10 @@ build-all:
 install:
 	go install ./cmd/...
 
+mac-install: build
+	install .local_dist/sncli_darwin_amd64 /usr/local/bin/sn
+
+
 critic:
 	gocritic check-project .
 
