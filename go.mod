@@ -10,4 +10,4 @@ require (
 	gopkg.in/yaml.v2 v2.2.1
 )
 
-replace github.com/jonhadfield/gosn => ../gosn
+// replace github.com/jonhadfield/gosn => ../gosn
