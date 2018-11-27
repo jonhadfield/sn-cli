@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"golang.org/x/crypto/ssh/terminal"
+	"gopkg.in/urfave/cli.v1"
 	"gopkg.in/yaml.v2"
 
 	"github.com/jonhadfield/gosn"
-	"gopkg.in/urfave/cli.v1"
 
 	"github.com/jonhadfield/sncli"
 
@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	msgAddSuccess    = "added."
-	msgDeleteSuccess = "deleted."
-	msgCreateSuccess = "created."
+	msgAddSuccess      = "added."
+	msgDeleteSuccess   = "deleted."
+	msgCreateSuccess   = "created."
 	msgRegisterSuccess = "registered."
 )
 
@@ -269,7 +269,12 @@ func startCLI(args []string) error {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						title := c.String("title")
+						title := strings.TrimSpace(c.String("title"))
+						uuid := strings.TrimSpace(c.String("uuid"))
+						if title == "" && uuid == "" {
+							cli.ShowSubcommandHelp(c)
+							return errors.New("")
+						}
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						if errMsg != "" {
 							fmt.Printf("\nerror: %s\n\n", errMsg)
@@ -454,9 +459,9 @@ func startCLI(args []string) error {
 
 						numResults := len(tags.Items)
 						if numResults <= 0 {
-							fmt.Println("no matches")
+							fmt.Println("no matches.")
 						} else if count {
-							fmt.Printf("%d matches", numResults)
+							fmt.Printf("%d matches.", numResults)
 						} else {
 							output = c.String("output")
 							var bOutput []byte
@@ -581,9 +586,9 @@ func startCLI(args []string) error {
 						}
 						numResults := len(notes.Items)
 						if numResults <= 0 {
-							fmt.Println("no matches")
+							fmt.Println("no matches.")
 						} else if count {
-							fmt.Printf("%d matches", numResults)
+							fmt.Printf("%d matches.", numResults)
 						} else {
 							output := c.String("output")
 							var bOutput []byte

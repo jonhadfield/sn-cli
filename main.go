@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-
 	"github.com/jonhadfield/gosn"
 )
 
@@ -36,6 +35,7 @@ type GetTagConfig struct {
 	Filters   gosn.ItemFilters
 	TagTitles []string
 	TagUUIDs  []string
+	Regex     string
 	Output    string
 	Debug     bool
 }
@@ -56,6 +56,7 @@ type DeleteTagConfig struct {
 	Email     string
 	TagTitles []string
 	TagUUIDs  []string
+	Regex     bool
 	Debug     bool
 }
 
@@ -71,7 +72,9 @@ type AddNoteConfig struct {
 type DeleteNoteConfig struct {
 	Session    gosn.Session
 	NoteTitles []string
+	NoteText   string
 	NoteUUIDs  []string
+	Regex      bool
 	Debug      bool
 }
 

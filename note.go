@@ -89,7 +89,7 @@ func (input *DeleteNoteConfig) Run() error {
 	//	gosn.SetDebugLogger(log.Println)
 	//}
 	var err error
-	_, err = deleteNotes(input.Session, input.NoteTitles, input.NoteUUIDs, "")
+	_, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "")
 	return err
 }
 
@@ -110,12 +110,46 @@ func (input *GetNoteConfig) Run() (output gosn.GetItemsOutput, err error) {
 }
 
 // TODO: don't pass match criteria here, pass actual items to mark Deleted flag as true for and then PutItems them
-func deleteNotes(session gosn.Session, noteTitles []string, noteUUIDs []string, syncToken string) (newSyncToken string, err error) {
-	getNotesFilter := gosn.Filter{
-		Type: "Note",
+func deleteNotes(session gosn.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string) (newSyncToken string, err error) {
+	var getNotesFilters []gosn.Filter
+	switch {
+	case len(noteTitles) > 0:
+		for _, title := range noteTitles {
+			comparison := "=="
+			if regex {
+				comparison = "~"
+			}
+			getNotesFilters = append(getNotesFilters, gosn.Filter{
+				Key:        "Title",
+				Value:      title,
+				Comparison: comparison,
+				Type:       "Note",
+			})
+		}
+	case noteText != "":
+		comparison := "=="
+		if regex {
+			comparison = "~"
+		}
+		getNotesFilters = append(getNotesFilters, gosn.Filter{
+			Key:        "Text",
+			Value:      noteText,
+			Comparison: comparison,
+			Type:       "Note",
+		})
+	case len(noteUUIDs) > 0:
+		for _, uuid := range noteUUIDs {
+			getNotesFilters = append(getNotesFilters, gosn.Filter{
+				Key:        "UUID",
+				Value:      uuid,
+				Comparison: "==",
+				Type:       "Note",
+			})
+		}
 	}
 	itemFilter := gosn.ItemFilters{
-		Filters: []gosn.Filter{getNotesFilter},
+		Filters:  getNotesFilters,
+		MatchAny: true,
 	}
 
 	getItemsInput := gosn.GetItemsInput{
@@ -129,23 +163,12 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteUUIDs []string, 
 	}
 	output.DeDupe()
 	var notesToDelete []gosn.Item
-
 	for _, item := range output.Items {
-		var deleteNote bool
 		if item.Content != nil && item.ContentType == "Note" {
-			if StringInSlice(item.UUID, noteUUIDs, true) {
-				item.Deleted = true
-				deleteNote = true
-			} else if StringInSlice(item.Content.GetTitle(), noteTitles, true) {
-				item.Deleted = true
-				deleteNote = true
-			}
-			if deleteNote {
-				notesToDelete = append(notesToDelete, item)
-			}
+			item.Deleted = true
+			notesToDelete = append(notesToDelete, item)
 		}
 	}
-
 	if len(notesToDelete) > 0 {
 		pii := gosn.PutItemsInput{
 			Session:   session,

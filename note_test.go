@@ -1,9 +1,10 @@
 package sncli
 
 import (
-	"fmt"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/jonhadfield/gosn"
 )
@@ -13,15 +14,16 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	// create note
 	addNoteConfig := AddNoteConfig{
 		Session: session,
 		Title:   "TestNoteOne",
+		Text:    "TestNoteOneText",
 	}
 	err = addNoteConfig.Run()
-	if err != nil {
-		t.Errorf("error: %+v", err)
-	}
+	assert.NoError(t, err, err)
 
+	// get new note
 	filter := gosn.Filter{
 		Type:       "Note",
 		Key:        "Title",
@@ -38,9 +40,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	}
 	var preRes, postRes gosn.GetItemsOutput
 	preRes, err = gnc.Run()
-	if err != nil {
-		t.Errorf("error: failed to retrieve note: %+v\n", err)
-	}
+	assert.NoError(t, err, err)
 
 	newItemUUID := preRes.Items[0].UUID
 	deleteNoteConfig := DeleteNoteConfig{
@@ -48,61 +48,105 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 		NoteUUIDs: []string{newItemUUID},
 	}
 	err = deleteNoteConfig.Run()
-	if err != nil {
-		t.Errorf("error: %+v", err)
-	}
+	assert.NoError(t, err, err)
 
 	postRes, err = gnc.Run()
-	if err != nil {
-		t.Errorf("error: %+v", err)
-	}
-	if len(postRes.Items) != 0 {
-		t.Error("note was not deleted")
-	}
+	assert.NoError(t, err, err)
+	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
+
 }
 
 func TestAddDeleteNoteByTitle(t *testing.T) {
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err, err)
+
 	addNoteConfig := AddNoteConfig{
 		Session: session,
 		Title:   "TestNoteOne",
 	}
 	err = addNoteConfig.Run()
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
-	}
+	assert.NoError(t, err, err)
+
 	deleteNoteConfig := DeleteNoteConfig{
 		Session:    session,
 		NoteTitles: []string{"TestNoteOne"},
 	}
 	err = deleteNoteConfig.Run()
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
+	assert.NoError(t, err, err)
+
+	filter := gosn.Filter{
+		Type:       "Note",
+		Key:        "Title",
+		Comparison: "==",
+		Value:      "TestNoteOne",
 	}
+
+	iFilter := gosn.ItemFilters{
+		Filters: []gosn.Filter{filter},
+	}
+	gnc := GetNoteConfig{
+		Session: session,
+		Filters: iFilter,
+	}
+	var postRes gosn.GetItemsOutput
+	postRes, err = gnc.Run()
+	assert.NoError(t, err, err)
+	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
+
+}
+
+func TestAddDeleteNoteByTitleRegex(t *testing.T) {
+	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
+	assert.NoError(t, err, err)
+	// add note
+	addNoteConfig := AddNoteConfig{
+		Session: session,
+		Title:   "TestNoteOne",
+	}
+	err = addNoteConfig.Run()
+	assert.NoError(t, err, err)
+
+	// delete note
+	deleteNoteConfig := DeleteNoteConfig{
+		Session:    session,
+		NoteTitles: []string{"^T.*ote..[def]"},
+		Regex:      true,
+	}
+	err = deleteNoteConfig.Run()
+	assert.NoError(t, err, err)
+
+	// get same note again
+	filter := gosn.Filter{
+		Type:       "Note",
+		Key:        "Title",
+		Comparison: "==",
+		Value:      "TestNoteOne",
+	}
+	iFilter := gosn.ItemFilters{
+		Filters: []gosn.Filter{filter},
+	}
+	gnc := GetNoteConfig{
+		Session: session,
+		Filters: iFilter,
+	}
+	var postRes gosn.GetItemsOutput
+	postRes, err = gnc.Run()
+
+	assert.NoError(t, err, err)
+	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
+
 }
 
 func TestGetNote(t *testing.T) {
-	//session, _, signInErr := gosn.CliSignIn(os.Getenv("SN_EMAIL"), "", "", os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	//if signInErr != nil {
-	//	t.Errorf("CliSignIn error:: %+v", signInErr)
-	//}
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	assert.NoError(t, err)
 	// create one note
 	addNoteConfig := AddNoteConfig{
 		Session: session,
 		Title:   "TestNoteOne",
 	}
 	err = addNoteConfig.Run()
-	if err != nil {
-		t.Errorf("%+v", err)
-	}
+	assert.NoError(t, err)
 
 	noteFilter := gosn.Filter{
 		Type:       "Note",
@@ -121,48 +165,33 @@ func TestGetNote(t *testing.T) {
 	}
 	var output gosn.GetItemsOutput
 	output, err = getNoteConfig.Run()
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
-	}
-	if len(output.Items) != 1 {
-		t.Errorf("expected one item but got: %+v", output.Items)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(output.Items))
 
 	// clean up
 	deleteNoteConfig := DeleteNoteConfig{
 		Session:    session,
 		NoteTitles: []string{"TestNoteOne"},
 	}
-	err = deleteNoteConfig.Run()
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
-	}
+	assert.NoError(t, deleteNoteConfig.Run(), "clean up failed")
 }
 
 func TestWipe(t *testing.T) {
 	numNotes := 50
 	textParas := 10
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	if err != nil {
-		t.Errorf("sign-in failed: %+v", err)
-	}
+	assert.NoError(t, err)
 
 	err = createNotes(session, numNotes, textParas)
-	if err != nil {
-		t.Errorf("error: %+v", err)
-	}
+	assert.NoError(t, err)
 
 	wipeConfig := WipeConfig{
 		Session: session,
 	}
 	var deleted int
 	deleted, err = wipeConfig.Run()
-	if err != nil {
-		t.Errorf("error: %+v\n", err)
-	}
-	if deleted != numNotes {
-		t.Errorf("error: created %d notes but deleted %d\n", numNotes, deleted)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, deleted, numNotes, "wipe failed")
 
 }
 
@@ -170,14 +199,10 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	numNotes := 100
 	textParas := 10
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	if err != nil {
-		t.Errorf("sign-in failed: %+v", err)
-	}
+	assert.NoError(t, err)
 
 	err = createNotes(session, numNotes, textParas)
-	if err != nil {
-		t.Errorf("error: %+v", err)
-	}
+	assert.NoError(t, err)
 
 	noteFilter := gosn.Filter{
 		Type: "Note",
@@ -192,21 +217,15 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	}
 	var res gosn.GetItemsOutput
 	res, err = gnc.Run()
-	if err != nil {
-		t.Errorf("error: failed to retrieve items: %+v\n", err)
-	}
-	if len(res.Items) != numNotes {
-		t.Errorf("error: expected %d notes but got %d items\n", numNotes, len(res.Items))
-	}
+	assert.NoError(t, err)
+
+	assert.EqualValues(t, len(res.Items), numNotes)
 	wipeConfig := WipeConfig{
 		Session: session,
 	}
 	var deleted int
 	deleted, err = wipeConfig.Run()
-	if err != nil {
-		t.Errorf("error: %+v\n", err)
-	}
-	if deleted != numNotes {
-		t.Errorf("error: created %d notes but deleted %d\n", numNotes, deleted)
-	}
+	assert.NoError(t, err)
+	assert.EqualValues(t, deleted, numNotes)
+
 }

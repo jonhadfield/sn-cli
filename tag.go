@@ -72,7 +72,8 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 	for _, note := range allNotes {
 		if StringInSlice(note.UUID, input.matchNoteUUIDs, false) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
-		} else if strings.TrimSpace(input.matchText) != "" && note.Content.TextContains(input.matchText, input.matchTextIgnoreCase) {
+			//} else if strings.TrimSpace(input.matchText) != "" && note.Content.TextContains(input.matchText, input.matchTextIgnoreCase) {
+		} else if strings.TrimSpace(input.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(input.matchText)) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
 		}
 	}

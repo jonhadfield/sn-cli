@@ -104,7 +104,7 @@ func (input *StatsConfig) Run() error {
 		} else {
 			finalItem = len(notes)
 		}
-		for x := 0; x <= finalItem; x++ {
+		for x := 0; x < finalItem; x++ {
 			fmt.Printf(" - %d bytes: \"%s\"\n", notes[x].ContentSize, notes[x].Content.GetTitle())
 		}
 	} else {
