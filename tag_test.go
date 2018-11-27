@@ -1,48 +1,39 @@
 package sncli
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/jonhadfield/gosn"
 )
 
 func TestAddDeleteTagByTitle(t *testing.T) {
-	sOutput, signInErr := gosn.SignIn(sInput)
-	if signInErr != nil {
-		t.Errorf("CliSignIn error:: %+v", signInErr)
-	}
+	sOutput, err := gosn.SignIn(sInput)
+	assert.NoError(t, err, err)
 	addTagConfig := AddTagConfig{
 		Session: sOutput.Session,
 		Tags:    []string{"TestTagOne", "TestTagTwo"},
 	}
-	err := addTagConfig.Run()
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
-	}
+	err = addTagConfig.Run()
+	assert.NoError(t, err, err)
 	deleteTagConfig := DeleteTagConfig{
 		Session:   sOutput.Session,
 		TagTitles: []string{"TestTagOne", "TestTagTwo"},
 	}
 	err = deleteTagConfig.Run()
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
-	}
+	assert.NoError(t, err, err)
 }
 
 func TestGetTag(t *testing.T) {
-	sOutput, signInErr := gosn.SignIn(sInput)
-	if signInErr != nil {
-		t.Errorf("CliSignIn error:: %+v", signInErr)
-	}
+	sOutput, err := gosn.SignIn(sInput)
+	assert.NoError(t, err, err)
 	testTagTitles := []string{"TestTagOne", "TestTagTwo"}
 	addTagConfig := AddTagConfig{
 		Session: sOutput.Session,
 		Tags:    testTagTitles,
 	}
-	err := addTagConfig.Run()
-	if err != nil {
-		t.Errorf("%+v", err)
-	}
+	err = addTagConfig.Run()
+	assert.NoError(t, err, err)
 
 	// create filters
 	getTagFilters := gosn.ItemFilters{
@@ -63,12 +54,8 @@ func TestGetTag(t *testing.T) {
 	}
 	var output gosn.GetItemsOutput
 	output, err = getTagConfig.Run()
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
-	}
-	if len(output.Items) != 2 {
-		t.Errorf("expected two items but got: %+v", output.Items)
-	}
+	assert.NoError(t, err, err)
+	assert.EqualValues(t, len(output.Items), 2, "expected two items but got: %+v", output.Items)
 
 	// clean up
 	deleteTagConfig := DeleteTagConfig{
@@ -76,9 +63,8 @@ func TestGetTag(t *testing.T) {
 		TagTitles: []string{"TestTagOne", "TestTagTwo"},
 	}
 	err = deleteTagConfig.Run()
-	if err != nil {
-		t.Errorf("unexpected error: %+v", err)
-	}
+	assert.NoError(t, err, err)
+
 }
 
 func _addNotes(session gosn.Session, input map[string]string) error {
@@ -134,9 +120,8 @@ func TestTaggingOfNotes(t *testing.T) {
 	}
 
 	err := _addNotes(sOutput.Session, notes)
-	if err != nil {
-		t.Errorf("failed to add notes")
-	}
+	assert.NoError(t, err, err)
+
 	// tag new notes with 'testTag'
 	tags := []string{"testTag"}
 	tni := TagItemsConfig{
@@ -145,9 +130,8 @@ func TestTaggingOfNotes(t *testing.T) {
 		NewTags:  tags,
 	}
 	err = tni.Run()
-	if err != nil {
-		t.Errorf("%+v", err)
-	}
+	assert.NoError(t, err, err)
+
 	// get newly tagged notes
 
 	filterNotesByTagName := gosn.Filter{
@@ -167,20 +151,16 @@ func TestTaggingOfNotes(t *testing.T) {
 
 	var retNotes gosn.GetItemsOutput
 	retNotes, err = gnc.Run()
-	if err != nil {
-		return
-	}
+	assert.NoError(t, err, err)
+
 	if len(retNotes.Items) != 2 {
 		t.Errorf("expected two notes but got: %d", len(retNotes.Items))
 	}
 
 	err = _deleteNotesByTitle(sOutput.Session, notes)
-	if err != nil {
-		t.Errorf("failed to clean up notes")
-	}
+	assert.NoError(t, err, err)
 
 	err = _deleteTagsByTitle(sOutput.Session, tags)
-	if err != nil {
-		t.Errorf("failed to clean up notes")
-	}
+	assert.NoError(t, err, err)
+
 }
