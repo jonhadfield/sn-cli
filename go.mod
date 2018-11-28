@@ -2,7 +2,8 @@ module github.com/jonhadfield/sncli
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
-	github.com/jonhadfield/gosn v0.0.0-20181128224553-029ca0b31c84
+	github.com/jonhadfield/gosn v0.0.0-20181128231942-7d07126bc6d8
+	github.com/kr/pty v1.1.3 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/spf13/cast v1.3.0 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
