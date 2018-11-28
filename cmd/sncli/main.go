@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/urfave/cli.v1"
 	"gopkg.in/yaml.v2"
 
 	"github.com/jonhadfield/gosn"
+	"gopkg.in/urfave/cli.v1"
 
 	"github.com/jonhadfield/sncli"
 
@@ -28,6 +28,7 @@ const (
 	msgRegisterSuccess = "registered."
 )
 
+var yamlAbbrevs = []string{"yml", "yaml"}
 // overwritten at build time
 var version, versionOutput, tag, sha, buildDate string
 
@@ -373,18 +374,32 @@ func startCLI(args []string) error {
 		{
 			Name:  "get",
 			Usage: "get items",
+			//Description: "get all items or limit results by search criteria",
 			Subcommands: []cli.Command{
 				{
-					Name:  "tags",
-					Usage: "get tags",
+					Name:    "tag",
+					Aliases: []string{"tags"},
+					Usage:   "get tags",
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "title",
-							Usage: "find by title",
+							Usage: "find by title (separate multiple by commas)",
+						},
+						cli.StringFlag{
+							Name:  "uuid",
+							Usage: "find by uuid (separate multiple by commas)",
+						},
+						cli.BoolFlag{
+							Name:  "regex",
+							Usage: "enable regular expressions",
+						},
+						cli.BoolFlag{
+							Name:  "match-all",
+							Usage: "match all search criteria (default: match any)",
 						},
 						cli.BoolFlag{
 							Name:  "count",
-							Usage: "display count matching query",
+							Usage: "display count only",
 						},
 						cli.StringFlag{
 							Name:  "output",
@@ -396,41 +411,56 @@ func startCLI(args []string) error {
 						return err
 					},
 					Action: func(c *cli.Context) error {
-						uuid := c.String("uuid")
-						title := c.String("title")
+						inTitle := strings.TrimSpace(c.String("title"))
+						inUUID := strings.TrimSpace(c.String("uuid"))
+
+						var matchAny bool
+						if c.Bool("match-all") {
+							matchAny = false
+						}
+						regex := c.Bool("regex")
 						count := c.Bool("count")
-						tagFilter := gosn.Filter{
-							Type: "Tag",
-						}
+
 						getTagsIF := gosn.ItemFilters{
-							MatchAny: false,
-							Filters:  []gosn.Filter{tagFilter},
+							MatchAny: matchAny,
 						}
 
-						if uuid != "" {
-							titleFilter := gosn.Filter{
-								Type:       "Tag",
-								Key:        "uuid",
-								Comparison: "==",
-								Value:      uuid,
+						// add uuid filters
+						if inUUID != "" {
+							for _, uuid := range commaSplit(inUUID) {
+								titleFilter := gosn.Filter{
+									Type:       "Tag",
+									Key:        "uuid",
+									Comparison: "==",
+									Value:      uuid,
+								}
+								getTagsIF.Filters = append(getTagsIF.Filters, titleFilter)
 							}
-							getTagsIF.Filters = append(getTagsIF.Filters, titleFilter)
-						}
-						if title != "" {
-							titleFilter := gosn.Filter{
-								Type:       "Tag",
-								Key:        "Title",
-								Comparison: "contains",
-								Value:      title,
-							}
-							getTagsIF.Filters = append(getTagsIF.Filters, titleFilter)
 						}
 
-						newTags := c.String("title")
-						if strings.TrimSpace(newTags) == "" {
-							fmt.Print("\nerror: tag title not defined\n\n")
-							return cli.ShowSubcommandHelp(c)
+						comparison := "contains"
+						if regex {
+							comparison = "~"
 						}
+
+						if inTitle != "" {
+							for _, title := range commaSplit(inTitle) {
+								titleFilter := gosn.Filter{
+									Type:       "Tag",
+									Key:        "Title",
+									Comparison: comparison,
+									Value:      title,
+								}
+								getTagsIF.Filters = append(getTagsIF.Filters, titleFilter)
+							}
+						}
+
+						if inTitle == "" && inUUID == "" {
+							getTagsIF.Filters = append(getTagsIF.Filters, gosn.Filter{
+								Type: "Tag",
+							})
+						}
+
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						if errMsg != "" {
 							fmt.Printf("\nerror: %s\n\n", errMsg)
@@ -442,46 +472,92 @@ func startCLI(args []string) error {
 							return err
 						}
 
-						processedTags := commaSplit(newTags)
+						//processedTags := commaSplit(newTags)
 						// TODO: validate output
 						output := c.String("output")
 						appGetTagConfig := sncli.GetTagConfig{
-							Session:   session,
-							TagTitles: processedTags,
-							Output:    output,
-							Debug:     c.GlobalBool("debug"),
+							Session: session,
+							Filters: getTagsIF,
+							Output:  output,
+							Debug:   c.GlobalBool("debug"),
 						}
-						var tags gosn.GetItemsOutput
-						tags, err = appGetTagConfig.Run()
+						var rawTags gosn.GetItemsOutput
+						rawTags, err = appGetTagConfig.Run()
 						if err != nil {
 							return err
 						}
 
-						numResults := len(tags.Items)
+						var tagsYAML []sncli.TagYAML
+						//var tagsContentYAML
+						var tagsJSON []sncli.TagJSON
+						var numResults int
+						for _, rt := range rawTags.Items {
+							numResults++
+							if ! count && sncli.StringInSlice(output, yamlAbbrevs, false) {
+								tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
+									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+								}
+								tagContentAppDataContent := sncli.AppDataContentYAML{
+									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailYAML,
+								}
+								tagContentYAML := sncli.TagContentYAML{
+									Title:   rt.Content.GetTitle(),
+									AppData: tagContentAppDataContent,
+								}
+
+								tagsYAML = append(tagsYAML, sncli.TagYAML{
+									UUID:        rt.UUID,
+									ContentType: rt.ContentType,
+									Content:     tagContentYAML,
+									UpdatedAt:   rt.UpdatedAt,
+									CreatedAt:   rt.CreatedAt,
+								})
+							}
+							if ! count && strings.ToLower(output) == "json" {
+								tagContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
+									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+								}
+								tagContentAppDataContent := sncli.AppDataContentJSON{
+									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailJSON,
+								}
+								tagContentJSON := sncli.TagContentJSON{
+									Title:   rt.Content.GetTitle(),
+									AppData: tagContentAppDataContent,
+								}
+
+								tagsJSON = append(tagsJSON, sncli.TagJSON{
+									UUID:        rt.UUID,
+									ContentType: rt.ContentType,
+									Content:     tagContentJSON,
+									UpdatedAt:   rt.UpdatedAt,
+									CreatedAt:   rt.CreatedAt,
+								})
+							}
+						}
 						if numResults <= 0 {
 							fmt.Println("no matches.")
 						} else if count {
-							fmt.Printf("%d matches.", numResults)
+							fmt.Println(numResults)
 						} else {
 							output = c.String("output")
 							var bOutput []byte
 							switch strings.ToLower(output) {
 							case "json":
-								bOutput, err = json.MarshalIndent(tags, "", "    ")
+								bOutput, err = json.MarshalIndent(tagsJSON, "", "    ")
 							case "yaml":
-								bOutput, err = yaml.Marshal(tags)
+								bOutput, err = yaml.Marshal(tagsYAML)
 							}
 							if len(bOutput) > 0 {
 								fmt.Println(string(bOutput))
 							}
 						}
-
 						return err
 					},
 				},
 				{
-					Name:  "notes",
-					Usage: "get notes",
+					Name:    "note",
+					Aliases: []string{"notes"},
+					Usage:   "get notes",
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "title",
@@ -501,7 +577,7 @@ func startCLI(args []string) error {
 						},
 						cli.BoolFlag{
 							Name:  "count",
-							Usage: "display count matching query",
+							Usage: "display countonly",
 						},
 						cli.StringFlag{
 							Name:  "output",

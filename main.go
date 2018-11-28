@@ -13,6 +13,55 @@ const (
 	SNServerURL = "https://sync.standardnotes.org"
 )
 
+type ItemReferenceYAML struct {
+	UUID        string `yaml:"uuid"`
+	ContentType string `yaml:"content_type"`
+}
+
+type ItemReferenceJSON struct {
+	UUID        string `json:"uuid"`
+	ContentType string `json:"content_type"`
+}
+
+type OrgStandardNotesSNDetailJSON struct {
+	ClientUpdatedAt string `json:"client_updated_at"`
+}
+
+type OrgStandardNotesSNDetailYAML struct {
+	ClientUpdatedAt string `yaml:"client_updated_at"`
+}
+type AppDataContentYAML struct {
+	OrgStandardNotesSN OrgStandardNotesSNDetailYAML `yaml:"org.standardnotes.sn"`
+}
+type AppDataContentJSON struct {
+	OrgStandardNotesSN OrgStandardNotesSNDetailJSON `json:"org.standardnotes.sn"`
+}
+type TagContentYAML struct {
+	Title          string              `yaml:"title"`
+	ItemReferences []ItemReferenceYAML `yaml:"references"`
+	AppData        AppDataContentYAML  `yaml:"appData"`
+}
+type TagContentJSON struct {
+	Title          string              `json:"title"`
+	ItemReferences []ItemReferenceJSON `json:"references"`
+	AppData        AppDataContentJSON  `json:"appData"`
+}
+type TagJSON struct {
+	UUID        string         `json:"uuid"`
+	Content     TagContentJSON `json:"content"`
+	ContentType string         `json:"content_type"`
+	CreatedAt   string         `json:"created_at"`
+	UpdatedAt   string         `json:"updated_at"`
+}
+
+type TagYAML struct {
+	UUID        string         `yaml:"uuid"`
+	Content     TagContentYAML `yaml:"content"`
+	ContentType string         `yaml:"content_type"`
+	CreatedAt   string         `yaml:"created_at"`
+	UpdatedAt   string         `yaml:"updated_at"`
+}
+
 type TagItemsConfig struct {
 	Session    gosn.Session
 	FindTitle  string
@@ -31,13 +80,13 @@ type AddTagConfig struct {
 }
 
 type GetTagConfig struct {
-	Session   gosn.Session
-	Filters   gosn.ItemFilters
-	TagTitles []string
-	TagUUIDs  []string
-	Regex     string
-	Output    string
-	Debug     bool
+	Session gosn.Session
+	Filters gosn.ItemFilters
+	//TagTitles []string
+	//TagUUIDs  []string
+	//Regex     string
+	Output string
+	Debug  bool
 }
 
 type GetNoteConfig struct {
