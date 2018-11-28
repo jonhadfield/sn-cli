@@ -17,26 +17,7 @@ fmt:
 	goimports -w .
 
 lint:
-	gometalinter -e testing.go -e validation_test.go --vendor --disable-all \
-		--enable=deadcode \
-		--enable=gocyclo \
-		--enable=errcheck \
-		--enable=gofmt \
-		--enable=goimports \
-		--enable=golint \
-		--enable=gosimple \
-		--enable=ineffassign \
-		--enable=misspell \
-		--enable=unconvert \
-		--enable=varcheck \
-		--enable=staticcheck \
-		--enable=unparam\
-		--enable=varcheck \
-		--enable=dupl \
-		--enable=structcheck \
-		--enable=vetshadow \
-		--deadline=10m \
-		./...
+	golangci-lint run --enable-all --disable lll
 
 ci: lint test
 
