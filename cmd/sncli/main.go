@@ -29,6 +29,7 @@ const (
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
+
 // overwritten at build time
 var version, versionOutput, tag, sha, buildDate string
 
@@ -493,7 +494,7 @@ func startCLI(args []string) error {
 						var numResults int
 						for _, rt := range rawTags.Items {
 							numResults++
-							if ! count && sncli.StringInSlice(output, yamlAbbrevs, false) {
+							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
 									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
@@ -513,7 +514,7 @@ func startCLI(args []string) error {
 									CreatedAt:   rt.CreatedAt,
 								})
 							}
-							if ! count && strings.ToLower(output) == "json" {
+							if !count && strings.ToLower(output) == "json" {
 								tagContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
 									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}

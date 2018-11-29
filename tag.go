@@ -7,14 +7,12 @@ import (
 )
 
 type tagNotesInput struct {
-	session             gosn.Session
-	matchText           string
-	matchTextIgnoreCase bool
-	matchTags           []string
-	matchTagsIgnoreCase bool
-	matchNoteUUIDs      []string
-	newTags             []string
-	syncToken           string
+	session        gosn.Session
+	matchText      string
+	matchTags      []string
+	matchNoteUUIDs []string
+	newTags        []string
+	syncToken      string
 }
 
 func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
