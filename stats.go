@@ -150,23 +150,23 @@ func timeSince(inTime time.Time) string {
 		inTime, now = now, inTime
 	}
 	y1, M1, d1 := inTime.Date()
-	_, _, d2 := now.Date()
+	y2, M2, d2 := now.Date()
 
-	h1, m1, _ := inTime.Clock()
-	h2, m2, _ := now.Clock()
+	h1, m1, s1 := inTime.Clock()
+	h2, m2, s2 := now.Clock()
 
-	//year := y2 - y1
-	//month := M2 - M1
+	year := y2 - y1
+	month := M2 - M1
 	day := d2 - d1
 	hour := h2 - h1
 	min := m2 - m1
-	//sec := s2 - s1
+	sec := s2 - s1
 
 	// Normalize negative values
-	//if sec < 0 {
-	//	sec += 60
-	//	min--
-	//}
+	if sec < 0 {
+		sec += 60
+		min--
+	}
 	if min < 0 {
 		min += 60
 		hour--
@@ -179,12 +179,28 @@ func timeSince(inTime time.Time) string {
 		// days in month:
 		t := time.Date(y1, M1, 32, 0, 0, 0, 0, time.UTC)
 		day += 32 - t.Day()
-		//month--
+		month--
 	}
-	//if month < 0 {
-	//	month += 12
-	//	year--
-	//}
+	if month < 0 {
+		month += 12
+		year--
+	}
 
-	return fmt.Sprintf("%2dd %2dh %2dm", day, hour, min)
+	// determine output
+	switch {
+	case year > 0:
+		return fmt.Sprintf("%2d years %2d months %2d days", year, month, day)
+	case month > 0:
+		return fmt.Sprintf("%2d months %2d days %2d hours", month, day, hour)
+	case day > 0:
+		return fmt.Sprintf("%2d days %2d hours %2d minutes", day, hour, min)
+	case hour > 0:
+		return fmt.Sprintf("%2d hours %2d minutes", hour, min)
+	case min > 0:
+		return fmt.Sprintf("%2d minutes %2d seconds", min, sec)
+	case sec > 0:
+		return fmt.Sprintf("%2d seconds", sec)
+	default:
+		return "0"
+	}
 }
