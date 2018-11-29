@@ -59,7 +59,7 @@ func GetCredentials(inServer string) (email, password, apiServer, errMsg string)
 	default:
 		fmt.Print("email: ")
 		_, err := fmt.Scanln(&email)
-		if err != nil || len(strings.TrimSpace(email)) <= 0 {
+		if err != nil || len(strings.TrimSpace(email)) == 0 {
 			errMsg = "email required"
 			return
 		}

@@ -21,7 +21,7 @@ func StringInSlice(inStr string, inSlice []string, matchCase bool) bool {
 }
 
 func outList(input []string, sep string) string {
-	if len(input) <= 0 {
+	if len(input) == 0 {
 		return "-"
 	}
 	return strings.Join(input, sep)

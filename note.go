@@ -42,7 +42,6 @@ type addNoteInput struct {
 	noteTitle string
 	noteText  string
 	tagTitles []string
-	tagUUIDs  []string
 	syncToken string
 }
 

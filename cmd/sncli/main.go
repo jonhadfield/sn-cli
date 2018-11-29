@@ -198,9 +198,8 @@ func startCLI(args []string) error {
 						}
 						if err = AddNoteConfig.Run(); err != nil {
 							return fmt.Errorf("failed to add note. %+v", err)
-						} else {
-							fmt.Println(msgAddSuccess)
 						}
+						fmt.Println(msgAddSuccess)
 						return nil
 					},
 				},
@@ -251,9 +250,8 @@ func startCLI(args []string) error {
 						}
 						if err = DeleteTagConfig.Run(); err != nil {
 							return fmt.Errorf("failed to delete tag. %+v", err)
-						} else {
-							fmt.Println(msgDeleteSuccess)
 						}
+						fmt.Println(msgDeleteSuccess)
 						return nil
 					},
 				},

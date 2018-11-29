@@ -27,7 +27,7 @@ func (input *StatsConfig) Run() error {
 	}
 	output.DeDupe()
 
-	var notes, tags []gosn.Item
+	var notes []gosn.Item
 	var oldestNote, newestNote, lastUpdatedNote time.Time
 	var deletedItemsUUIDs []string
 	var missingContentUUIDs []string
@@ -78,9 +78,6 @@ func (input *StatsConfig) Run() error {
 			if !item.Deleted && item.ContentSize > 0 {
 				notes = append(notes, item)
 			}
-		}
-		if item.ContentType == "Tag" {
-			tags = append(tags, item)
 		}
 	}
 
