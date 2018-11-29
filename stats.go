@@ -69,7 +69,7 @@ func (input *StatsConfig) Run() error {
 					return err
 				}
 			}
-			if !item.Deleted && lastUpdatedNote.IsZero() || uTime.Before(lastUpdatedNote) {
+			if !item.Deleted && lastUpdatedNote.IsZero() || uTime.After(lastUpdatedNote) {
 				lastUpdatedNote, err = time.Parse(timeLayout, item.UpdatedAt)
 				if err != nil {
 					return err
