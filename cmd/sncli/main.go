@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"gopkg.in/urfave/cli.v1"
 	"os"
 	"sort"
 	"strings"
@@ -12,7 +13,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/jonhadfield/gosn"
-	"gopkg.in/urfave/cli.v1"
 
 	"github.com/jonhadfield/sncli"
 
@@ -124,7 +124,7 @@ func startCLI(args []string) (msg string, err error) {
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							return  fmt.Errorf("failed to authenticate. %+v", err)
+							return fmt.Errorf("failed to authenticate. %+v", err)
 						}
 						if errMsg != "" {
 							if cErr := cli.ShowSubcommandHelp(c); err != nil {
