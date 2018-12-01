@@ -8,6 +8,7 @@ import (
 
 type tagNotesInput struct {
 	session        gosn.Session
+	matchTitle     string
 	matchText      string
 	matchTags      []string
 	matchNoteUUIDs []string
@@ -70,8 +71,9 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 	for _, note := range allNotes {
 		if StringInSlice(note.UUID, input.matchNoteUUIDs, false) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
-			//} else if strings.TrimSpace(input.matchText) != "" && note.Content.TextContains(input.matchText, input.matchTextIgnoreCase) {
-		} else if strings.TrimSpace(input.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(input.matchText)) {
+		} else if strings.TrimSpace(input.matchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(input.matchTitle)) {
+			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
+		} else if strings.TrimSpace(input.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(input.matchText)) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
 		}
 	}
@@ -114,10 +116,11 @@ func (input *TagItemsConfig) Run() error {
 	//	gosn.SetDebugLogger(log.Println)
 	//}
 	tni := tagNotesInput{
-		matchText: input.FindText,
-		matchTags: []string{input.FindTag},
-		newTags:   input.NewTags,
-		session:   input.Session,
+		matchTitle: input.FindTitle,
+		matchText:  input.FindText,
+		matchTags:  []string{input.FindTag},
+		newTags:    input.NewTags,
+		session:    input.Session,
 	}
 	_, err := tagNotes(tni)
 	return err
@@ -262,7 +265,6 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 			newTag.Content = newTagContent
 			newTag.UUID = gosn.GenUUID()
 			tagsToAdd = append(tagsToAdd, *newTag)
-
 		}
 	}
 	if len(tagsToAdd) > 0 {

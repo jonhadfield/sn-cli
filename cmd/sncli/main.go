@@ -3,16 +3,15 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"gopkg.in/urfave/cli.v1"
 	"os"
 	"sort"
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/yaml.v2"
-
 	"github.com/jonhadfield/gosn"
+	"golang.org/x/crypto/ssh/terminal"
+	"gopkg.in/urfave/cli.v1"
+	"gopkg.in/yaml.v2"
 
 	"github.com/jonhadfield/sncli"
 
@@ -26,6 +25,7 @@ const (
 	msgDeleteSuccess   = "deleted."
 	msgCreateSuccess   = "created."
 	msgRegisterSuccess = "registered."
+	msgTagSuccess      = "tagged."
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
@@ -41,6 +41,30 @@ func main() {
 	}
 	fmt.Println(msg)
 	os.Exit(0)
+}
+
+func itemRefsToYaml(irs []gosn.ItemReference) []sncli.ItemReferenceYAML {
+	var iRefs []sncli.ItemReferenceYAML
+	for _, ref := range irs {
+		iRef := sncli.ItemReferenceYAML{
+			UUID:        ref.UUID,
+			ContentType: ref.ContentType,
+		}
+		iRefs = append(iRefs, iRef)
+	}
+	return iRefs
+}
+
+func itemRefsToJSON(irs []gosn.ItemReference) []sncli.ItemReferenceJSON {
+	var iRefs []sncli.ItemReferenceJSON
+	for _, ref := range irs {
+		iRef := sncli.ItemReferenceJSON{
+			UUID:        ref.UUID,
+			ContentType: ref.ContentType,
+		}
+		iRefs = append(iRefs, iRef)
+	}
+	return iRefs
 }
 
 func commaSplit(input string) []string {
@@ -383,7 +407,7 @@ func startCLI(args []string) (msg string, err error) {
 				if err != nil {
 					return err
 				}
-				msg = msgDeleteSuccess
+				msg = msgTagSuccess
 				return nil
 			},
 		},
@@ -515,9 +539,11 @@ func startCLI(args []string) (msg string, err error) {
 								tagContentAppDataContent := sncli.AppDataContentYAML{
 									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailYAML,
 								}
+
 								tagContentYAML := sncli.TagContentYAML{
-									Title:   rt.Content.GetTitle(),
-									AppData: tagContentAppDataContent,
+									Title:          rt.Content.GetTitle(),
+									ItemReferences: itemRefsToYaml(rt.Content.References()),
+									AppData:        tagContentAppDataContent,
 								}
 
 								tagsYAML = append(tagsYAML, sncli.TagYAML{
@@ -535,9 +561,11 @@ func startCLI(args []string) (msg string, err error) {
 								tagContentAppDataContent := sncli.AppDataContentJSON{
 									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailJSON,
 								}
+
 								tagContentJSON := sncli.TagContentJSON{
-									Title:   rt.Content.GetTitle(),
-									AppData: tagContentAppDataContent,
+									Title:          rt.Content.GetTitle(),
+									ItemReferences: itemRefsToJSON(rt.Content.References()),
+									AppData:        tagContentAppDataContent,
 								}
 
 								tagsJSON = append(tagsJSON, sncli.TagJSON{
@@ -690,8 +718,10 @@ func startCLI(args []string) (msg string, err error) {
 									OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailYAML,
 								}
 								noteContentYAML := sncli.NoteContentYAML{
-									Title:   rt.Content.GetTitle(),
-									AppData: noteContentAppDataContent,
+									Title:          rt.Content.GetTitle(),
+									Text:           rt.Content.GetText(),
+									ItemReferences: itemRefsToYaml(rt.Content.References()),
+									AppData:        noteContentAppDataContent,
 								}
 
 								notesYAML = append(notesYAML, sncli.NoteYAML{
@@ -710,9 +740,10 @@ func startCLI(args []string) (msg string, err error) {
 									OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailJSON,
 								}
 								noteContentJSON := sncli.NoteContentJSON{
-									Title:   rt.Content.GetTitle(),
-									Text:   rt.Content.GetText(),
-									AppData: noteContentAppDataContent,
+									Title:          rt.Content.GetTitle(),
+									Text:           rt.Content.GetText(),
+									ItemReferences: itemRefsToJSON(rt.Content.References()),
+									AppData:        noteContentAppDataContent,
 								}
 
 								notesJSON = append(notesJSON, sncli.NoteJSON{
@@ -724,8 +755,6 @@ func startCLI(args []string) (msg string, err error) {
 								})
 							}
 						}
-
-
 
 						if numResults <= 0 {
 							fmt.Println("no matches.")

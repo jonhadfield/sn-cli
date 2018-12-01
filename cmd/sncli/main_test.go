@@ -23,6 +23,13 @@ func TestDeleteTag(t *testing.T) {
 	assert.Equal(t, msg, msgDeleteSuccess)
 }
 
+func TestDeleteTagMissingUUID(t *testing.T) {
+	msg, err := startCLI([]string{"sncli", "delete", "tag", "--uuid", "3a277f8d-f247-4236-a803-80795123135g"})
+	assert.NoError(t, err)
+	assert.Equal(t, msg, "no match.")
+}
+
+
 func TestDeleteTagErrorMissingTitle(t *testing.T) {
 	_, err := startCLI([]string{"sncli", "delete", "tag"})
 	assert.Error(t, err, "error should be returned if title is unspecified")

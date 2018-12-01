@@ -36,6 +36,7 @@ type AppDataContentYAML struct {
 type AppDataContentJSON struct {
 	OrgStandardNotesSN OrgStandardNotesSNDetailJSON `json:"org.standardnotes.sn"`
 }
+
 type TagContentYAML struct {
 	Title          string              `yaml:"title"`
 	ItemReferences []ItemReferenceYAML `yaml:"references"`
@@ -48,6 +49,7 @@ type TagContentJSON struct {
 }
 type NoteContentYAML struct {
 	Title          string              `yaml:"title"`
+	Text           string              `json:"text"`
 	ItemReferences []ItemReferenceYAML `yaml:"references"`
 	AppData        AppDataContentYAML  `yaml:"appData"`
 }
