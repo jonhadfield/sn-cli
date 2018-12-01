@@ -504,7 +504,6 @@ func startCLI(args []string) (msg string, err error) {
 						}
 
 						var tagsYAML []sncli.TagYAML
-						//var tagsContentYAML
 						var tagsJSON []sncli.TagJSON
 						var numResults int
 						for _, rt := range rawTags.Items {
@@ -606,6 +605,7 @@ func startCLI(args []string) (msg string, err error) {
 						title := c.String("title")
 						text := c.String("text")
 						count := c.Bool("count")
+						output := c.String("output")
 						noteFilter := gosn.Filter{
 							Type: "Note",
 						}
@@ -671,30 +671,79 @@ func startCLI(args []string) (msg string, err error) {
 							Filters: getNotesIF,
 							Debug:   c.GlobalBool("debug"),
 						}
-						var notes gosn.GetItemsOutput
-						notes, err = getNoteConfig.Run()
+						var rawNotes gosn.GetItemsOutput
+						rawNotes, err = getNoteConfig.Run()
 						if err != nil {
 							return err
 						}
-						numResults := len(notes.Items)
+						numResults := len(rawNotes.Items)
+						var notesYAML []sncli.NoteYAML
+						var notesJSON []sncli.NoteJSON
+
+						for _, rt := range rawNotes.Items {
+							numResults++
+							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
+								noteContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
+									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+								}
+								noteContentAppDataContent := sncli.AppDataContentYAML{
+									OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailYAML,
+								}
+								noteContentYAML := sncli.NoteContentYAML{
+									Title:   rt.Content.GetTitle(),
+									AppData: noteContentAppDataContent,
+								}
+
+								notesYAML = append(notesYAML, sncli.NoteYAML{
+									UUID:        rt.UUID,
+									ContentType: rt.ContentType,
+									Content:     noteContentYAML,
+									UpdatedAt:   rt.UpdatedAt,
+									CreatedAt:   rt.CreatedAt,
+								})
+							}
+							if !count && strings.ToLower(output) == "json" {
+								noteContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
+									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+								}
+								noteContentAppDataContent := sncli.AppDataContentJSON{
+									OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailJSON,
+								}
+								noteContentJSON := sncli.NoteContentJSON{
+									Title:   rt.Content.GetTitle(),
+									Text:   rt.Content.GetText(),
+									AppData: noteContentAppDataContent,
+								}
+
+								notesJSON = append(notesJSON, sncli.NoteJSON{
+									UUID:        rt.UUID,
+									ContentType: rt.ContentType,
+									Content:     noteContentJSON,
+									UpdatedAt:   rt.UpdatedAt,
+									CreatedAt:   rt.CreatedAt,
+								})
+							}
+						}
+
+
+
 						if numResults <= 0 {
 							fmt.Println("no matches.")
 						} else if count {
-							fmt.Printf("%d matches.", numResults)
+							fmt.Println(numResults)
 						} else {
-							output := c.String("output")
+							output = c.String("output")
 							var bOutput []byte
 							switch strings.ToLower(output) {
 							case "json":
-								bOutput, err = json.MarshalIndent(notes, "", "    ")
+								bOutput, err = json.MarshalIndent(notesJSON, "", "    ")
 							case "yaml":
-								bOutput, err = yaml.Marshal(notes)
+								bOutput, err = yaml.Marshal(notesYAML)
 							}
 							if len(bOutput) > 0 {
 								fmt.Println(string(bOutput))
 							}
 						}
-
 						return err
 					},
 				},

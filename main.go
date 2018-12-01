@@ -46,6 +46,17 @@ type TagContentJSON struct {
 	ItemReferences []ItemReferenceJSON `json:"references"`
 	AppData        AppDataContentJSON  `json:"appData"`
 }
+type NoteContentYAML struct {
+	Title          string              `yaml:"title"`
+	ItemReferences []ItemReferenceYAML `yaml:"references"`
+	AppData        AppDataContentYAML  `yaml:"appData"`
+}
+type NoteContentJSON struct {
+	Title          string              `json:"title"`
+	Text           string              `json:"text"`
+	ItemReferences []ItemReferenceJSON `json:"references"`
+	AppData        AppDataContentJSON  `json:"appData"`
+}
 type TagJSON struct {
 	UUID        string         `json:"uuid"`
 	Content     TagContentJSON `json:"content"`
@@ -60,6 +71,22 @@ type TagYAML struct {
 	ContentType string         `yaml:"content_type"`
 	CreatedAt   string         `yaml:"created_at"`
 	UpdatedAt   string         `yaml:"updated_at"`
+}
+
+type NoteJSON struct {
+	UUID        string          `json:"uuid"`
+	Content     NoteContentJSON `json:"content"`
+	ContentType string          `json:"content_type"`
+	CreatedAt   string          `json:"created_at"`
+	UpdatedAt   string          `json:"updated_at"`
+}
+
+type NoteYAML struct {
+	UUID        string          `yaml:"uuid"`
+	Content     NoteContentYAML `yaml:"content"`
+	ContentType string          `yaml:"content_type"`
+	CreatedAt   string          `yaml:"created_at"`
+	UpdatedAt   string          `yaml:"updated_at"`
 }
 
 type TagItemsConfig struct {
