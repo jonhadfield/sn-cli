@@ -7,75 +7,66 @@ import (
 )
 
 func TestAddTag(t *testing.T) {
-	err := startCLI([]string{"sncli", "add", "tag", "--title", "testTag"})
-	if err != nil {
-		t.Errorf("%+v", err)
-	}
+	msg, err := startCLI([]string{"sncli", "add", "tag", "--title", "testTag"})
+	assert.NoError(t, err)
+	assert.Equal(t, msg, msgAddSuccess)
 }
 
 func TestAddTagErrorMissingTitle(t *testing.T) {
-	err := startCLI([]string{"sncli", "add", "tag"})
-	if err == nil {
-		t.Errorf("error should be returned if title is unspecified")
-	}
+	_, err := startCLI([]string{"sncli", "add", "tag"})
+	assert.Error(t, err, "error should be returned if title is unspecified")
 }
 
 func TestDeleteTag(t *testing.T) {
-	err := startCLI([]string{"sncli", "delete", "tag", "--title", "testTag"})
-	if err != nil {
-		t.Errorf("%+v", err)
-	}
+	msg, err := startCLI([]string{"sncli", "delete", "tag", "--title", "testTag"})
+	assert.NoError(t, err)
+	assert.Equal(t, msg, msgDeleteSuccess)
 }
 
 func TestDeleteTagErrorMissingTitle(t *testing.T) {
-	err := startCLI([]string{"sncli", "delete", "tag"})
-	if err == nil {
-		t.Errorf("error should be returned if title is unspecified")
-	}
+	_, err := startCLI([]string{"sncli", "delete", "tag"})
+	assert.Error(t, err, "error should be returned if title is unspecified")
 }
 
 func TestAddNote(t *testing.T) {
-	err := startCLI([]string{"sncli", "add", "note", "--title", "testNote", "--text", "some example text"})
-	if err != nil {
-		t.Errorf("%+v", err)
-	}
+	msg, err := startCLI([]string{"sncli", "add", "note", "--title", "testNote", "--text", "some example text"})
+	assert.NoError(t, err)
+	assert.Equal(t, msg, msgAddSuccess)
 }
 
 func TestAddNoteErrorMissingTitle(t *testing.T) {
-	err := startCLI([]string{"sncli", "add", "note"})
-	if err == nil {
-		t.Errorf("error should be returned if title is unspecified")
-	}
+	_, err := startCLI([]string{"sncli", "add", "note"})
+	assert.Error(t, err)
 }
 
 func TestDeleteNote(t *testing.T) {
-	err := startCLI([]string{"sncli", "delete", "note", "--title", "testNote"})
-	if err != nil {
-		t.Errorf("%+v", err)
-	}
+	msg, err := startCLI([]string{"sncli", "delete", "note", "--title", "testNote"})
+	assert.NoError(t, err)
+	assert.Equal(t, msg, msgDeleteSuccess)
 }
 
 func TestDeleteNoteErrorMissingTitle(t *testing.T) {
-	err := startCLI([]string{"sncli", "delete", "note"})
-	if err == nil {
-		t.Errorf("error should be returned if title is unspecified")
-	}
+	_, err := startCLI([]string{"sncli", "delete", "note"})
+	assert.Error(t, err, "error should be returned if title is unspecified")
 }
 
 func TestTagNotesByTextWithNewTags(t *testing.T) {
-	startCLI([]string{"sncli", "get", "notes"})
-	err := startCLI([]string{"sncli", "add", "note", "--title", "TestNoteOne", "--text", "test note one"})
+	_, err := startCLI([]string{"sncli", "get", "notes"})
+	assert.NoError(t, err)
+	msg, err := startCLI([]string{"sncli", "add", "note", "--title", "TestNoteOne", "--text", "test note one"})
+	assert.Equal(t, msg, msgAddSuccess)
 	assert.NoError(t, err, err)
-	err = startCLI([]string{"sncli", "add", "note", "--title", "TestNoteTwo", "--text", "test note two"})
+	msg, err = startCLI([]string{"sncli", "add", "note", "--title", "TestNoteTwo", "--text", "test note two"})
+	assert.Equal(t, msg, msgAddSuccess)
+	assert.NoError(t, err)
+	msg, err = startCLI([]string{"sncli", "tag", "--find-text", "test note", "--title", "testTagOne,testTagTwo"})
+	assert.NoError(t, err)
+	msg, err = startCLI([]string{"sncli", "delete", "note", "--title", "TestNoteOne,TestNoteTwo"})
 	assert.NoError(t, err, err)
-	err = startCLI([]string{"sncli", "tag", "--find-text", "test note", "--title", "testTagOne,testTagTwo"})
+	_, err = startCLI([]string{"sncli", "get", "notes"})
+	msg, err = startCLI([]string{"sncli", "delete", "tag", "--title", "testTagOne,testTagTwo"})
 	assert.NoError(t, err, err)
-	err = startCLI([]string{"sncli", "delete", "note", "--title", "TestNoteOne,TestNoteTwo"})
-	assert.NoError(t, err, err)
-	startCLI([]string{"sncli", "get", "notes"})
-	err = startCLI([]string{"sncli", "delete", "tag", "--title", "testTagOne,testTagTwo"})
-	assert.NoError(t, err, err)
-	startCLI([]string{"sncli", "get", "notes"})
+	_, err = startCLI([]string{"sncli", "get", "notes"})
 
 }
 

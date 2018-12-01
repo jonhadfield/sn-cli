@@ -34,11 +34,12 @@ var yamlAbbrevs = []string{"yml", "yaml"}
 var version, versionOutput, tag, sha, buildDate string
 
 func main() {
-	err := startCLI(os.Args)
+	msg, err := startCLI(os.Args)
 	if err != nil {
 		fmt.Printf("error: %+v\n", err)
 		os.Exit(1)
 	}
+	fmt.Println(msg)
 	os.Exit(0)
 }
 
@@ -50,19 +51,19 @@ func commaSplit(input string) []string {
 	return o
 }
 
-func startCLI(args []string) error {
+func startCLI(args []string) (msg string, err error) {
 	viper.SetEnvPrefix("sn")
-	err := viper.BindEnv("email")
+	err = viper.BindEnv("email")
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = viper.BindEnv("password")
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = viper.BindEnv("server")
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if tag != "" && buildDate != "" {
@@ -123,7 +124,7 @@ func startCLI(args []string) error {
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
 						if err != nil {
-							return fmt.Errorf("failed to authenticate. %+v", err)
+							return  fmt.Errorf("failed to authenticate. %+v", err)
 						}
 						if errMsg != "" {
 							if cErr := cli.ShowSubcommandHelp(c); err != nil {
@@ -141,7 +142,7 @@ func startCLI(args []string) error {
 						if err = appAddTagConfig.Run(); err != nil {
 							return fmt.Errorf("failed to add tag: %+v", err)
 						}
-						fmt.Println(msgAddSuccess)
+						msg = msgAddSuccess
 						return nil
 					},
 				},
@@ -209,7 +210,7 @@ func startCLI(args []string) error {
 						if err = AddNoteConfig.Run(); err != nil {
 							return fmt.Errorf("failed to add note. %+v", err)
 						}
-						fmt.Println(msgAddSuccess)
+						msg = msgAddSuccess
 						return nil
 					},
 				},
@@ -265,7 +266,7 @@ func startCLI(args []string) error {
 						if err = DeleteTagConfig.Run(); err != nil {
 							return fmt.Errorf("failed to delete tag. %+v", err)
 						}
-						fmt.Println(msgDeleteSuccess)
+						msg = msgDeleteSuccess
 						return nil
 					},
 				},
@@ -311,7 +312,7 @@ func startCLI(args []string) error {
 						if err = DeleteNoteConfig.Run(); err != nil {
 							return fmt.Errorf("failed to delete note. %+v", err)
 						}
-						fmt.Println(msgDeleteSuccess)
+						msg = msgDeleteSuccess
 						return nil
 					},
 				},
@@ -382,7 +383,7 @@ func startCLI(args []string) error {
 				if err != nil {
 					return err
 				}
-				fmt.Println(msgAddSuccess)
+				msg = msgDeleteSuccess
 				return nil
 			},
 		},
@@ -926,5 +927,5 @@ func startCLI(args []string) error {
 		},
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))
-	return app.Run(args)
+	return msg, app.Run(args)
 }
