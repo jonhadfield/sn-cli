@@ -114,7 +114,9 @@ func startCLI(args []string) error {
 					Action: func(c *cli.Context) error {
 						tagInput := c.String("title")
 						if strings.TrimSpace(tagInput) == "" {
-							cli.ShowSubcommandHelp(c)
+							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+								panic(cErr)
+							}
 							return errors.New("tag title not defined")
 						}
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
@@ -124,7 +126,9 @@ func startCLI(args []string) error {
 							return fmt.Errorf("failed to authenticate. %+v", err)
 						}
 						if errMsg != "" {
-							cli.ShowSubcommandHelp(c)
+							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+								panic(cErr)
+							}
 							return errors.New(errMsg)
 						}
 
@@ -166,18 +170,24 @@ func startCLI(args []string) error {
 						title := c.String("title")
 						text := c.String("text")
 						if strings.TrimSpace(title) == "" {
-							cli.ShowSubcommandHelp(c)
+							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+								panic(cErr)
+							}
 							return errors.New("note title not defined")
 						}
 						if strings.TrimSpace(text) == "" {
-							cli.ShowSubcommandHelp(c)
+							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+								panic(cErr)
+							}
 							return errors.New("note text not defined")
 
 						}
 
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						if errMsg != "" {
-							cli.ShowSubcommandHelp(c)
+							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+								panic(cErr)
+							}
 							return errors.New(errMsg)
 						}
 						var session gosn.Session
@@ -226,12 +236,16 @@ func startCLI(args []string) error {
 						titleIn := strings.TrimSpace(c.String("title"))
 						uuidIn := strings.Replace(c.String("uuid"), " ", "", -1)
 						if titleIn == "" && uuidIn == "" {
-							cli.ShowSubcommandHelp(c)
+							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+								panic(cErr)
+							}
 							return errors.New("title or uuid required")
 						}
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						if errMsg != "" {
-							cli.ShowSubcommandHelp(c)
+							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+								panic(cErr)
+							}
 							return errors.New(errMsg)
 						}
 						var session gosn.Session
@@ -272,7 +286,9 @@ func startCLI(args []string) error {
 						title := strings.TrimSpace(c.String("title"))
 						uuid := strings.TrimSpace(c.String("uuid"))
 						if title == "" && uuid == "" {
-							cli.ShowSubcommandHelp(c)
+							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+								panic(cErr)
+							}
 							return errors.New("")
 						}
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
@@ -701,7 +717,9 @@ func startCLI(args []string) error {
 					apiServer = sncli.SNServerURL
 				}
 				if strings.TrimSpace(c.String("email")) == "" {
-					cli.ShowCommandHelp(c, "register")
+					if cErr := cli.ShowCommandHelp(c, "register"); err != nil {
+						panic(cErr)
+					}
 					return errors.New("email required")
 				}
 				var password string
@@ -882,7 +900,9 @@ func startCLI(args []string) error {
 						}
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						if errMsg != "" {
-							cli.ShowSubcommandHelp(c)
+							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+								panic(cErr)
+							}
 							return errors.New(errMsg)
 						}
 						var session gosn.Session
