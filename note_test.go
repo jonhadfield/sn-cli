@@ -234,13 +234,13 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	res, err = gnc.Run()
 	assert.NoError(t, err)
 
-	assert.EqualValues(t, len(res.Items), numNotes)
+	assert.EqualValues(t, numNotes, len(res.Items))
 	wipeConfig := WipeConfig{
 		Session: session,
 	}
 	var deleted int
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
-	assert.EqualValues(t, deleted, numNotes)
+	assert.EqualValues(t, numNotes, deleted)
 
 }
