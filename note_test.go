@@ -3,6 +3,7 @@ package sncli
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -207,7 +208,8 @@ func TestWipe(t *testing.T) {
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
 	assert.EqualValues(t, deleted, numNotes, "wipe failed")
-
+	// Hack to enable Circle-CI tests to run. Allow time to propagate delete.
+	time.Sleep(5 * time.Second)
 }
 
 func TestCreateOneHundredNotes(t *testing.T) {
