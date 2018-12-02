@@ -1,0 +1,41 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.11
+    steps:
+      - checkout
+      - run: go test -v ./...
+  release:
+    docker:
+      - image: circleci/golang:1.11
+    steps:
+      - checkout
+      - run: go get github.com/tcnksm/ghr
+      - run: go get github.com/mitchellh/gox
+      - run: mkdir dist
+      - run: echo "export BUILD_TAG=$(git describe --tags)" >> $BASH_ENV
+      - run: echo "export BUILD_SHA=$(git rev-parse --short HEAD)" >> $BASH_ENV
+      - run: echo "export BUILD_DATE=$(date -u '+%Y/%m/%d:%H:%M:%S')" >> $BASH_ENV
+      - run: gox -verbose -osarch="darwin/amd64 linux/amd64 linux/arm linux/arm64 netbsd/amd64 openbsd/amd64 freebsd/amd64" -ldflags "-X main.tag=$BUILD_TAG -X main.sha=$BUILD_SHA -X main.buildDate=$BUILD_DATE" -output "dist/sncli_{{.OS}}_{{.Arch}}" ./...
+      - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` dist/
+      
+workflows:
+  version: 2
+  build-release:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - release:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)/
+            branches:
+              ignore: /.*/
