@@ -73,7 +73,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
 		} else if strings.TrimSpace(input.matchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(input.matchTitle)) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
-		} else if strings.TrimSpace(input.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(input.matchText)) {
+		} else if strings.TrimSpace(input.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(input.matchText)) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
 		}
 	}
@@ -158,17 +158,16 @@ func (input *GetTagConfig) Run() (output gosn.GetItemsOutput, err error) {
 	return
 }
 
-func (input *DeleteTagConfig) Run() error {
+func (input *DeleteTagConfig) Run() (noDeleted int, err error) {
 	//gosn.SetErrorLogger(log.Println)
 	//if input.Debug {
 	//	gosn.SetDebugLogger(log.Println)
 	//}
-	var err error
-	_, err = deleteTags(input.Session, input.TagTitles, input.TagUUIDs, "")
-	return err
+	noDeleted, _, err = deleteTags(input.Session, input.TagTitles, input.TagUUIDs, "")
+	return noDeleted, err
 }
 
-func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syncToken string) (newSyncToken string, err error) {
+func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syncToken string) (noDeleted int, newSyncToken string, err error) {
 	deleteNotesFilter := gosn.Filter{
 		Type: "Note",
 	}
@@ -214,6 +213,7 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 		}
 		newSyncToken = putItemsOutput.ResponseBody.SyncToken
 	}
+	noDeleted = len(tagsToDelete)
 	return
 }
 
