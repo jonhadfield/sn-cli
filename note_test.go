@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -33,7 +34,7 @@ func TestWipeWith50(t *testing.T) {
 	var deleted int
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
-	assert.True(t, deleted >= numNotes, "wipe failed")
+	assert.True(t, deleted >= numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
 }
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
