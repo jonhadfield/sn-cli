@@ -22,7 +22,7 @@ import (
 
 const (
 	msgAddSuccess      = "added."
-	msgDeleteSuccess   = "deleted."
+	msgDeleted         = "deleted."
 	msgCreateSuccess   = "created."
 	msgRegisterSuccess = "registered."
 	msgTagSuccess      = "tagged."
@@ -287,10 +287,12 @@ func startCLI(args []string) (msg string, err error) {
 							TagUUIDs:  uuids,
 							Debug:     c.GlobalBool("debug"),
 						}
-						if err = DeleteTagConfig.Run(); err != nil {
+						var noDeleted int
+						noDeleted, err = DeleteTagConfig.Run()
+						if err != nil {
 							return fmt.Errorf("failed to delete tag. %+v", err)
 						}
-						msg = msgDeleteSuccess
+						msg = fmt.Sprintf("%d %s", noDeleted, msgDeleted)
 						return nil
 					},
 				},
@@ -333,10 +335,11 @@ func startCLI(args []string) (msg string, err error) {
 							NoteTitles: processedNotes,
 							Debug:      c.GlobalBool("debug"),
 						}
-						if err = DeleteNoteConfig.Run(); err != nil {
+						var noDeleted int
+						if noDeleted, err = DeleteNoteConfig.Run(); err != nil {
 							return fmt.Errorf("failed to delete note. %+v", err)
 						}
-						msg = msgDeleteSuccess
+						msg = fmt.Sprintf("%d %s", noDeleted, msgDeleted)
 						return nil
 					},
 				},

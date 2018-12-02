@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,15 +21,14 @@ func TestAddTagErrorMissingTitle(t *testing.T) {
 func TestDeleteTag(t *testing.T) {
 	msg, err := startCLI([]string{"sncli", "delete", "tag", "--title", "testTag"})
 	assert.NoError(t, err)
-	assert.Equal(t, msg, msgDeleteSuccess)
+	assert.Equal(t, msg, fmt.Sprintf("1 %s", msgDeleted))
 }
 
 func TestDeleteTagMissingUUID(t *testing.T) {
 	msg, err := startCLI([]string{"sncli", "delete", "tag", "--uuid", "3a277f8d-f247-4236-a803-80795123135g"})
 	assert.NoError(t, err)
-	assert.Equal(t, msg, "no match.")
+	assert.Equal(t, msg, fmt.Sprintf("0 %s", msgDeleted))
 }
-
 
 func TestDeleteTagErrorMissingTitle(t *testing.T) {
 	_, err := startCLI([]string{"sncli", "delete", "tag"})
@@ -49,7 +49,7 @@ func TestAddNoteErrorMissingTitle(t *testing.T) {
 func TestDeleteNote(t *testing.T) {
 	msg, err := startCLI([]string{"sncli", "delete", "note", "--title", "testNote"})
 	assert.NoError(t, err)
-	assert.Equal(t, msg, msgDeleteSuccess)
+	assert.Equal(t, msg, fmt.Sprintf("1 %s", msgDeleted))
 }
 
 func TestDeleteNoteErrorMissingTitle(t *testing.T) {

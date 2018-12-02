@@ -21,7 +21,9 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 		Session:   sOutput.Session,
 		TagTitles: []string{"TestTagOne", "TestTagTwo"},
 	}
-	err = deleteTagConfig.Run()
+	var noDeleted int
+	noDeleted, err = deleteTagConfig.Run()
+	assert.Equal(t, 2, noDeleted)
 	assert.NoError(t, err, err)
 }
 
@@ -63,7 +65,9 @@ func TestGetTag(t *testing.T) {
 		Session:   sOutput.Session,
 		TagTitles: []string{"TestTagOne", "TestTagTwo"},
 	}
-	err = deleteTagConfig.Run()
+	var noDeleted int
+	noDeleted, err = deleteTagConfig.Run()
+	assert.Equal(t, noDeleted, len(testTagTitles))
 	assert.NoError(t, err, err)
 
 }
@@ -83,28 +87,28 @@ func _addNotes(session gosn.Session, input map[string]string) error {
 	return nil
 }
 
-func _deleteNotesByTitle(session gosn.Session, input map[string]string) error {
+func _deleteNotesByTitle(session gosn.Session, input map[string]string) (noDeleted int, err error) {
 	for k := range input {
 		deleteNoteConfig := DeleteNoteConfig{
 			Session:    session,
 			NoteTitles: []string{k},
 		}
-		err := deleteNoteConfig.Run()
+		_, err = deleteNoteConfig.Run()
 		if err != nil {
-			return err
+			return noDeleted, err
 		}
+		noDeleted++
 	}
-	return nil
+	return noDeleted, err
 }
 
-func _deleteTagsByTitle(session gosn.Session, input []string) error {
+func _deleteTagsByTitle(session gosn.Session, input []string) (noDeleted int, err error) {
 
 	deleteTagConfig := DeleteTagConfig{
 		Session:   session,
 		TagTitles: input,
 	}
-	err := deleteTagConfig.Run()
-	return err
+	return deleteTagConfig.Run()
 }
 
 func TestTaggingOfNotes(t *testing.T) {
@@ -157,11 +161,10 @@ func TestTaggingOfNotes(t *testing.T) {
 	if len(retNotes.Items) != 2 {
 		t.Errorf("expected two notes but got: %d", len(retNotes.Items))
 	}
-
-	err = _deleteNotesByTitle(sOutput.Session, notes)
+	_, err = _deleteNotesByTitle(sOutput.Session, notes)
 	assert.NoError(t, err, err)
 
-	err = _deleteTagsByTitle(sOutput.Session, tags)
+	_, err = _deleteTagsByTitle(sOutput.Session, tags)
 	assert.NoError(t, err, err)
 
 }

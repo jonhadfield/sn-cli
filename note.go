@@ -82,14 +82,13 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 	return
 }
 
-func (input *DeleteNoteConfig) Run() error {
+func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
 	//gosn.SetErrorLogger(log.Println)
 	//if input.Debug {
 	//	gosn.SetDebugLogger(log.Println)
 	//}
-	var err error
-	_, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "")
-	return err
+	noDeleted, _, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "")
+	return noDeleted, err
 }
 
 func (input *GetNoteConfig) Run() (output gosn.GetItemsOutput, err error) {
@@ -108,8 +107,7 @@ func (input *GetNoteConfig) Run() (output gosn.GetItemsOutput, err error) {
 	return
 }
 
-// TODO: don't pass match criteria here, pass actual items to mark Deleted flag as true for and then PutItems them
-func deleteNotes(session gosn.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string) (newSyncToken string, err error) {
+func deleteNotes(session gosn.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string) (noDeleted int, newSyncToken string, err error) {
 	var getNotesFilters []gosn.Filter
 	switch {
 	case len(noteTitles) > 0:
@@ -179,6 +177,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 		if err != nil {
 			return
 		}
+		noDeleted = len(notesToDelete)
 		newSyncToken = putItemsOutput.ResponseBody.SyncToken
 	}
 	return

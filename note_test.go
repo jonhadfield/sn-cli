@@ -14,6 +14,14 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	// first test - so wipe existing
+	wipeConfig := WipeConfig{
+		Session: session,
+	}
+	_, err = wipeConfig.Run()
+	assert.NoError(t, err)
+
 	// create note
 	addNoteConfig := AddNoteConfig{
 		Session: session,
@@ -47,7 +55,9 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 		Session:   session,
 		NoteUUIDs: []string{newItemUUID},
 	}
-	err = deleteNoteConfig.Run()
+	var noDeleted int
+	noDeleted, err = deleteNoteConfig.Run()
+	assert.Equal(t, noDeleted, 1)
 	assert.NoError(t, err, err)
 
 	postRes, err = gnc.Run()
@@ -71,7 +81,9 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 		Session:    session,
 		NoteTitles: []string{"TestNoteOne"},
 	}
-	err = deleteNoteConfig.Run()
+	var noDeleted int
+	noDeleted, err = deleteNoteConfig.Run()
+	assert.Equal(t, noDeleted, 1)
 	assert.NoError(t, err, err)
 
 	filter := gosn.Filter{
@@ -112,7 +124,9 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 		NoteTitles: []string{"^T.*ote..[def]"},
 		Regex:      true,
 	}
-	err = deleteNoteConfig.Run()
+	var noDeleted int
+	noDeleted, err = deleteNoteConfig.Run()
+	assert.Equal(t, noDeleted, 1)
 	assert.NoError(t, err, err)
 
 	// get same note again
@@ -173,7 +187,8 @@ func TestGetNote(t *testing.T) {
 		Session:    session,
 		NoteTitles: []string{"TestNoteOne"},
 	}
-	assert.NoError(t, deleteNoteConfig.Run(), "clean up failed")
+	_, err = deleteNoteConfig.Run()
+	assert.NoError(t, err, "clean up failed")
 }
 
 func TestWipe(t *testing.T) {
