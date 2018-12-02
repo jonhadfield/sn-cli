@@ -26,6 +26,7 @@ const (
 	msgCreateSuccess   = "created."
 	msgRegisterSuccess = "registered."
 	msgTagSuccess      = "tagged."
+	msgItemsDeleted    = "items deleted."
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
@@ -861,6 +862,12 @@ func startCLI(args []string) (msg string, err error) {
 		{
 			Name:  "wipe",
 			Usage: "deletes all tags and notes",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "yes",
+					Usage: "ignore warning",
+				},
+			},
 			Action: func(c *cli.Context) error {
 				email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 				if errMsg != "" {
@@ -877,12 +884,24 @@ func startCLI(args []string) (msg string, err error) {
 					Session: session,
 				}
 				var numWiped int
-				fmt.Printf("wipe all items for account %s? ", email)
-				var input string
-				_, err = fmt.Scanln(&input)
-				if err == nil && sncli.StringInSlice(input, []string{"y", "yes"}, false) {
+
+				var proceed bool
+				if c.Bool("yes") {
+					proceed = true
+				} else {
+					fmt.Printf("wipe all items for account %s? ", email)
+					var input string
+					_, err = fmt.Scanln(&input)
+					if err != nil {
+						return err
+					}
+					if sncli.StringInSlice(input, []string{"y", "yes"}, false) {
+						proceed = true
+					}
+				}
+				if proceed {
 					numWiped, err = wipeConfig.Run()
-					fmt.Printf("%d items deleted\n\n", numWiped)
+					msg = fmt.Sprintf("%d %s", numWiped, msgItemsDeleted)
 				} else {
 					return nil
 				}

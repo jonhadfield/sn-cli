@@ -7,6 +7,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestWipe(t *testing.T) {
+	msg, err := startCLI([]string{"sncli", "wipe", "--yes"})
+	assert.NoError(t, err)
+	assert.Contains(t, msg, msgItemsDeleted)
+}
+
 func TestAddTag(t *testing.T) {
 	msg, err := startCLI([]string{"sncli", "add", "tag", "--title", "testTag"})
 	assert.NoError(t, err)
