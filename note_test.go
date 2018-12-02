@@ -33,7 +33,7 @@ func TestWipeWith50(t *testing.T) {
 	var deleted int
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
-	assert.EqualValues(t, deleted, numNotes, "wipe failed")
+	assert.True(t, deleted >= numNotes, "wipe failed")
 }
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
