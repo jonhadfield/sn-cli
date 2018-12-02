@@ -2,15 +2,15 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/jonhadfield/gosn"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 	"time"
-
-	"github.com/jonhadfield/gosn"
 )
 
 func TestWipeWith50(t *testing.T) {
+	fmt.Printf("TestWipeWith50 start time: %+v\n", time.Now())
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	assert.NoError(t, err)
 	cleanUp(&session)
@@ -19,7 +19,22 @@ func TestWipeWith50(t *testing.T) {
 	textParas := 10
 	err = createNotes(session, numNotes, textParas)
 	assert.NoError(t, err)
-	time.Sleep(5 * time.Second)
+
+	// check notes created
+	noteFilter := gosn.Filter{
+		Type: "Note",
+	}
+	filters := gosn.ItemFilters{
+		Filters: []gosn.Filter{noteFilter},
+	}
+	gni := gosn.GetItemsInput{
+		Session: session,
+		Filters: filters,
+	}
+	var gno gosn.GetItemsOutput
+	gno, err = gosn.GetItems(gni)
+
+	assert.Equal(t, len(gno.Items), 50)
 	wipeConfig := WipeConfig{
 		Session: session,
 	}
@@ -27,9 +42,13 @@ func TestWipeWith50(t *testing.T) {
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
 	assert.True(t, deleted >= numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
+	fmt.Printf("TestWipeWith50 end time: %+v\n", time.Now())
+
 }
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
+	fmt.Printf("TestAddDeleteNoteByUUID start time: %+v\n", time.Now())
+
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	assert.NoError(t, err)
 	cleanUp(&session)
@@ -76,6 +95,8 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	assert.NoError(t, err, err)
 	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
 	cleanUp(&session)
+
+	fmt.Printf("TestAddDeleteNoteByUUID end time: %+v\n", time.Now())
 
 }
 

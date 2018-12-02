@@ -1,7 +1,6 @@
 package sncli
 
 import (
-	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -113,6 +112,13 @@ func createTags(session gosn.Session, num int64) error {
 	return err
 }
 
+type TestDataCreateNotesConfig struct {
+	Session  gosn.Session
+	NumNotes int
+	NumParas int
+	Debug    bool
+}
+
 type TestDataCreateTagsConfig struct {
 	Session gosn.Session
 	NumTags int64
@@ -120,19 +126,13 @@ type TestDataCreateTagsConfig struct {
 }
 
 func (input *TestDataCreateTagsConfig) Run() error {
-	gosn.SetErrorLogger(log.Println)
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
+	//gosn.SetErrorLogger(log.Println)
+	//if input.Debug {
+	//	gosn.SetDebugLogger(log.Println)
+	//}
 	return createTags(input.Session, input.NumTags)
 }
 
-type TestDataCreateNotesConfig struct {
-	Session  gosn.Session
-	NumNotes int
-	NumParas int
-	Debug    bool
-}
 
 func (input *TestDataCreateNotesConfig) Run() error {
 	//gosn.SetErrorLogger(log.Println)

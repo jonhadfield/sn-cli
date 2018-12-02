@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,12 +36,14 @@ var yamlAbbrevs = []string{"yml", "yaml"}
 var version, versionOutput, tag, sha, buildDate string
 
 func main() {
-	msg, err := startCLI(os.Args)
+	msg, display, err := startCLI(os.Args)
 	if err != nil {
 		fmt.Printf("error: %+v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println(msg)
+	if display {
+		fmt.Println(msg)
+	}
 	os.Exit(0)
 }
 
@@ -76,19 +79,19 @@ func commaSplit(input string) []string {
 	return o
 }
 
-func startCLI(args []string) (msg string, err error) {
+func startCLI(args []string) (msg string, display bool, err error) {
 	viper.SetEnvPrefix("sn")
 	err = viper.BindEnv("email")
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	err = viper.BindEnv("password")
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	err = viper.BindEnv("server")
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	if tag != "" && buildDate != "" {
@@ -136,8 +139,16 @@ func startCLI(args []string) (msg string, err error) {
 							Name:  "title",
 							Usage: "new tag title (separate multiple with commas)",
 						},
+						cli.BoolFlag{
+							Name:   "no-stdout",
+							Usage:  "don't display stdout",
+							Hidden: true,
+						},
 					},
 					Action: func(c *cli.Context) error {
+						if ! c.Bool("no-stdout") {
+							display = true
+						}
 						tagInput := c.String("title")
 						if strings.TrimSpace(tagInput) == "" {
 							if cErr := cli.ShowSubcommandHelp(c); err != nil {
@@ -191,8 +202,16 @@ func startCLI(args []string) (msg string, err error) {
 							Name:  "replace",
 							Usage: "replace note with same title",
 						},
+						cli.BoolFlag{
+							Name:   "no-stdout",
+							Usage:  "don't display stdout",
+							Hidden: true,
+						},
 					},
 					Action: func(c *cli.Context) error {
+						if ! c.Bool("no-stdout") {
+							display = true
+						}
 						title := c.String("title")
 						text := c.String("text")
 						if strings.TrimSpace(title) == "" {
@@ -257,8 +276,16 @@ func startCLI(args []string) (msg string, err error) {
 							Name:  "uuid",
 							Usage: "unique id of note to delete (separate multiple with commas)",
 						},
+						cli.BoolFlag{
+							Name:   "no-stdout",
+							Usage:  "don't display stdout",
+							Hidden: true,
+						},
 					},
 					Action: func(c *cli.Context) error {
+						if ! c.Bool("no-stdout") {
+							display = true
+						}
 						titleIn := strings.TrimSpace(c.String("title"))
 						uuidIn := strings.Replace(c.String("uuid"), " ", "", -1)
 						if titleIn == "" && uuidIn == "" {
@@ -308,6 +335,11 @@ func startCLI(args []string) (msg string, err error) {
 						cli.StringFlag{
 							Name:  "uuid",
 							Usage: "unique id of note to delete (separate multiple with commas)",
+						},
+						cli.BoolFlag{
+							Name:   "no-stdout",
+							Usage:  "don't display stdout",
+							Hidden: true,
 						},
 					},
 					Action: func(c *cli.Context) error {
@@ -375,8 +407,16 @@ func startCLI(args []string) (msg string, err error) {
 					Name:  "ignore-case",
 					Usage: "ignore case when matching",
 				},
+				cli.BoolFlag{
+					Name:   "no-stdout",
+					Usage:  "don't display stdout",
+					Hidden: true,
+				},
 			},
 			Action: func(c *cli.Context) error {
+				if ! c.Bool("no-stdout") {
+					display = true
+				}
 				findTitle := c.String("find-title")
 				findText := c.String("find-text")
 				findTag := c.String("find-tag")
@@ -450,11 +490,19 @@ func startCLI(args []string) (msg string, err error) {
 							Value: "json",
 							Usage: "output format",
 						},
+						cli.BoolFlag{
+							Name:   "no-stdout",
+							Usage:  "don't display stdout",
+							Hidden: true,
+						},
 					},
 					OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
 						return err
 					},
 					Action: func(c *cli.Context) error {
+						if ! c.Bool("no-stdout") {
+							display = true
+						}
 						inTitle := strings.TrimSpace(c.String("title"))
 						inUUID := strings.TrimSpace(c.String("uuid"))
 
@@ -582,9 +630,9 @@ func startCLI(args []string) (msg string, err error) {
 							}
 						}
 						if numResults <= 0 {
-							fmt.Println("no matches.")
+							msg = "no matches."
 						} else if count {
-							fmt.Println(numResults)
+							msg = strconv.Itoa(numResults)
 						} else {
 							output = c.String("output")
 							var bOutput []byte
@@ -631,8 +679,16 @@ func startCLI(args []string) (msg string, err error) {
 							Value: "json",
 							Usage: "output format",
 						},
+						cli.BoolFlag{
+							Name:   "no-stdout",
+							Usage:  "don't display stdout",
+							Hidden: true,
+						},
 					},
 					Action: func(c *cli.Context) error {
+						if ! c.Bool("no-stdout") {
+							display = true
+						}
 						uuid := c.String("uuid")
 						title := c.String("title")
 						text := c.String("text")
@@ -761,9 +817,9 @@ func startCLI(args []string) (msg string, err error) {
 						}
 
 						if numResults <= 0 {
-							fmt.Println("no matches.")
+							msg = "no matches."
 						} else if count {
-							fmt.Println(numResults)
+							msg = strconv.Itoa(numResults)
 						} else {
 							output = c.String("output")
 							var bOutput []byte
@@ -791,8 +847,16 @@ func startCLI(args []string) (msg string, err error) {
 					Name:  "email",
 					Usage: "email address",
 				},
+				cli.BoolFlag{
+					Name:   "no-stdout",
+					Usage:  "don't display stdout",
+					Hidden: true,
+				},
 			},
 			Action: func(c *cli.Context) error {
+				if ! c.Bool("no-stdout") {
+					display = true
+				}
 				var apiServer string
 				if viper.GetString("server") != "" {
 					apiServer = viper.GetString("server")
@@ -867,8 +931,16 @@ func startCLI(args []string) (msg string, err error) {
 					Name:  "yes",
 					Usage: "ignore warning",
 				},
+				cli.BoolFlag{
+					Name:   "no-stdout",
+					Usage:  "don't display stdout",
+					Hidden: true,
+				},
 			},
 			Action: func(c *cli.Context) error {
+				if ! c.Bool("no-stdout") {
+					display = true
+				}
 				email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 				if errMsg != "" {
 					fmt.Printf("\nerror: %s\n\n", errMsg)
@@ -1027,5 +1099,5 @@ func startCLI(args []string) (msg string, err error) {
 		},
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))
-	return msg, app.Run(args)
+	return msg, display, app.Run(args)
 }
