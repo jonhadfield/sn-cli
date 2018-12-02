@@ -72,7 +72,6 @@ func TestTagNotesByTextWithNewTags(t *testing.T) {
 	assert.NoError(t, err)
 	msg, _, err = startCLI([]string{"sncli", "delete", "note", "--title", "TestNoteOne,TestNoteTwo"})
 	assert.NoError(t, err, err)
-	_, _, err = startCLI([]string{"sncli", "get", "notes"})
 	msg, _, err = startCLI([]string{"sncli", "delete", "tag", "--title", "testTagOne,testTagTwo"})
 	assert.NoError(t, err, err)
 	_, _, err = startCLI([]string{"sncli", "get", "notes"})
