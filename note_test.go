@@ -5,29 +5,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jonhadfield/gosn"
 )
 
-func TestWipe(t *testing.T) {
+func TestWipeWith50(t *testing.T) {
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	assert.NoError(t, err)
-	wipeConfig := WipeConfig{
-		Session: session,
-	}
-	_, err = wipeConfig.Run()
-	assert.NoError(t, err)
-}
+	cleanUp(&session)
 
-func TestWipeWith50(t *testing.T) {
 	numNotes := 50
 	textParas := 10
-	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	assert.NoError(t, err)
-
 	err = createNotes(session, numNotes, textParas)
 	assert.NoError(t, err)
-
+	time.Sleep(5 * time.Second)
 	wipeConfig := WipeConfig{
 		Session: session,
 	}
@@ -39,16 +31,8 @@ func TestWipeWith50(t *testing.T) {
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	if err != nil {
-		t.Error(err)
-	}
-
-	// first test - so wipe existing
-	wipeConfig := WipeConfig{
-		Session: session,
-	}
-	_, err = wipeConfig.Run()
 	assert.NoError(t, err)
+	cleanUp(&session)
 
 	// create note
 	addNoteConfig := AddNoteConfig{
@@ -91,12 +75,19 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	postRes, err = gnc.Run()
 	assert.NoError(t, err, err)
 	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
+	cleanUp(&session)
 
 }
 
 func TestAddDeleteNoteByTitle(t *testing.T) {
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	assert.NoError(t, err, err)
+
+	wipeConfig := WipeConfig{
+		Session: session,
+	}
+	_, err = wipeConfig.Run()
+	assert.NoError(t, err)
 
 	addNoteConfig := AddNoteConfig{
 		Session: session,
@@ -133,11 +124,16 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 	assert.NoError(t, err, err)
 	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
 
+	cleanUp(&session)
+
 }
 
 func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	assert.NoError(t, err, err)
+	cleanUp(&session)
+
+	assert.NoError(t, err)
 	// add note
 	addNoteConfig := AddNoteConfig{
 		Session: session,
@@ -177,11 +173,15 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 	assert.NoError(t, err, err)
 	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
 
+	cleanUp(&session)
+
 }
 
 func TestGetNote(t *testing.T) {
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	assert.NoError(t, err)
+	cleanUp(&session)
+
 	// create one note
 	addNoteConfig := AddNoteConfig{
 		Session: session,
@@ -210,13 +210,8 @@ func TestGetNote(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(output.Items))
 
-	// clean up
-	deleteNoteConfig := DeleteNoteConfig{
-		Session:    session,
-		NoteTitles: []string{"TestNoteOne"},
-	}
-	_, err = deleteNoteConfig.Run()
-	assert.NoError(t, err, "clean up failed")
+	cleanUp(&session)
+
 }
 
 func TestCreateOneHundredNotes(t *testing.T) {
@@ -224,6 +219,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	textParas := 10
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	assert.NoError(t, err)
+	cleanUp(&session)
 
 	err = createNotes(session, numNotes, textParas)
 	assert.NoError(t, err)
@@ -243,13 +239,23 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	res, err = gnc.Run()
 	assert.NoError(t, err)
 
-	assert.EqualValues(t, numNotes, len(res.Items))
+	assert.True(t, len(res.Items) >= numNotes)
 	wipeConfig := WipeConfig{
 		Session: session,
 	}
 	var deleted int
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
-	assert.EqualValues(t, numNotes, deleted)
+	assert.True(t, deleted >= numNotes)
+	cleanUp(&session)
+}
 
+func cleanUp(session *gosn.Session) {
+	wipeConfig := WipeConfig{
+		Session: *session,
+	}
+	_, err := wipeConfig.Run()
+	if err != nil {
+		panic(err)
+	}
 }
