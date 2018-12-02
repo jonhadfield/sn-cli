@@ -1,14 +1,40 @@
 package sncli
 
 import (
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/jonhadfield/gosn"
 )
+
+func TestWipe(t *testing.T) {
+	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
+	assert.NoError(t, err)
+	wipeConfig := WipeConfig{
+		Session: session,
+	}
+	_, err = wipeConfig.Run()
+	assert.NoError(t, err)
+}
+
+func TestWipeWith50(t *testing.T) {
+	numNotes := 50
+	textParas := 10
+	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
+	assert.NoError(t, err)
+
+	err = createNotes(session, numNotes, textParas)
+	assert.NoError(t, err)
+
+	wipeConfig := WipeConfig{
+		Session: session,
+	}
+	var deleted int
+	deleted, err = wipeConfig.Run()
+	assert.NoError(t, err)
+	assert.EqualValues(t, deleted, numNotes, "wipe failed")
+}
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
@@ -190,26 +216,6 @@ func TestGetNote(t *testing.T) {
 	}
 	_, err = deleteNoteConfig.Run()
 	assert.NoError(t, err, "clean up failed")
-}
-
-func TestWipe(t *testing.T) {
-	numNotes := 50
-	textParas := 10
-	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	assert.NoError(t, err)
-
-	err = createNotes(session, numNotes, textParas)
-	assert.NoError(t, err)
-
-	wipeConfig := WipeConfig{
-		Session: session,
-	}
-	var deleted int
-	deleted, err = wipeConfig.Run()
-	assert.NoError(t, err)
-	assert.EqualValues(t, deleted, numNotes, "wipe failed")
-	// Hack to enable Circle-CI tests to run. Allow time to propagate delete.
-	time.Sleep(5 * time.Second)
 }
 
 func TestCreateOneHundredNotes(t *testing.T) {
