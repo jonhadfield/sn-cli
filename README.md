@@ -43,23 +43,25 @@ $ install <sncli binary> /usr/local/bin/sn
 ``
 
 Then to see commands and options:  
-```    
+``
 $ sn --help
-```
+``
 ## authentication
 
 sncli will automatically prompt for credentials (including 2FA, if set) each time you run a command.  
 Instead, you can set your email and/or password using environment variables:
 
-Setting email and password:
-```
-$ export SN_EMAIL=<email_address>
-$ export SN_PASSWORD=<password>
-```
+Setting email and password:  
+``
+$ export SN_EMAIL=<email_address>  
+``  
+``
+$ export SN_PASSWORD=<password>  
+``
 
 ## using your own server
 
-To override the Standard Notes server:
-```
+To override the Standard Notes server:  
+``
 $ export SN_SERVER=https://<your_server_url>
-```
+``
