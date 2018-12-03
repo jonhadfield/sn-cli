@@ -44,7 +44,7 @@ $ install <sncli binary> /usr/local/bin/sn
 
 Then to see commands and options:  
 ```    
-$ sn
+$ sn --help
 ```
 ## authentication
 
