@@ -3,20 +3,18 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"github.com/jonhadfield/sn-cli"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"fmt"
 	"github.com/jonhadfield/gosn"
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/urfave/cli.v1"
 	"gopkg.in/yaml.v2"
-
-	"github.com/jonhadfield/sncli"
-
-	"fmt"
 
 	"github.com/spf13/viper"
 )
@@ -130,10 +128,25 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		{
 			Name:  "add",
 			Usage: "add items",
+			BashComplete: func(c *cli.Context) {
+				addTasks := []string{"tag", "note"}
+				if c.NArg() > 0 {
+					return
+				}
+				for _, t := range addTasks {
+					fmt.Println(t)
+				}
+			},
 			Subcommands: []cli.Command{
 				{
 					Name:  "tag",
 					Usage: "add tags",
+					BashComplete: func(c *cli.Context) {
+						if c.NArg() > 0 {
+							return
+						}
+						fmt.Println("--title")
+					},
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "title",
@@ -146,7 +159,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						if ! c.Bool("no-stdout") {
+						if !c.Bool("no-stdout") {
 							display = true
 						}
 						tagInput := c.String("title")
@@ -185,6 +198,15 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				{
 					Name:  "note",
 					Usage: "add a note",
+					BashComplete: func(c *cli.Context) {
+						addNoteOpts := []string{"--title", "--text", "--tag", "--replace"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, ano := range addNoteOpts {
+							fmt.Println(ano)
+						}
+					},
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "title",
@@ -209,7 +231,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						if ! c.Bool("no-stdout") {
+						if !c.Bool("no-stdout") {
 							display = true
 						}
 						title := c.String("title")
@@ -263,10 +285,28 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		{
 			Name:  "delete",
 			Usage: "delete items",
+			BashComplete: func(c *cli.Context) {
+				addTasks := []string{"tag", "note"}
+				if c.NArg() > 0 {
+					return
+				}
+				for _, t := range addTasks {
+					fmt.Println(t)
+				}
+			},
 			Subcommands: []cli.Command{
 				{
 					Name:  "tag",
 					Usage: "delete tag",
+					BashComplete: func(c *cli.Context) {
+						delTagOpts := []string{"--title", "--uuid"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, t := range delTagOpts {
+							fmt.Println(t)
+						}
+					},
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "title",
@@ -283,7 +323,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						if ! c.Bool("no-stdout") {
+						if !c.Bool("no-stdout") {
 							display = true
 						}
 						titleIn := strings.TrimSpace(c.String("title"))
@@ -327,6 +367,15 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				{
 					Name:  "note",
 					Usage: "delete note",
+					BashComplete: func(c *cli.Context) {
+						delNoteOpts := []string{"--title", "--uuid"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, t := range delNoteOpts {
+							fmt.Println(t)
+						}
+					},
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "title",
@@ -414,7 +463,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if ! c.Bool("no-stdout") {
+				if !c.Bool("no-stdout") {
 					display = true
 				}
 				findTitle := c.String("find-title")
@@ -458,6 +507,15 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		{
 			Name:  "get",
 			Usage: "get items",
+			BashComplete: func(c *cli.Context) {
+				addTasks := []string{"tag", "note"}
+				if c.NArg() > 0 {
+					return
+				}
+				for _, t := range addTasks {
+					fmt.Println(t)
+				}
+			},
 			//Description: "get all items or limit results by search criteria",
 			Subcommands: []cli.Command{
 				{
@@ -500,7 +558,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						return err
 					},
 					Action: func(c *cli.Context) error {
-						if ! c.Bool("no-stdout") {
+						if !c.Bool("no-stdout") {
 							display = true
 						}
 						inTitle := strings.TrimSpace(c.String("title"))
@@ -564,7 +622,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 
-						//processedTags := commaSplit(newTags)
 						// TODO: validate output
 						output := c.String("output")
 						appGetTagConfig := sncli.GetTagConfig{
@@ -686,7 +743,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						if ! c.Bool("no-stdout") {
+						if !c.Bool("no-stdout") {
 							display = true
 						}
 						uuid := c.String("uuid")
@@ -842,6 +899,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		{
 			Name:  "register",
 			Usage: "register a new user",
+			BashComplete: func(c *cli.Context) {
+				if c.NArg() > 0 {
+					return
+				}
+				fmt.Println("--email")
+			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "email",
@@ -854,7 +917,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if ! c.Bool("no-stdout") {
+				if !c.Bool("no-stdout") {
 					display = true
 				}
 				var apiServer string
@@ -938,7 +1001,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if ! c.Bool("no-stdout") {
+				if !c.Bool("no-stdout") {
 					display = true
 				}
 				email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))

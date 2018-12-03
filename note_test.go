@@ -2,11 +2,12 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/jonhadfield/gosn"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/jonhadfield/gosn"
+	"github.com/stretchr/testify/assert"
 )
 
 var testSession gosn.Session

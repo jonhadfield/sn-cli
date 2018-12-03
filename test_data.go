@@ -133,7 +133,6 @@ func (input *TestDataCreateTagsConfig) Run() error {
 	return createTags(input.Session, input.NumTags)
 }
 
-
 func (input *TestDataCreateNotesConfig) Run() error {
 	//gosn.SetErrorLogger(log.Println)
 	//if input.Debug {

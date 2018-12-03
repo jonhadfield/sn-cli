@@ -74,7 +74,6 @@ func TestGetTag(t *testing.T) {
 	assert.NoError(t, err, err)
 	time.Sleep(1 * time.Second)
 
-
 }
 
 func _addNotes(session gosn.Session, input map[string]string) error {
@@ -172,6 +171,5 @@ func TestTaggingOfNotes(t *testing.T) {
 	_, err = _deleteTagsByTitle(sOutput.Session, tags)
 	assert.NoError(t, err, err)
 	time.Sleep(1 * time.Second)
-
 
 }
