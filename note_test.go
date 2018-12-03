@@ -18,10 +18,7 @@ func TestMain(m *testing.M) {
 
 func TestWipeWith50(t *testing.T) {
 	fmt.Printf("TestWipeWith50 start time: %+v\n", time.Now())
-	//session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	//assert.NoError(t, err)
 	cleanUp(&testSession)
-
 	numNotes := 50
 	textParas := 10
 	err := createNotes(testSession, numNotes, textParas)
@@ -41,7 +38,7 @@ func TestWipeWith50(t *testing.T) {
 	var gno gosn.GetItemsOutput
 	gno, err = gosn.GetItems(gni)
 
-	assert.Equal(t, len(gno.Items), 50)
+	assert.Equal(t, 50, len(gno.Items))
 	wipeConfig := WipeConfig{
 		Session: testSession,
 	}
@@ -68,6 +65,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	}
 	err := addNoteConfig.Run()
 	assert.NoError(t, err, err)
+	time.Sleep(1 * time.Second)
 
 	// get new note
 	filter := gosn.Filter{
@@ -86,6 +84,8 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	}
 	var preRes, postRes gosn.GetItemsOutput
 	preRes, err = gnc.Run()
+	time.Sleep(1 * time.Second)
+
 	assert.NoError(t, err, err)
 
 	newItemUUID := preRes.Items[0].UUID
@@ -95,6 +95,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	}
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
+	time.Sleep(1 * time.Second)
 	assert.Equal(t, noDeleted, 1)
 	assert.NoError(t, err, err)
 
@@ -104,7 +105,6 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	cleanUp(&testSession)
 
 	fmt.Printf("TestAddDeleteNoteByUUID end time: %+v\n", time.Now())
-	time.Sleep(1 * time.Second)
 }
 
 func TestAddDeleteNoteByTitle(t *testing.T) {
@@ -276,4 +276,5 @@ func cleanUp(session *gosn.Session) {
 	if err != nil {
 		panic(err)
 	}
+	time.Sleep(2 * time.Second)
 }
