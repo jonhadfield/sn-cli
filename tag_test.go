@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -25,6 +26,8 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 	noDeleted, err = deleteTagConfig.Run()
 	assert.Equal(t, 2, noDeleted)
 	assert.NoError(t, err, err)
+	time.Sleep(1 * time.Second)
+
 }
 
 func TestGetTag(t *testing.T) {
@@ -69,6 +72,8 @@ func TestGetTag(t *testing.T) {
 	noDeleted, err = deleteTagConfig.Run()
 	assert.Equal(t, noDeleted, len(testTagTitles))
 	assert.NoError(t, err, err)
+	time.Sleep(1 * time.Second)
+
 
 }
 
@@ -166,5 +171,7 @@ func TestTaggingOfNotes(t *testing.T) {
 
 	_, err = _deleteTagsByTitle(sOutput.Session, tags)
 	assert.NoError(t, err, err)
+	time.Sleep(1 * time.Second)
+
 
 }
