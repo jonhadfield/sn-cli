@@ -43,7 +43,7 @@ func TestWipeWith50(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, deleted >= numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
 	fmt.Printf("TestWipeWith50 end time: %+v\n", time.Now())
-
+	time.Sleep(1 * time.Second)
 }
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
@@ -97,7 +97,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	cleanUp(&session)
 
 	fmt.Printf("TestAddDeleteNoteByUUID end time: %+v\n", time.Now())
-
+	time.Sleep(1 * time.Second)
 }
 
 func TestAddDeleteNoteByTitle(t *testing.T) {
@@ -146,7 +146,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
 
 	cleanUp(&session)
-
+	time.Sleep(1 * time.Second)
 }
 
 func TestAddDeleteNoteByTitleRegex(t *testing.T) {
@@ -195,7 +195,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
 
 	cleanUp(&session)
-
+	time.Sleep(1 * time.Second)
 }
 
 func TestGetNote(t *testing.T) {
@@ -232,7 +232,7 @@ func TestGetNote(t *testing.T) {
 	assert.EqualValues(t, 1, len(output.Items))
 
 	cleanUp(&session)
-
+	time.Sleep(1 * time.Second)
 }
 
 func TestCreateOneHundredNotes(t *testing.T) {
@@ -269,6 +269,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, deleted >= numNotes)
 	cleanUp(&session)
+	time.Sleep(1 * time.Second)
 }
 
 func cleanUp(session *gosn.Session) {
