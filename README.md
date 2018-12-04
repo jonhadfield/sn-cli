@@ -1,7 +1,7 @@
-# sncli
+# sn-cli
 a command-line interface for [Standard Notes](https://standardnotes.org/).
 
-[![Build Status](https://www.travis-ci.org/jonhadfield/sncli.svg?branch=master)](https://www.travis-ci.org/jonhadfield/sncli) [![Go Report Card](https://goreportcard.com/badge/github.com/jonhadfield/gosn)](https://goreportcard.com/report/github.com/jonhadfield/gosn)
+[![Build Status](https://www.travis-ci.org/jonhadfield/sn-cli.svg?branch=master)](https://www.travis-ci.org/jonhadfield/sn-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/jonhadfield/sn-cli)](https://goreportcard.com/report/github.com/jonhadfield/sn-cli)
 
 
 
@@ -36,10 +36,10 @@ features in progess:
 
 ## install and run
 
-Download the latest release here: https://github.com/jonhadfield/sncli/releases and install:
+Download the latest release here: https://github.com/jonhadfield/sn-cli/releases and install:
 
 ``
-$ install <sncli binary> /usr/local/bin/sn
+$ install <sn-cli binary> /usr/local/bin/sn
 ``
 
 Then to see commands and options:  
@@ -48,7 +48,7 @@ $ sn --help
 ``
 ## authentication
 
-sncli will automatically prompt for credentials (including 2FA, if set) each time you run a command.  
+sn-cli will automatically prompt for credentials (including 2FA, if set) each time you run a command.  
 Instead, you can set your email and/or password using environment variables:
 
 Setting email and password:  
