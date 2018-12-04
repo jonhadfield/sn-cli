@@ -92,3 +92,4 @@ $ cp autocomplete/bash_autocomplete /usr/local/etc/bash_completion.d/sn
 ``
 $ cp autocomplete/bash_autocomplete /etc/bash_completion.d/sn
 ``
+
