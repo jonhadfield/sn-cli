@@ -31,7 +31,7 @@ Please raise an issue if you find any problems.*
 ## roadmap
 
 features in progess:
-- ~~bash and~~ zsh completion
+- ~~bash completion~~
 - export: plaintext or encrypted
 - local caching of encrypted items
 - option to securely persist session between commands
@@ -72,8 +72,8 @@ $ export SN_SERVER=https://<your_server_url>
 
 ## bash autocompletion
 
-### autocompletion tool
-bash completion depends on a tool that should be installed by default on most Linux installations.  
+### tool
+the bash completion tool should be installed by default on most Linux installations.  
 
 To install on macOS (Homebrew)  
 ``
@@ -83,13 +83,17 @@ then add the following to ~/.bash_profile:
 ``  
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 `` 
-### installing auto completion script ([found here](https://github.com/jonhadfield/sn-cli/tree/master/autocomplete))
+### script ([found here](https://github.com/jonhadfield/sn-cli/tree/master/autocomplete/bash_autocomplete))
 #### macOS  
 ``  
-$ cp autocomplete/bash_autocomplete /usr/local/etc/bash_completion.d/sn
+$ cp bash_autocomplete /usr/local/etc/bash_completion.d/sn
 ``  
 #### Linux  
 ``
-$ cp autocomplete/bash_autocomplete /etc/bash_completion.d/sn
+$ cp bash_autocomplete /etc/bash_completion.d/sn
 ``
 
+### use
+``
+$ sn <tab>
+``
