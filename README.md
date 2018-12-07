@@ -25,8 +25,8 @@ Please raise an issue if you find any problems.*
 
 ## changelog
 
-0.0.4  add Windows support
-0.0.3  add note content from file  
+0.0.4  added Windows support
+0.0.3  added note content from file  
 0.0.2  added bash completion  
 0.0.1  initial  
 
@@ -40,14 +40,23 @@ features in progess:
 - local caching of encrypted items
 - option to securely persist session between commands
 - manage preferences
+- Windows MSI
 
-## install and run
+## installation
+Download the latest release here: https://github.com/jonhadfield/sn-cli/releases
 
-Download the latest release here: https://github.com/jonhadfield/sn-cli/releases  
+#### macOS and Linux
+  
 Install:  
 ``
 $ install <sn-cli binary> /usr/local/bin/sn
 ``  
+#### Windows
+  
+An installer is planned, but for now...  
+Download the binary 'sncli_windows_amd64.exe' and rename to sn.exe
+
+
 To see commands and options:  
 ``
 $ sn --help
@@ -75,7 +84,7 @@ $ export SN_SERVER=https://<your_server_url>
 
 ## bash autocompletion
 
-### tool
+#### tool
 the bash completion tool should be installed by default on most Linux installations.  
 
 To install on macOS (Homebrew)  
@@ -86,17 +95,17 @@ then add the following to ~/.bash_profile:
 ``  
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 `` 
-### script ([found here](https://github.com/jonhadfield/sn-cli/tree/master/autocomplete/bash_autocomplete))
-#### macOS  
+#### installing completion script ([found here](https://github.com/jonhadfield/sn-cli/tree/master/autocomplete/bash_autocomplete))
+##### macOS  
 ``  
 $ cp bash_autocomplete /usr/local/etc/bash_completion.d/sn
 ``  
-#### Linux  
+##### Linux  
 ``
 $ cp bash_autocomplete /etc/bash_completion.d/sn
 ``
 
-### use
+##### autocomplete commands
 ``
 $ sn <tab>
 ``
