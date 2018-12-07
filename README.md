@@ -25,10 +25,10 @@ Please raise an issue if you find any problems.*
 
 ## changelog
 
-0.0.4  added Windows support
-0.0.3  added note content from file  
-0.0.2  added bash completion  
-0.0.1  initial  
+0.0.4 - added Windows support  
+0.0.3 - added note content from file  
+0.0.2 - added bash completion  
+0.0.1 - initial  
 
 
 ## roadmap
