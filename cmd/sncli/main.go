@@ -116,8 +116,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{Name: "debug"},
-	}
-	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "server"},
 	}
 	app.CommandNotFound = func(c *cli.Context, command string) {
@@ -169,9 +167,11 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							return errors.New("tag title not defined")
 						}
+
 						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 						var session gosn.Session
 						session, err = sncli.CliSignIn(email, password, apiServer)
+
 						if err != nil {
 							return fmt.Errorf("failed to authenticate. %+v", err)
 						}
