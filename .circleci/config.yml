@@ -17,7 +17,7 @@ jobs:
       - run: echo "export BUILD_TAG=$(git describe --tags)" >> $BASH_ENV
       - run: echo "export BUILD_SHA=$(git rev-parse --short HEAD)" >> $BASH_ENV
       - run: echo "export BUILD_DATE=$(date -u '+%Y/%m/%d:%H:%M:%S')" >> $BASH_ENV
-      - run: gox -verbose -osarch="darwin/amd64 linux/amd64 linux/arm linux/arm64 netbsd/amd64 openbsd/amd64 freebsd/amd64" -ldflags "-X main.tag=$BUILD_TAG -X main.sha=$BUILD_SHA -X main.buildDate=$BUILD_DATE" -output "dist/sncli_{{.OS}}_{{.Arch}}" ./...
+      - run: gox -verbose -osarch="darwin/amd64 linux/amd64 linux/arm linux/arm64 windows/amd64 netbsd/amd64 openbsd/amd64 freebsd/amd64" -ldflags "-X main.tag=$BUILD_TAG -X main.sha=$BUILD_SHA -X main.buildDate=$BUILD_DATE" -output "dist/sncli_{{.OS}}_{{.Arch}}" ./...
       - run:
           name: "Publish Release on GitHub"
           command: |

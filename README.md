@@ -25,6 +25,7 @@ Please raise an issue if you find any problems.*
 
 ## changelog
 
+0.0.4  add Windows support
 0.0.3  add note content from file  
 0.0.2  added bash completion  
 0.0.1  initial  
@@ -33,11 +34,11 @@ Please raise an issue if you find any problems.*
 ## roadmap
 
 features in progess:
-- ~~bash completion~~
+- ~~bash completion~~ DONE
+- ~~test and document for Windows users~~ DONE
 - export: plaintext or encrypted
 - local caching of encrypted items
 - option to securely persist session between commands
-- test and document for Windows users
 - manage preferences
 
 ## install and run
