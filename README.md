@@ -25,8 +25,8 @@ Please raise an issue if you find any problems.*
 
 ## changelog
 
-0.0.3  add note content from file
-0.0.2  added bash completion
+0.0.3  add note content from file  
+0.0.2  added bash completion  
 0.0.1  initial  
 
 
