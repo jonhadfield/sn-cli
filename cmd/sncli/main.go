@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/jonhadfield/sn-cli"
+	"io/ioutil"
 	"os"
+	"os/user"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -29,11 +32,19 @@ const (
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
+var prefsPath string
 
 // overwritten at build time
 var version, versionOutput, tag, sha, buildDate string
 
+type Prefs struct {
+	DefaultOutput string
+	Session       gosn.Session
+}
+
 func main() {
+	usr, err := user.Current()
+	prefsPath = path.Join(usr.HomeDir, ".sn-cli")
 	msg, display, err := startCLI(os.Args)
 	if err != nil {
 		fmt.Printf("error: %+v\n", err)
@@ -117,6 +128,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{Name: "debug"},
 		cli.StringFlag{Name: "server"},
+		cli.BoolFlag{Name: "cache-session"},
 	}
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		_, _ = fmt.Fprintf(c.App.Writer, "\ninvalid command: \"%s\" \n\n", command)
@@ -966,17 +978,37 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			Name:  "stats",
 			Usage: "show statistics",
 			Action: func(c *cli.Context) error {
-				email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-				if errMsg != "" {
-					fmt.Printf("\nerror: %s\n\n", errMsg)
-					return cli.ShowSubcommandHelp(c)
-				}
 				var session gosn.Session
-				session, err = sncli.CliSignIn(email, password, apiServer)
-				if err != nil {
-					return err
-				}
+				prefs, err := readPrefs()
+				if err == nil && prefs.Session.Mk != "" && prefs.Session.Ak != "" && prefs.Session.Token != "" {
+					fmt.Println("RE-USING SESSION!!")
+					session = prefs.Session
+				} else {
+					fmt.Println("GONNA SIGN-IN")
+					email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
+					fmt.Printf("email: %s password: %s apiServer: %s errMsg: %s\n", email, password, apiServer, errMsg)
+					if errMsg != "" {
+						fmt.Printf("\nerror: %s\n\n", errMsg)
+						return cli.ShowSubcommandHelp(c)
+					}
 
+					var prefs Prefs
+					prefs, err = readPrefs()
+					if prefs.Session.Mk != "" {
+						fmt.Println("Got session!")
+					}
+					session, err = sncli.CliSignIn(email, password, apiServer)
+					if err != nil {
+						return err
+					}
+					if c.GlobalBool("cache-session") {
+						err = saveSession(session)
+						if err != nil {
+							return err
+						}
+					}
+				}
+				fmt.Printf("\n\nGOING TO USE SESSION: %+v\n", session)
 				statsConfig := sncli.StatsConfig{
 					Session: session,
 				}
@@ -1004,6 +1036,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				if !c.Bool("no-stdout") {
 					display = true
 				}
+
 				email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
 				if errMsg != "" {
 					fmt.Printf("\nerror: %s\n\n", errMsg)
@@ -1163,4 +1196,46 @@ func startCLI(args []string) (msg string, display bool, err error) {
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))
 	return msg, display, app.Run(args)
+}
+
+func readPrefs() (p Prefs, err error) {
+	var dat []byte
+	dat, err = ioutil.ReadFile(prefsPath)
+	if err != nil {
+		return
+	}
+	fmt.Println("NO ERROR")
+	fmt.Println(string(dat))
+	err = yaml.Unmarshal(dat, &p)
+	fmt.Println("PREFS", p)
+	return
+}
+
+func writePrefs(in []byte) error {
+	usr, err := user.Current()
+	if err != nil {
+		return err
+	}
+	prefsPath := path.Join(usr.HomeDir, ".sn-cli")
+	err = ioutil.WriteFile(prefsPath, in, 0644)
+	return err
+}
+
+func saveSession(s gosn.Session) error {
+	p := Prefs{Session: s}
+	var pB []byte
+	pB, err := yaml.Marshal(p)
+
+	if err != nil {
+		return err
+	}
+	err = writePrefs(pB)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getSession() (sess gosn.Session, err error) {
+
 }
