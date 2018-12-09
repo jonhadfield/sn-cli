@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/jonhadfield/sn-cli"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -14,10 +14,11 @@ import (
 	"time"
 
 	"fmt"
+
 	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/sn-cli"
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/urfave/cli.v1"
-	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/viper"
 )
@@ -32,19 +33,20 @@ const (
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
-var prefsPath string
+var settingsPath string
 
 // overwritten at build time
 var version, versionOutput, tag, sha, buildDate string
 
-type Prefs struct {
+type Settings struct {
 	DefaultOutput string
 	Session       gosn.Session
+	Email         string
 }
 
 func main() {
 	usr, err := user.Current()
-	prefsPath = path.Join(usr.HomeDir, ".sn-cli")
+	settingsPath = path.Join(usr.HomeDir, ".sn-cli")
 	msg, display, err := startCLI(os.Args)
 	if err != nil {
 		fmt.Printf("error: %+v\n", err)
@@ -179,19 +181,14 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							return errors.New("tag title not defined")
 						}
-
-						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-						var session gosn.Session
-						session, err = sncli.CliSignIn(email, password, apiServer)
-
+						settings := getSettings()
 						if err != nil {
-							return fmt.Errorf("failed to authenticate. %+v", err)
+							return err
 						}
-						if errMsg != "" {
-							if cErr := cli.ShowSubcommandHelp(c); err != nil {
-								panic(cErr)
-							}
-							return errors.New(errMsg)
+						var session gosn.Session
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+						if err != nil {
+							return err
 						}
 
 						tags := commaSplit(tagInput)
@@ -261,16 +258,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return errors.New("note text not defined")
 
 						}
-
-						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-						if errMsg != "" {
-							if cErr := cli.ShowSubcommandHelp(c); err != nil {
-								panic(cErr)
-							}
-							return errors.New(errMsg)
+						settings := getSettings()
+						if err != nil {
+							return err
 						}
 						var session gosn.Session
-						session, err = sncli.CliSignIn(email, password, apiServer)
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
 						if err != nil {
 							return err
 						}
@@ -346,15 +339,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							return errors.New("title or uuid required")
 						}
-						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-						if errMsg != "" {
-							if cErr := cli.ShowSubcommandHelp(c); err != nil {
-								panic(cErr)
-							}
-							return errors.New(errMsg)
+						settings := getSettings()
+						if err != nil {
+							return err
 						}
 						var session gosn.Session
-						session, err = sncli.CliSignIn(email, password, apiServer)
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
 						if err != nil {
 							return err
 						}
@@ -412,13 +402,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							return errors.New("")
 						}
-						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-						if errMsg != "" {
-							fmt.Printf("\nerror: %s\n\n", errMsg)
-							return cli.ShowSubcommandHelp(c)
+						settings := getSettings()
+						if err != nil {
+							return err
 						}
 						var session gosn.Session
-						session, err = sncli.CliSignIn(email, password, apiServer)
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
 						if err != nil {
 							return err
 						}
@@ -482,13 +471,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				findText := c.String("find-text")
 				findTag := c.String("find-tag")
 				newTags := c.String("title")
-				email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-				if errMsg != "" {
-					fmt.Printf("\nerror: %s\n\n", errMsg)
-					return cli.ShowSubcommandHelp(c)
+				settings := getSettings()
+				if err != nil {
+					return err
 				}
 				var session gosn.Session
-				session, err = sncli.CliSignIn(email, password, apiServer)
+				session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
 				if err != nil {
 					return err
 				}
@@ -622,14 +610,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 								Type: "Tag",
 							})
 						}
-
-						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-						if errMsg != "" {
-							fmt.Printf("\nerror: %s\n\n", errMsg)
-							return cli.ShowSubcommandHelp(c)
+						settings := getSettings()
+						if err != nil {
+							return err
 						}
 						var session gosn.Session
-						session, err = sncli.CliSignIn(email, password, apiServer)
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
 						if err != nil {
 							return err
 						}
@@ -811,14 +797,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 								getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
 							}
 						}
-
-						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-						if errMsg != "" {
-							fmt.Printf("\nerror: %s\n\n", errMsg)
-							return cli.ShowSubcommandHelp(c)
+						settings := getSettings()
+						if err != nil {
+							return err
 						}
 						var session gosn.Session
-						session, err = sncli.CliSignIn(email, password, apiServer)
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
 						if err != nil {
 							return err
 						}
@@ -978,42 +962,19 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			Name:  "stats",
 			Usage: "show statistics",
 			Action: func(c *cli.Context) error {
-				var session gosn.Session
-				prefs, err := readPrefs()
-				if err == nil && prefs.Session.Mk != "" && prefs.Session.Ak != "" && prefs.Session.Token != "" {
-					fmt.Println("RE-USING SESSION!!")
-					session = prefs.Session
-				} else {
-					fmt.Println("GONNA SIGN-IN")
-					email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-					fmt.Printf("email: %s password: %s apiServer: %s errMsg: %s\n", email, password, apiServer, errMsg)
-					if errMsg != "" {
-						fmt.Printf("\nerror: %s\n\n", errMsg)
-						return cli.ShowSubcommandHelp(c)
-					}
-
-					var prefs Prefs
-					prefs, err = readPrefs()
-					if prefs.Session.Mk != "" {
-						fmt.Println("Got session!")
-					}
-					session, err = sncli.CliSignIn(email, password, apiServer)
-					if err != nil {
-						return err
-					}
-					if c.GlobalBool("cache-session") {
-						err = saveSession(session)
-						if err != nil {
-							return err
-						}
-					}
+				settings := getSettings()
+				if err != nil {
+					return err
 				}
-				fmt.Printf("\n\nGOING TO USE SESSION: %+v\n", session)
+				var session gosn.Session
+				session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+				if err != nil {
+					return err
+				}
 				statsConfig := sncli.StatsConfig{
 					Session: session,
 				}
 				err = statsConfig.Run()
-
 				return err
 
 			},
@@ -1036,18 +997,16 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				if !c.Bool("no-stdout") {
 					display = true
 				}
-
-				email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-				if errMsg != "" {
-					fmt.Printf("\nerror: %s\n\n", errMsg)
-					return cli.ShowSubcommandHelp(c)
-				}
-				var session gosn.Session
-				session, err = sncli.CliSignIn(email, password, apiServer)
+				settings := getSettings()
 				if err != nil {
 					return err
 				}
-
+				var session gosn.Session
+				var email string
+				session, email, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+				if err != nil {
+					return err
+				}
 				wipeConfig := sncli.WipeConfig{
 					Session: session,
 				}
@@ -1080,16 +1039,15 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			Name:  "fixup",
 			Usage: "find and fix item issues",
 			Action: func(c *cli.Context) error {
-				email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-				if errMsg != "" {
-					fmt.Printf("\nerror: %s\n\n", errMsg)
-					return cli.ShowSubcommandHelp(c)
-				}
-				var session gosn.Session
-				session, err = sncli.CliSignIn(email, password, apiServer)
+				settings := getSettings()
 				if err != nil {
 					return err
 				}
+				session, _, err := getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+				if err != nil {
+					return err
+				}
+
 				fixupConfig := sncli.FixupConfig{
 					Session: session,
 				}
@@ -1119,13 +1077,8 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if numTags <= 0 {
 							return cli.ShowSubcommandHelp(c)
 						}
-						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-						if errMsg != "" {
-							fmt.Printf("\nerror: %s\n\n", errMsg)
-							return cli.ShowSubcommandHelp(c)
-						}
-						var session gosn.Session
-						session, err = sncli.CliSignIn(email, password, apiServer)
+						settings := getSettings()
+						session, _, err := getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
 						if err != nil {
 							return err
 						}
@@ -1167,15 +1120,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if numParas <= 1 {
 							return cli.ShowSubcommandHelp(c)
 						}
-						email, password, apiServer, errMsg := sncli.GetCredentials(c.GlobalString("server"))
-						if errMsg != "" {
-							if cErr := cli.ShowSubcommandHelp(c); err != nil {
-								panic(cErr)
-							}
-							return errors.New(errMsg)
-						}
+						settings := getSettings()
 						var session gosn.Session
-						session, err = sncli.CliSignIn(email, password, apiServer)
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
 						if err != nil {
 							return err
 						}
@@ -1198,44 +1145,71 @@ func startCLI(args []string) (msg string, display bool, err error) {
 	return msg, display, app.Run(args)
 }
 
-func readPrefs() (p Prefs, err error) {
-	var dat []byte
-	dat, err = ioutil.ReadFile(prefsPath)
-	if err != nil {
-		return
-	}
-	fmt.Println("NO ERROR")
-	fmt.Println(string(dat))
-	err = yaml.Unmarshal(dat, &p)
-	fmt.Println("PREFS", p)
-	return
-}
-
-func writePrefs(in []byte) error {
+func (in Settings) write() error {
 	usr, err := user.Current()
 	if err != nil {
 		return err
 	}
-	prefsPath := path.Join(usr.HomeDir, ".sn-cli")
-	err = ioutil.WriteFile(prefsPath, in, 0644)
+	settingsPath := path.Join(usr.HomeDir, ".sn-cli")
+	var bPrefs []byte
+	bPrefs, err = yaml.Marshal(in)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(settingsPath, bPrefs, 0644)
 	return err
 }
 
-func saveSession(s gosn.Session) error {
-	p := Prefs{Session: s}
-	var pB []byte
-	pB, err := yaml.Marshal(p)
-
+func (in *Settings) read() error {
+	var err error
+	var dat []byte
+	dat, err = ioutil.ReadFile(settingsPath)
 	if err != nil {
 		return err
 	}
-	err = writePrefs(pB)
-	if err != nil {
-		return err
-	}
-	return nil
+	err = yaml.Unmarshal(dat, &in)
+	return err
 }
 
-func getSession() (sess gosn.Session, err error) {
+func getSettings() *Settings {
+	var settings Settings
+	err := settings.read()
+	if err != nil {
+		return nil
+	}
+	return &settings
+}
 
+func getSession(server string, settings *Settings, cache bool) (gosn.Session, string, error) {
+	var sess gosn.Session
+	var email string
+	var err error
+	// check saved settings for a previous session
+	if settings != nil && settings.Session.Mk != "" && settings.Session.Ak != "" && settings.Session.Token != "" {
+		sess = settings.Session
+		email = settings.Email
+	} else {
+		// no saved settings, so try obtaining via envvars or from the user
+		settings = &Settings{}
+		var password, apiServer, errMsg string
+		email, password, apiServer, errMsg = sncli.GetCredentials(server)
+		if errMsg != "" {
+			fmt.Printf("\nerror: %s\n\n", errMsg)
+			return sess, email, err
+		}
+		sess, err = sncli.CliSignIn(email, password, apiServer)
+		if err != nil {
+			return sess, email, err
+		}
+		// save session to settings file
+		if cache {
+			settings.Session = sess
+			settings.Email = email
+			err = settings.write()
+			if err != nil {
+				return sess, email, err
+			}
+		}
+	}
+	return sess, email, err
 }
