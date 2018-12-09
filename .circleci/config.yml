@@ -5,7 +5,7 @@ jobs:
       - image: circleci/golang:1.11
     steps:
       - checkout
-      - run: go test -v -parallel 1 -failfast ./...
+      - run: go test -v -p 1 -parallel 1 -failfast ./...
   release:
     docker:
       - image: circleci/golang:1.11
