@@ -1,8 +1,9 @@
 package sncli
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/jonhadfield/gosn"
 )
@@ -159,5 +160,5 @@ func TestTaggingOfNotes(t *testing.T) {
 	var deletedTags int
 	deletedTags, err = _deleteTagsByTitle(sOutput.Session, tags)
 	assert.NoError(t, err, err)
-	assert.Equal(t,len(tags), deletedTags)
+	assert.Equal(t, len(tags), deletedTags)
 }

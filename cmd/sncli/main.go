@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"gopkg.in/yaml.v2"
+	"github.com/jonhadfield/sn-cli"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"fmt"
+	"gopkg.in/urfave/cli.v1"
 
 	"github.com/jonhadfield/gosn"
-	"github.com/jonhadfield/sn-cli"
 	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/urfave/cli.v1"
+	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/viper"
 )
@@ -130,7 +130,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{Name: "debug"},
 		cli.StringFlag{Name: "server"},
-		cli.BoolFlag{Name: "cache-session"},
+		cli.BoolFlag{Name: "save-session"},
 	}
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		_, _ = fmt.Fprintf(c.App.Writer, "\ninvalid command: \"%s\" \n\n", command)
@@ -186,7 +186,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 						var session gosn.Session
-						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 						if err != nil {
 							return err
 						}
@@ -263,7 +263,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 						var session gosn.Session
-						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 						if err != nil {
 							return err
 						}
@@ -344,7 +344,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 						var session gosn.Session
-						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 						if err != nil {
 							return err
 						}
@@ -407,7 +407,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 						var session gosn.Session
-						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 						if err != nil {
 							return err
 						}
@@ -476,7 +476,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					return err
 				}
 				var session gosn.Session
-				session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+				session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 				if err != nil {
 					return err
 				}
@@ -615,7 +615,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 						var session gosn.Session
-						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 						if err != nil {
 							return err
 						}
@@ -802,7 +802,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 						var session gosn.Session
-						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 						if err != nil {
 							return err
 						}
@@ -967,7 +967,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					return err
 				}
 				var session gosn.Session
-				session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+				session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 				if err != nil {
 					return err
 				}
@@ -1003,7 +1003,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				var session gosn.Session
 				var email string
-				session, email, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+				session, email, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 				if err != nil {
 					return err
 				}
@@ -1043,7 +1043,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				if err != nil {
 					return err
 				}
-				session, _, err := getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+				session, _, err := getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 				if err != nil {
 					return err
 				}
@@ -1078,7 +1078,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return cli.ShowSubcommandHelp(c)
 						}
 						settings := getSettings()
-						session, _, err := getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+						session, _, err := getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 						if err != nil {
 							return err
 						}
@@ -1122,7 +1122,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 						settings := getSettings()
 						var session gosn.Session
-						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("cache-session"))
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
 						if err != nil {
 							return err
 						}
@@ -1186,30 +1186,35 @@ func getSession(server string, settings *Settings, cache bool) (gosn.Session, st
 	var err error
 	// check saved settings for a previous session
 	if settings != nil && settings.Session.Mk != "" && settings.Session.Ak != "" && settings.Session.Token != "" {
+		// check
+		if viper.GetString("email") != "" {
+			fmt.Println("warning: using cached session and ignoring credentials in environment variables")
+			time.Sleep(5 * time.Second)
+		}
 		sess = settings.Session
 		email = settings.Email
-	} else {
-		// no saved settings, so try obtaining via envvars or from the user
-		settings = &Settings{}
-		var password, apiServer, errMsg string
-		email, password, apiServer, errMsg = sncli.GetCredentials(server)
-		if errMsg != "" {
-			fmt.Printf("\nerror: %s\n\n", errMsg)
-			return sess, email, err
-		}
-		sess, err = sncli.CliSignIn(email, password, apiServer)
+	}
+	// no saved settings, so try obtaining via envvars or from the user
+	settings = &Settings{}
+	var password, apiServer, errMsg string
+	email, password, apiServer, errMsg = sncli.GetCredentials(server)
+	if errMsg != "" {
+		fmt.Printf("\nerror: %s\n\n", errMsg)
+		return sess, email, err
+	}
+	sess, err = sncli.CliSignIn(email, password, apiServer)
+	if err != nil {
+		return sess, email, err
+	}
+	// save session to settings file
+	if cache {
+		settings.Session = sess
+		settings.Email = email
+		err = settings.write()
 		if err != nil {
 			return sess, email, err
 		}
-		// save session to settings file
-		if cache {
-			settings.Session = sess
-			settings.Email = email
-			err = settings.write()
-			if err != nil {
-				return sess, email, err
-			}
-		}
 	}
+
 	return sess, email, err
 }
