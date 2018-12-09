@@ -25,6 +25,7 @@ Please raise an issue if you find any problems.*
 
 ## changelog
 
+0.0.5 - added option to save session (unencrypted for now)
 0.0.4 - added Windows support  
 0.0.3 - added note content from file  
 0.0.2 - added bash completion  
