@@ -27,10 +27,10 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 	assert.Equal(t, 2, noDeleted)
 	assert.NoError(t, err, err)
 	time.Sleep(1 * time.Second)
-
 }
 
 func TestGetTag(t *testing.T) {
+	defer cleanUp(&testSession)
 	sOutput, err := gosn.SignIn(sInput)
 	assert.NoError(t, err, err)
 	testTagTitles := []string{"TestTagOne", "TestTagTwo"}
@@ -62,17 +62,6 @@ func TestGetTag(t *testing.T) {
 	output, err = getTagConfig.Run()
 	assert.NoError(t, err, err)
 	assert.EqualValues(t, len(output.Items), 2, "expected two items but got: %+v", output.Items)
-
-	// clean up
-	deleteTagConfig := DeleteTagConfig{
-		Session:   sOutput.Session,
-		TagTitles: []string{"TestTagOne", "TestTagTwo"},
-	}
-	var noDeleted int
-	noDeleted, err = deleteTagConfig.Run()
-	assert.Equal(t, noDeleted, len(testTagTitles))
-	assert.NoError(t, err, err)
-	time.Sleep(1 * time.Second)
 
 }
 
@@ -116,6 +105,8 @@ func _deleteTagsByTitle(session gosn.Session, input []string) (noDeleted int, er
 }
 
 func TestTaggingOfNotes(t *testing.T) {
+	defer cleanUp(&testSession)
+
 	sOutput, signInErr := gosn.SignIn(sInput)
 	if signInErr != nil {
 		t.Errorf("CliSignIn error:: %+v", signInErr)
@@ -168,8 +159,10 @@ func TestTaggingOfNotes(t *testing.T) {
 	_, err = _deleteNotesByTitle(sOutput.Session, notes)
 	assert.NoError(t, err, err)
 
-	_, err = _deleteTagsByTitle(sOutput.Session, tags)
+	var deletedTags int
+	deletedTags, err = _deleteTagsByTitle(sOutput.Session, tags)
 	assert.NoError(t, err, err)
+	assert.Equal(t,len(tags), deletedTags)
 	time.Sleep(1 * time.Second)
 
 }

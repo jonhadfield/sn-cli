@@ -18,8 +18,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestWipeWith50(t *testing.T) {
-	fmt.Printf("TestWipeWith50 start time: %+v\n", time.Now())
-	cleanUp(&testSession)
+	defer cleanUp(&testSession)
+
 	numNotes := 50
 	textParas := 10
 	err := createNotes(testSession, numNotes, textParas)
@@ -47,16 +47,11 @@ func TestWipeWith50(t *testing.T) {
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
 	assert.True(t, deleted >= numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
-	fmt.Printf("TestWipeWith50 end time: %+v\n", time.Now())
 	time.Sleep(1 * time.Second)
 }
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
-	fmt.Printf("TestAddDeleteNoteByUUID start time: %+v\n", time.Now())
-
-	//session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	//assert.NoError(t, err)
-	cleanUp(&testSession)
+	defer cleanUp(&testSession)
 
 	// create note
 	addNoteConfig := AddNoteConfig{
@@ -103,13 +98,10 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	postRes, err = gnc.Run()
 	assert.NoError(t, err, err)
 	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
-	cleanUp(&testSession)
-
-	fmt.Printf("TestAddDeleteNoteByUUID end time: %+v\n", time.Now())
 }
 
 func TestAddDeleteNoteByTitle(t *testing.T) {
-	cleanUp(&testSession)
+	defer cleanUp(&testSession)
 
 	addNoteConfig := AddNoteConfig{
 		Session: testSession,
@@ -145,14 +137,10 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 	postRes, err = gnc.Run()
 	assert.NoError(t, err, err)
 	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
-
-	cleanUp(&testSession)
-	time.Sleep(1 * time.Second)
 }
 
 func TestAddDeleteNoteByTitleRegex(t *testing.T) {
-
-	cleanUp(&testSession)
+	defer cleanUp(&testSession)
 	// add note
 	addNoteConfig := AddNoteConfig{
 		Session: testSession,
@@ -191,14 +179,10 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 
 	assert.NoError(t, err, err)
 	assert.EqualValues(t, len(postRes.Items), 0, "note was not deleted")
-
-	cleanUp(&testSession)
-	time.Sleep(1 * time.Second)
 }
 
 func TestGetNote(t *testing.T) {
-
-	cleanUp(&testSession)
+	defer cleanUp(&testSession)
 
 	// create one note
 	addNoteConfig := AddNoteConfig{
@@ -228,11 +212,10 @@ func TestGetNote(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(output.Items))
 
-	cleanUp(&testSession)
-	time.Sleep(1 * time.Second)
 }
 
 func TestCreateOneHundredNotes(t *testing.T) {
+	defer cleanUp(&testSession)
 	numNotes := 100
 	textParas := 10
 	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
@@ -265,8 +248,6 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
 	assert.True(t, deleted >= numNotes)
-	cleanUp(&session)
-	time.Sleep(1 * time.Second)
 }
 
 func cleanUp(session *gosn.Session) {
