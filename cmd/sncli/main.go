@@ -1156,7 +1156,7 @@ func (in Settings) write() error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(settingsPath, bPrefs, 0644)
+	err = ioutil.WriteFile(settingsPath, bPrefs, 0600)
 	return err
 }
 

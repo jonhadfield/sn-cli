@@ -101,6 +101,7 @@ func createNotes(session gosn.Session, num int, paras int) error {
 	pii.Session = session
 	pii.Items = genNotes(num, paras)
 	_, err := gosn.PutItems(pii)
+	time.Sleep(5 * time.Second)
 	return err
 }
 

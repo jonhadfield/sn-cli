@@ -18,6 +18,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestWipeWith50(t *testing.T) {
+	cleanUp(&testSession)
 	defer cleanUp(&testSession)
 
 	numNotes := 50
@@ -38,7 +39,21 @@ func TestWipeWith50(t *testing.T) {
 	}
 	var gno gosn.GetItemsOutput
 	gno, err = gosn.GetItems(gni)
+	for i, n := range gno.Items {
+		if n.Deleted {
+			fmt.Printf("%d %s %s %t\n", i, n.UUID, "-------", n.Deleted)
 
+		} else {
+			if len(n.Content.GetTitle()) >= 50 {
+				fmt.Printf("%d %s %s %t\n", i, n.UUID, n.Content.GetTitle()[:50], n.Deleted)
+
+			} else {
+				fmt.Printf("%d %s %s %t\n", i, n.UUID, n.Content.GetTitle(), n.Deleted)
+
+			}
+
+		}
+	}
 	assert.Equal(t, 50, len(gno.Items))
 	wipeConfig := WipeConfig{
 		Session: testSession,
