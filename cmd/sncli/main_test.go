@@ -78,10 +78,49 @@ func TestTagNotesByTextWithNewTags(t *testing.T) {
 	assert.NoError(t, err, err)
 }
 
-//func TestAddTag1(t *testing.T) {
-//	fmt.Println(randomdata.Paragraph())
-//	//err := startCLI([]string{"sncli", "add", "tag", "--title", "testTag"})
-//	//if err != nil {
-//	//	t.Errorf("%+v", err)
-//	//}
-//}
+func TestAddOneNoteGetCount(t *testing.T) {
+	msg, _, err := startCLI([]string{"sncli", "add", "note", "--title", "testAddOneNoteGetCount Title",
+		"--text", "testAddOneNoteGetCount Text"})
+	assert.NoError(t, err)
+	assert.Contains(t, msg, msgAddSuccess)
+	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
+	assert.NoError(t, err)
+	assert.Equal(t, "1", msg)
+	msg, _, err = startCLI([]string{"sncli", "delete", "note", "--title", "testAddOneNoteGetCount Title"})
+	assert.NoError(t, err, err)
+}
+
+func TestAddOneTagGetCount(t *testing.T) {
+	msg, _, err := startCLI([]string{"sncli", "add", "tag", "--title", "testAddOneTagGetCount Title"})
+	assert.NoError(t, err)
+	assert.Contains(t, msg, msgAddSuccess)
+	msg, _, err = startCLI([]string{"sncli", "get", "tag", "--count"})
+	assert.NoError(t, err)
+	assert.Equal(t, "1", msg)
+	msg, _, err = startCLI([]string{"sncli", "delete", "tag", "--title", "testAddOneTagGetCount Title"})
+	assert.NoError(t, err, err)
+}
+
+func TestGetNoteCountWithNoResults(t *testing.T) {
+	msg, _, err := startCLI([]string{"sncli", "get", "note", "--count"})
+	assert.NoError(t, err)
+	assert.Equal(t, "0", msg)
+}
+
+func TestGetTagCountWithNoResults(t *testing.T) {
+	msg, _, err := startCLI([]string{"sncli", "get", "tag", "--count"})
+	assert.NoError(t, err)
+	assert.Equal(t, "0", msg)
+}
+
+func TestGetNotesWithNoResults(t *testing.T) {
+	msg, _, err := startCLI([]string{"sncli", "get", "note"})
+	assert.NoError(t, err)
+	assert.Equal(t, msgNoMatches, msg)
+}
+
+func TestGetTagsWithNoResults(t *testing.T) {
+	msg, _, err := startCLI([]string{"sncli", "get", "tag"})
+	assert.NoError(t, err)
+	assert.Equal(t, msgNoMatches, msg)
+}

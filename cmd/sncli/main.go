@@ -30,6 +30,7 @@ const (
 	msgRegisterSuccess = "registered."
 	msgTagSuccess      = "tagged."
 	msgItemsDeleted    = "items deleted."
+	msgNoMatches       = "no matches."
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
@@ -685,7 +686,11 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 						}
 						if numResults <= 0 {
-							msg = "no matches."
+							if count {
+								msg = "0"
+							} else {
+								msg = "no matches."
+							}
 						} else if count {
 							msg = strconv.Itoa(numResults)
 						} else {
@@ -817,10 +822,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if err != nil {
 							return err
 						}
-						numResults := len(rawNotes.Items)
+						var numResults int
 						var notesYAML []sncli.NoteYAML
 						var notesJSON []sncli.NoteJSON
-
 						for _, rt := range rawNotes.Items {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
@@ -870,7 +874,11 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 
 						if numResults <= 0 {
-							msg = "no matches."
+							if count {
+								msg = "0"
+							} else {
+								msg = "no matches."
+							}
 						} else if count {
 							msg = strconv.Itoa(numResults)
 						} else {
