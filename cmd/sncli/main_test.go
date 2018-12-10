@@ -124,3 +124,13 @@ func TestGetTagsWithNoResults(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, msgNoMatches, msg)
 }
+
+func TestFinalWipeAndCountZero(t *testing.T) {
+	_, _, err := startCLI([]string{"sncli", "wipe", "--yes"})
+	assert.NoError(t, err)
+	var msg string
+	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
+	assert.Equal(t, "0", msg)
+	msg, _, err = startCLI([]string{"sncli", "get", "tag", "--count"})
+	assert.Equal(t, "0", msg)
+}
