@@ -21,7 +21,7 @@ func TestWipeWith50(t *testing.T) {
 	defer cleanUp(&testSession)
 
 	numNotes := 50
-	textParas := 10
+	textParas := 3
 	err := createNotes(testSession, numNotes, textParas)
 	assert.NoError(t, err)
 
