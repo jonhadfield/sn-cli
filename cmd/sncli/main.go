@@ -1201,19 +1201,21 @@ func getSession(server string, settings *Settings, cache bool) (gosn.Session, st
 		}
 		sess = settings.Session
 		email = settings.Email
+	} else {
+		// no saved settings, so try obtaining via envvars or interactively
+		settings = &Settings{}
+		var password, apiServer, errMsg string
+		email, password, apiServer, errMsg = sncli.GetCredentials(server)
+		if errMsg != "" {
+			fmt.Printf("\nerror: %s\n\n", errMsg)
+			return sess, email, err
+		}
+		sess, err = sncli.CliSignIn(email, password, apiServer)
+		if err != nil {
+			return sess, email, err
+		}
 	}
-	// no saved settings, so try obtaining via envvars or interactively
-	settings = &Settings{}
-	var password, apiServer, errMsg string
-	email, password, apiServer, errMsg = sncli.GetCredentials(server)
-	if errMsg != "" {
-		fmt.Printf("\nerror: %s\n\n", errMsg)
-		return sess, email, err
-	}
-	sess, err = sncli.CliSignIn(email, password, apiServer)
-	if err != nil {
-		return sess, email, err
-	}
+
 	// save session to settings file
 	if cache {
 		settings.Session = sess
