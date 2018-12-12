@@ -1196,13 +1196,13 @@ func getSession(server string, settings *Settings, cache bool) (gosn.Session, st
 	if settings != nil && settings.Session.Mk != "" && settings.Session.Ak != "" && settings.Session.Token != "" {
 		// check
 		if viper.GetString("email") != "" {
-			fmt.Println("warning: using cached session and ignoring credentials in environment variables")
+			fmt.Printf("warning: using cached session for: %s and ignoring credentials in environment variables\n", settings.Email)
 			time.Sleep(5 * time.Second)
 		}
 		sess = settings.Session
 		email = settings.Email
 	}
-	// no saved settings, so try obtaining via envvars or from the user
+	// no saved settings, so try obtaining via envvars or interactively
 	settings = &Settings{}
 	var password, apiServer, errMsg string
 	email, password, apiServer, errMsg = sncli.GetCredentials(server)
