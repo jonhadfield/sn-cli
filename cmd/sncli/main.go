@@ -53,7 +53,7 @@ func main() {
 		fmt.Printf("error: %+v\n", err)
 		os.Exit(1)
 	}
-	if display {
+	if display && msg != "" {
 		fmt.Println(msg)
 	}
 	os.Exit(0)
@@ -1027,10 +1027,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					fmt.Printf("wipe all items for account %s? ", email)
 					var input string
 					_, err = fmt.Scanln(&input)
-					if err != nil {
-						return err
-					}
-					if sncli.StringInSlice(input, []string{"y", "yes"}, false) {
+					if err == nil && sncli.StringInSlice(input, []string{"y", "yes"}, false) {
 						proceed = true
 					}
 				}
