@@ -1,6 +1,8 @@
 package sncli
 
 import (
+	"fmt"
+	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -74,7 +76,7 @@ func genRandomText(paragraphs int) string {
 func genNotes(num, textParas int) (notes []gosn.Item) {
 	for i := 1; i <= num; i++ {
 		noteContent := gosn.NewNoteContent()
-		noteContent.Title = genRandomText(1)
+		noteContent.Title = fmt.Sprintf("%d.%s", i, genRandomText(1))
 		noteContent.Text = genRandomText(textParas)
 		note := gosn.NewNote()
 		note.Content = noteContent
@@ -126,18 +128,18 @@ type TestDataCreateTagsConfig struct {
 }
 
 func (input *TestDataCreateTagsConfig) Run() error {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+	gosn.SetErrorLogger(log.Println)
+	if input.Debug {
+		gosn.SetDebugLogger(log.Println)
+	}
 	return createTags(input.Session, input.NumTags)
 }
 
 func (input *TestDataCreateNotesConfig) Run() error {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+	gosn.SetErrorLogger(log.Println)
+	if input.Debug {
+		gosn.SetDebugLogger(log.Println)
+	}
 	return createNotes(input.Session, input.NumNotes, input.NumParas)
 
 }

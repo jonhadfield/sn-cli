@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"log"
 	"strings"
 
 	"github.com/jonhadfield/gosn"
@@ -111,10 +112,10 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 }
 
 func (input *TagItemsConfig) Run() error {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+	gosn.SetErrorLogger(log.Println)
+	if input.Debug {
+		gosn.SetDebugLogger(log.Println)
+	}
 	tni := tagNotesInput{
 		matchTitle: input.FindTitle,
 		matchText:  input.FindText,
@@ -128,10 +129,10 @@ func (input *TagItemsConfig) Run() error {
 }
 
 func (input *AddTagConfig) Run() error {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+	gosn.SetErrorLogger(log.Println)
+	if input.Debug {
+		gosn.SetDebugLogger(log.Println)
+	}
 
 	ati := addTagsInput{
 
@@ -144,10 +145,10 @@ func (input *AddTagConfig) Run() error {
 }
 
 func (input *GetTagConfig) Run() (output gosn.GetItemsOutput, err error) {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+	gosn.SetErrorLogger(log.Println)
+	if input.Debug {
+		gosn.SetDebugLogger(log.Println)
+	}
 
 	getItemsInput := gosn.GetItemsInput{
 		Session: input.Session,
@@ -159,10 +160,10 @@ func (input *GetTagConfig) Run() (output gosn.GetItemsOutput, err error) {
 }
 
 func (input *DeleteTagConfig) Run() (noDeleted int, err error) {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+	gosn.SetErrorLogger(log.Println)
+	if input.Debug {
+		gosn.SetDebugLogger(log.Println)
+	}
 	noDeleted, _, err = deleteTags(input.Session, input.TagTitles, input.TagUUIDs, "")
 	return noDeleted, err
 }

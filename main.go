@@ -196,11 +196,14 @@ func (input *WipeConfig) Run() (int, error) {
 		if item.Deleted {
 			continue
 		}
-		if item.ContentType == "Tag" {
+		switch item.ContentType {
+		case "Tag":
 			item.Deleted = true
+			item.Content = gosn.NewTagContent()
 			itemsToDel = append(itemsToDel, item)
-		} else if item.ContentType == "Note" {
+		case "Note":
 			item.Deleted = true
+			item.Content = gosn.NewNoteContent()
 			itemsToDel = append(itemsToDel, item)
 		}
 	}

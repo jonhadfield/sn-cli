@@ -2,14 +2,16 @@ package sncli
 
 import (
 	"github.com/jonhadfield/gosn"
+	"log"
+
 	//"log"
 )
 
 func (input *AddNoteConfig) Run() error {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+	gosn.SetErrorLogger(log.Println)
+	if input.Debug {
+		gosn.SetDebugLogger(log.Println)
+	}
 
 	var syncToken, newNoteUUID string
 
@@ -83,19 +85,19 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 }
 
 func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+	gosn.SetErrorLogger(log.Println)
+	if input.Debug {
+		gosn.SetDebugLogger(log.Println)
+	}
 	noDeleted, _, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "")
 	return noDeleted, err
 }
 
 func (input *GetNoteConfig) Run() (output gosn.GetItemsOutput, err error) {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+	gosn.SetErrorLogger(log.Println)
+	if input.Debug {
+		gosn.SetDebugLogger(log.Println)
+	}
 	getItemsInput := gosn.GetItemsInput{
 		PageSize:  input.PageSize,
 		BatchSize: input.BatchSize,
@@ -162,6 +164,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 	var notesToDelete []gosn.Item
 	for _, item := range output.Items {
 		if item.Content != nil && item.ContentType == "Note" {
+			item.Content.SetText("")
 			item.Deleted = true
 			notesToDelete = append(notesToDelete, item)
 		}

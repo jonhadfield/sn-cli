@@ -942,6 +942,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				bytePassword, err = terminal.ReadPassword(0)
 				if err == nil {
 					password = string(bytePassword)
+					fmt.Println()
 				}
 				if len(password) == 0 {
 					return errors.New("password cannot be empty")
