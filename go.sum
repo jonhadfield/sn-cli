@@ -16,6 +16,8 @@ github.com/jonhadfield/gosn v0.0.0-20181217180752-d3e625717966 h1:Pf/I1MqvvR+1oT
 github.com/jonhadfield/gosn v0.0.0-20181217180752-d3e625717966/go.mod h1:3r413pI83xh/tmeWWjtgaBc5KPFBB0Wj/k5zqPwjsAI=
 github.com/jonhadfield/gosn v0.0.0-20181218134710-b1bceecfc151 h1:W44OVKG+qwgQmQ5DvzQamm8QKWIm26zKt2enknLb6PI=
 github.com/jonhadfield/gosn v0.0.0-20181218134710-b1bceecfc151/go.mod h1:trCS+i2vvc5g3NoofAfaTyhOs2YQ6uVpC9Y7kS+FxlU=
+github.com/jonhadfield/gosn v0.0.0-20181218151455-3531d8356b8b h1:uwldrH8sYsMgRxlISsy+dDRHLBEv3ZVaPBTHRmEryKQ=
+github.com/jonhadfield/gosn v0.0.0-20181218151455-3531d8356b8b/go.mod h1:trCS+i2vvc5g3NoofAfaTyhOs2YQ6uVpC9Y7kS+FxlU=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pty v1.1.1 h1:VkoXIwSboBpnk99O/KFauAEILuNHv5DVFKZMBN/gUgw=

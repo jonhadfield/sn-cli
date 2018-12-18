@@ -2,7 +2,7 @@ module github.com/jonhadfield/sn-cli
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
-	github.com/jonhadfield/gosn v0.0.0-20181218134710-b1bceecfc151
+	github.com/jonhadfield/gosn v0.0.0-20181218151455-3531d8356b8b
 	github.com/kr/pty v1.1.3 // indirect
 	github.com/spf13/afero v1.2.0 // indirect
 	github.com/spf13/viper v1.3.1
