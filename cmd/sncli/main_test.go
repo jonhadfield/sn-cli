@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestWipe(t *testing.T) {
@@ -41,15 +40,18 @@ func TestDeleteTagErrorMissingTitle(t *testing.T) {
 	assert.Error(t, err, "error should be returned if title is unspecified")
 }
 
-//func TestAddDeleteNote(t *testing.T) {
-//	msg, _, err := startCLI([]string{"sncli", "add", "note", "--title", "testNote", "--text", "some example text"})
-//	assert.NoError(t, err)
-//	assert.Equal(t, msg, msgAddSuccess)
-//	msg, _, err = startCLI([]string{"sncli", "delete", "note", "--title", "testNote"})
-//	assert.NoError(t, err)
-//	assert.Equal(t, msg, fmt.Sprintf("1 %s", msgDeleted))
-//	time.Sleep(1 * time.Second)
-//}
+func TestAddDeleteNote(t *testing.T) {
+	msg, _, err := startCLI([]string{"sncli", "add", "note", "--title", "testNote", "--text", "some example text"})
+	assert.NoError(t, err)
+	assert.Equal(t, msg, msgAddSuccess)
+	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
+	assert.Equal(t, "1", msg)
+	msg, _, err = startCLI([]string{"sncli", "delete", "note", "--title", "testNote"})
+	assert.NoError(t, err)
+	assert.Equal(t, msg, fmt.Sprintf("1 %s", msgDeleted))
+	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
+	assert.Equal(t, "0", msg)
+}
 
 func TestAddNoteErrorMissingTitle(t *testing.T) {
 	_, _, err := startCLI([]string{"sncli", "add", "note", "--no-stdout"})
