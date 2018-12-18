@@ -28,7 +28,7 @@ func CliSignIn(email, password, apiServer string) (session gosn.Session, err err
 					return
 				}
 			} else {
-				fmt.Print("\ntoken: ")
+				fmt.Print("token: ")
 				_, err = fmt.Scanln(&tokenValue)
 				if err != nil {
 					return
