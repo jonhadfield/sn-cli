@@ -234,27 +234,31 @@ func (input *FixupConfig) Run() error {
 		Session: input.Session,
 	}
 	var err error
-	// get all existing Notes with nil content
 	var output gosn.GetItemsOutput
 	output, err = gosn.GetItems(getItemsInput)
 	if err != nil {
 		return err
 	}
 	output.DeDupe()
-	// notes with missing content to delete
 	var missingContentType []gosn.Item
 	var missingContent []gosn.Item
 	var notesToTitleFix []gosn.Item
 
+	var allIDs []string
+	var allItems []gosn.Item
+
 	for _, item := range output.Items {
+		allIDs = append(allIDs, item.UUID)
 		if !item.Deleted {
+			allItems = append(allItems, item)
 			switch {
 			case item.ContentType == "":
 				item.Deleted = true
 				item.ContentType = "Note"
 				missingContentType = append(missingContentType, item)
-			case item.Content == nil:
+			case item.Content == nil && StringInSlice(item.ContentType, []string{"Note", "Tag"}, true):
 				item.Deleted = true
+				fmt.Println(item.ContentType)
 				missingContent = append(missingContent, item)
 			default:
 				if item.ContentType == "Note" && item.Content.GetTitle() == "" {
@@ -266,6 +270,48 @@ func (input *FixupConfig) Run() error {
 		}
 	}
 
+	var itemsWithRefsToUpdate []gosn.Item
+	for _, item := range allItems {
+		var newRefs []gosn.ItemReference
+		var needsFix bool
+		if item.Content != nil && item.Content.References() != nil && len(item.Content.References()) > 0 {
+			for _, ref := range item.Content.References() {
+				if !StringInSlice(ref.UUID, allIDs, false) {
+					needsFix = true
+					fmt.Printf("item: %s references missing item id: %s\n", item.Content.GetTitle(), ref.UUID)
+				} else {
+					newRefs = append(newRefs, ref)
+				}
+			}
+			if needsFix {
+				item.Content.SetReferences(newRefs)
+				itemsWithRefsToUpdate = append(itemsWithRefsToUpdate, item)
+			}
+		}
+
+	}
+
+	// fix items with references to missing or deleted items
+	if len(itemsWithRefsToUpdate) > 0 {
+		fmt.Printf("found %d items with invalid references. fix? ", len(itemsWithRefsToUpdate))
+		var response string
+		_, err = fmt.Scanln(&response)
+		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
+			putItemsInput := gosn.PutItemsInput{
+				Session: input.Session,
+				Items:   itemsWithRefsToUpdate,
+			}
+			_, err = gosn.PutItems(putItemsInput)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("fixed references in %d items\n", len(itemsWithRefsToUpdate))
+		}
+	} else {
+		fmt.Println("no items with invalid references")
+	}
+
+	// check for items without content type
 	if len(missingContentType) > 0 {
 		fmt.Printf("found %d notes with missing content type. delete? ", len(missingContentType))
 		var response string
@@ -283,9 +329,10 @@ func (input *FixupConfig) Run() error {
 
 		}
 	} else {
-		fmt.Println("no notes with missing content type")
+		fmt.Println("no items with missing content type")
 	}
 
+	// check for items with missing content
 	if len(missingContent) > 0 {
 		fmt.Printf("found %d notes with missing content. delete? ", len(missingContent))
 		var response string
@@ -303,9 +350,10 @@ func (input *FixupConfig) Run() error {
 
 		}
 	} else {
-		fmt.Println("no notes with missing content")
+		fmt.Println("no items with missing content")
 	}
 
+	// check for items with missing titles
 	if len(notesToTitleFix) > 0 {
 		fmt.Printf("found %d items with missing titles. fix? ", len(notesToTitleFix))
 		var response string

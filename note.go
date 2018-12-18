@@ -3,8 +3,6 @@ package sncli
 import (
 	"github.com/jonhadfield/gosn"
 	"log"
-
-	//"log"
 )
 
 func (input *AddNoteConfig) Run() error {
