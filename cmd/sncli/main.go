@@ -1056,6 +1056,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 				fixupConfig := sncli.FixupConfig{
 					Session: session,
+					Debug:   c.GlobalBool("debug"),
 				}
 				err = fixupConfig.Run()
 				if err != nil {
