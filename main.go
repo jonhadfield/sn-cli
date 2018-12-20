@@ -111,11 +111,8 @@ type AddTagConfig struct {
 type GetTagConfig struct {
 	Session gosn.Session
 	Filters gosn.ItemFilters
-	//TagTitles []string
-	//TagUUIDs  []string
-	//Regex     string
-	Output string
-	Debug  bool
+	Output  string
+	Debug   bool
 }
 
 type GetNoteConfig struct {
@@ -190,9 +187,20 @@ func (input *WipeConfig) Run() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	output.DeDupe()
+	output.Items.DeDupe()
+	ei := output.Items
+	var di gosn.DecryptedItems
+	di, err = ei.Decrypt(input.Session.Mk, input.Session.Ak)
+	if err != nil {
+		return 0, err
+	}
+	var pi gosn.Items
+	pi, err = di.Parse()
+	if err != nil {
+		return 0, err
+	}
 	var itemsToDel []gosn.Item
-	for _, item := range output.Items {
+	for _, item := range pi {
 		if item.Deleted {
 			continue
 		}
@@ -239,7 +247,12 @@ func (input *FixupConfig) Run() error {
 	if err != nil {
 		return err
 	}
-	output.DeDupe()
+	output.Items.DeDupe()
+	ei := output.Items
+	var di gosn.DecryptedItems
+	di, err = ei.Decrypt(input.Session.Mk, input.Session.Ak)
+	var pi gosn.Items
+	pi, err = di.Parse()
 	var missingContentType []gosn.Item
 	var missingContent []gosn.Item
 	var notesToTitleFix []gosn.Item
@@ -247,7 +260,7 @@ func (input *FixupConfig) Run() error {
 	var allIDs []string
 	var allItems []gosn.Item
 
-	for _, item := range output.Items {
+	for _, item := range pi {
 		allIDs = append(allIDs, item.UUID)
 		if !item.Deleted {
 			allItems = append(allItems, item)

@@ -44,18 +44,28 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 	getItemsInput := gosn.GetItemsInput{
 		Session:   input.session,
 		SyncToken: input.syncToken,
-		Filters:   itemFilter,
 	}
 	var output gosn.GetItemsOutput
 	output, err = gosn.GetItems(getItemsInput)
 	if err != nil {
 		return newSyncToken, err
 	}
-	output.DeDupe()
+
+	output.Items.DeDupe()
+	ei := output.Items
+	var di gosn.DecryptedItems
+	di, err = ei.Decrypt(input.session.Mk, input.session.Ak)
+	if err != nil {
+		return output.SyncToken, err
+	}
+	var items gosn.Items
+	items, err = di.Parse()
+	items.Filter(itemFilter)
+
 	var allTags []gosn.Item
 	var allNotes []gosn.Item
 	// create slices of notes and tags
-	for _, item := range output.Items {
+	for _, item := range items {
 		if item.Deleted {
 			continue
 		}
@@ -144,7 +154,7 @@ func (input *AddTagConfig) Run() error {
 	return err
 }
 
-func (input *GetTagConfig) Run() (output gosn.GetItemsOutput, err error) {
+func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
 	gosn.SetErrorLogger(log.Println)
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
@@ -152,10 +162,19 @@ func (input *GetTagConfig) Run() (output gosn.GetItemsOutput, err error) {
 
 	getItemsInput := gosn.GetItemsInput{
 		Session: input.Session,
-		Filters: input.Filters,
 	}
+	var output gosn.GetItemsOutput
 	output, err = gosn.GetItems(getItemsInput)
-	output.DeDupe()
+
+	output.Items.DeDupe()
+	ei := output.Items
+	var di gosn.DecryptedItems
+	di, err = ei.Decrypt(input.Session.Mk, input.Session.Ak)
+	if err != nil {
+		return nil, err
+	}
+	tags, err = di.Parse()
+	tags.Filter(input.Filters)
 	return
 }
 
@@ -184,12 +203,21 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 	getItemsInput := gosn.GetItemsInput{
 		Session:   session,
 		SyncToken: syncToken,
-		Filters:   deleteFilter,
 	}
 	output, err := gosn.GetItems(getItemsInput)
-	output.DeDupe()
-	var tagsToDelete []gosn.Item
-	for _, item := range output.Items {
+	output.Items.DeDupe()
+	ei := output.Items
+	var di gosn.DecryptedItems
+	di, err = ei.Decrypt(session.Mk, session.Ak)
+	if err != nil {
+		return 0, output.SyncToken, err
+	}
+	var tags gosn.Items
+	tags, err = di.Parse()
+	tags.Filter(deleteFilter)
+
+	var tagsToDelete gosn.Items
+	for _, item := range tags {
 		if item.Deleted {
 			continue
 		}
@@ -240,15 +268,23 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 	getItemsInput := gosn.GetItemsInput{
 		SyncToken: input.syncToken,
 		Session:   input.session,
-		Filters:   addFilter,
 	}
 	output, err := gosn.GetItems(getItemsInput)
 	if err != nil {
 		return
 	}
-	output.DeDupe()
-	var allTags []gosn.Item
-	for _, item := range output.Items {
+	output.Items.DeDupe()
+	ei := output.Items
+	var di gosn.DecryptedItems
+	di, err = ei.Decrypt(input.session.Mk, input.session.Ak)
+	if err != nil {
+		return output.SyncToken, err
+	}
+	var tags gosn.Items
+	tags, err = di.Parse()
+	tags.Filter(addFilter)
+	var allTags gosn.Items
+	for _, item := range tags {
 		if item.Deleted {
 			continue
 		}

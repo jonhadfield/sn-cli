@@ -25,16 +25,25 @@ func (input *StatsConfig) Run() error {
 	if err != nil {
 		return err
 	}
-	output.DeDupe()
 
-	var notes []gosn.Item
+	output.Items.DeDupe()
+	ei := output.Items
+	var di gosn.DecryptedItems
+	di, err = ei.Decrypt(input.Session.Mk, input.Session.Ak)
+	if err != nil {
+		return err
+	}
+	var items gosn.Items
+	items, err = di.Parse()
+
+	var notes gosn.Items
 	var oldestNote, newestNote, lastUpdatedNote time.Time
 	var deletedItemsUUIDs []string
 	var missingContentUUIDs []string
 	var allUUIDs, duplicateUUIDs []string
 	var tCounter typeCounter
 	tCounter.counts = make(map[string]int64)
-	for _, item := range output.Items {
+	for _, item := range items {
 		tCounter.update(item.ContentType)
 		if StringInSlice(item.UUID, allUUIDs, false) {
 			duplicateUUIDs = append(duplicateUUIDs, item.UUID)

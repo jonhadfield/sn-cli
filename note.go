@@ -91,7 +91,7 @@ func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
 	return noDeleted, err
 }
 
-func (input *GetNoteConfig) Run() (output gosn.GetItemsOutput, err error) {
+func (input *GetNoteConfig) Run() (output gosn.Items, err error) {
 	gosn.SetErrorLogger(log.Println)
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
@@ -100,10 +100,21 @@ func (input *GetNoteConfig) Run() (output gosn.GetItemsOutput, err error) {
 		PageSize:  input.PageSize,
 		BatchSize: input.BatchSize,
 		Session:   input.Session,
-		Filters:   input.Filters,
 	}
-	output, err = gosn.GetItems(getItemsInput)
-	output.DeDupe()
+	var gio gosn.GetItemsOutput
+	gio, err = gosn.GetItems(getItemsInput)
+	if err != nil {
+		return
+	}
+	gio.Items.DeDupe()
+	ei := gio.Items
+	var di gosn.DecryptedItems
+	di, err = ei.Decrypt(input.Session.Mk, input.Session.Ak)
+	if err != nil {
+		return
+	}
+	output, err = di.Parse()
+	output.Filter(input.Filters)
 	return
 }
 
@@ -152,15 +163,24 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 	getItemsInput := gosn.GetItemsInput{
 		Session:   session,
 		SyncToken: syncToken,
-		Filters:   itemFilter,
 	}
-	output, err := gosn.GetItems(getItemsInput)
+	gio, err := gosn.GetItems(getItemsInput)
 	if err != nil {
 		return
 	}
-	output.DeDupe()
-	var notesToDelete []gosn.Item
-	for _, item := range output.Items {
+
+	gio.Items.DeDupe()
+	ei := gio.Items
+	var di gosn.DecryptedItems
+	di, err = ei.Decrypt(session.Mk, session.Ak)
+	if err != nil {
+		return
+	}
+	var notes gosn.Items
+	notes, err = di.Parse()
+	notes.Filter(itemFilter)
+	var notesToDelete gosn.Items
+	for _, item := range notes {
 		if item.Content != nil && item.ContentType == "Note" {
 			item.Content.SetText("")
 			item.Deleted = true

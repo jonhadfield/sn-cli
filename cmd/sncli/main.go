@@ -59,38 +59,6 @@ func main() {
 	os.Exit(0)
 }
 
-func itemRefsToYaml(irs []gosn.ItemReference) []sncli.ItemReferenceYAML {
-	var iRefs []sncli.ItemReferenceYAML
-	for _, ref := range irs {
-		iRef := sncli.ItemReferenceYAML{
-			UUID:        ref.UUID,
-			ContentType: ref.ContentType,
-		}
-		iRefs = append(iRefs, iRef)
-	}
-	return iRefs
-}
-
-func itemRefsToJSON(irs []gosn.ItemReference) []sncli.ItemReferenceJSON {
-	var iRefs []sncli.ItemReferenceJSON
-	for _, ref := range irs {
-		iRef := sncli.ItemReferenceJSON{
-			UUID:        ref.UUID,
-			ContentType: ref.ContentType,
-		}
-		iRefs = append(iRefs, iRef)
-	}
-	return iRefs
-}
-
-func commaSplit(input string) []string {
-	o := strings.Split(input, ",")
-	if len(o) == 1 && len(o[0]) == 0 {
-		return nil
-	}
-	return o
-}
-
 func startCLI(args []string) (msg string, display bool, err error) {
 	viper.SetEnvPrefix("sn")
 	err = viper.BindEnv("email")
@@ -629,7 +597,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Output:  output,
 							Debug:   c.GlobalBool("debug"),
 						}
-						var rawTags gosn.GetItemsOutput
+						var rawTags gosn.Items
 						rawTags, err = appGetTagConfig.Run()
 						if err != nil {
 							return err
@@ -638,7 +606,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						var tagsYAML []sncli.TagYAML
 						var tagsJSON []sncli.TagJSON
 						var numResults int
-						for _, rt := range rawTags.Items {
+						for _, rt := range rawTags {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
@@ -817,7 +785,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Filters: getNotesIF,
 							Debug:   c.GlobalBool("debug"),
 						}
-						var rawNotes gosn.GetItemsOutput
+						var rawNotes gosn.Items
 						rawNotes, err = getNoteConfig.Run()
 						if err != nil {
 							return err
@@ -825,7 +793,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						var numResults int
 						var notesYAML []sncli.NoteYAML
 						var notesJSON []sncli.NoteJSON
-						for _, rt := range rawNotes.Items {
+						for _, rt := range rawNotes {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								noteContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
@@ -899,7 +867,54 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 		},
+		{
+			Name:  "export",
+			Usage: "export data",
+			Flags: []cli.Flag{
+				cli.BoolTFlag{
+					Name:  "encrypted (default: true)",
+					Usage: "number of tags",
+				},
+				cli.StringFlag{
+					Name:   "format",
+					Usage:  "hidden whilst gob is the only supported format",
+					Value:  "gob",
+					Hidden: true,
+				},
+				cli.StringFlag{
+					Name:  "output (default: current directory)",
+					Usage: "output path",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				outputPath := strings.TrimSpace(c.String("output"))
+				if outputPath == "" {
+					currDir, err := os.Getwd()
+					if err != nil {
+						return err
+					}
+					timeStamp := time.Now().UTC().Format("20060102150405")
+					filePath := fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
+					outputPath = currDir + string(os.PathSeparator) + filePath
 
+				}
+				settings := getSettings()
+				var session gosn.Session
+				session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
+				if err != nil {
+					return err
+				}
+
+				appExportConfig := sncli.ExportConfig{
+					Session: session,
+					Output:  outputPath,
+					Debug:   c.GlobalBool("debug"),
+				}
+				err = appExportConfig.Run()
+				return err
+
+			},
+		},
 		{
 			Name:  "register",
 			Usage: "register a new user",
@@ -1226,4 +1241,36 @@ func getSession(server string, settings *Settings, cache bool) (gosn.Session, st
 	}
 
 	return sess, email, err
+}
+
+func itemRefsToYaml(irs []gosn.ItemReference) []sncli.ItemReferenceYAML {
+	var iRefs []sncli.ItemReferenceYAML
+	for _, ref := range irs {
+		iRef := sncli.ItemReferenceYAML{
+			UUID:        ref.UUID,
+			ContentType: ref.ContentType,
+		}
+		iRefs = append(iRefs, iRef)
+	}
+	return iRefs
+}
+
+func itemRefsToJSON(irs []gosn.ItemReference) []sncli.ItemReferenceJSON {
+	var iRefs []sncli.ItemReferenceJSON
+	for _, ref := range irs {
+		iRef := sncli.ItemReferenceJSON{
+			UUID:        ref.UUID,
+			ContentType: ref.ContentType,
+		}
+		iRefs = append(iRefs, iRef)
+	}
+	return iRefs
+}
+
+func commaSplit(input string) []string {
+	o := strings.Split(input, ",")
+	if len(o) == 1 && len(o[0]) == 0 {
+		return nil
+	}
+	return o
 }

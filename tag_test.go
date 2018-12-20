@@ -56,10 +56,10 @@ func TestGetTag(t *testing.T) {
 		Session: sOutput.Session,
 		Filters: getTagFilters,
 	}
-	var output gosn.GetItemsOutput
+	var output gosn.Items
 	output, err = getTagConfig.Run()
 	assert.NoError(t, err, err)
-	assert.EqualValues(t, len(output.Items), 2, "expected two items but got: %+v", output.Items)
+	assert.EqualValues(t, len(output), 2, "expected two items but got: %+v", output)
 
 }
 
@@ -147,12 +147,12 @@ func TestTaggingOfNotes(t *testing.T) {
 		Filters: itemFilters,
 	}
 
-	var retNotes gosn.GetItemsOutput
+	var retNotes gosn.Items
 	retNotes, err = gnc.Run()
 	assert.NoError(t, err, err)
 
-	if len(retNotes.Items) != 2 {
-		t.Errorf("expected two notes but got: %d", len(retNotes.Items))
+	if len(retNotes) != 2 {
+		t.Errorf("expected two notes but got: %d", len(retNotes))
 	}
 	_, err = _deleteNotesByTitle(sOutput.Session, notes)
 	assert.NoError(t, err, err)
