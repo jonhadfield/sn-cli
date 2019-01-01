@@ -1,8 +1,9 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn"
 	"log"
+
+	"github.com/jonhadfield/gosn"
 )
 
 func (input *AddNoteConfig) Run() error {
@@ -54,10 +55,14 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 	newNote.Content = newNoteContent
 	newNote.UUID = gosn.GenUUID()
 
+	newNoteItems := gosn.Items{*newNote}
+	var eNewNoteItems gosn.EncryptedItems
+	eNewNoteItems, err = newNoteItems.Encrypt(input.session.Mk, input.session.Ak)
+
 	pii := gosn.PutItemsInput{
 		Session:   input.session,
 		SyncToken: input.syncToken,
-		Items:     []gosn.Item{*newNote},
+		Items:     eNewNoteItems,
 	}
 	var putItemsOutput gosn.PutItemsOutput
 	putItemsOutput, err = gosn.PutItems(pii)
@@ -187,10 +192,14 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 			notesToDelete = append(notesToDelete, item)
 		}
 	}
+
+	var eNotesToDelete gosn.EncryptedItems
+	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak)
+
 	if len(notesToDelete) > 0 {
 		pii := gosn.PutItemsInput{
 			Session:   session,
-			Items:     notesToDelete,
+			Items:     eNotesToDelete,
 			SyncToken: syncToken,
 		}
 		var putItemsOutput gosn.PutItemsOutput

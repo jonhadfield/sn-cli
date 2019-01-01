@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/jonhadfield/sn-cli"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -14,13 +13,13 @@ import (
 	"time"
 
 	"fmt"
-	"gopkg.in/urfave/cli.v1"
 
 	"github.com/jonhadfield/gosn"
-	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/yaml.v2"
-
+	"github.com/jonhadfield/sn-cli"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/ssh/terminal"
+	"gopkg.in/urfave/cli.v1"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -485,7 +484,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					fmt.Println(t)
 				}
 			},
-			//Description: "get all items or limit results by search criteria",
 			Subcommands: []cli.Command{
 				{
 					Name:    "tag",
@@ -896,7 +894,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					timeStamp := time.Now().UTC().Format("20060102150405")
 					filePath := fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
 					outputPath = currDir + string(os.PathSeparator) + filePath
-
 				}
 				settings := getSettings()
 				var session gosn.Session
@@ -907,10 +904,47 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 				appExportConfig := sncli.ExportConfig{
 					Session: session,
-					Output:  outputPath,
+					File:    outputPath,
 					Debug:   c.GlobalBool("debug"),
 				}
 				err = appExportConfig.Run()
+				return err
+			},
+		},
+		{
+			Name:  "import",
+			Usage: "import data",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   "format",
+					Usage:  "hidden whilst gob is the only supported format",
+					Value:  "gob",
+					Hidden: true,
+				},
+				cli.StringFlag{
+					Name:  "file",
+					Usage: "path of file to import",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				inputPath := strings.TrimSpace(c.String("file"))
+				fmt.Println(inputPath)
+				if inputPath == "" {
+					err = errors.New("missing import path")
+				}
+				settings := getSettings()
+				var session gosn.Session
+				session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
+				if err != nil {
+					return err
+				}
+
+				appImportConfig := sncli.ImportConfig{
+					Session: session,
+					File:    inputPath,
+					Debug:   c.GlobalBool("debug"),
+				}
+				err = appImportConfig.Run()
 				return err
 
 			},

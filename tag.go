@@ -91,7 +91,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 
 	// update existing (and just created) tags to reference matching uuids
 	// determine which TAGS need updating and create list to sync back to server
-	var tagsToPush []gosn.Item
+	var tagsToPush gosn.Items
 	for _, t := range allTags {
 		// if tag title is in ones to add then update tag with new references
 		if StringInSlice(t.Content.GetTitle(), input.newTags, true) {
@@ -103,9 +103,12 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 		}
 	}
 
+	var eTagsToPush gosn.EncryptedItems
+	eTagsToPush, err = tagsToPush.Encrypt(input.session.Mk, input.session.Ak)
+
 	if len(tagsToPush) > 0 {
 		pii := gosn.PutItemsInput{
-			Items:     tagsToPush,
+			Items:     eTagsToPush,
 			SyncToken: input.syncToken,
 			Session:   input.session,
 		}
@@ -229,9 +232,12 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 		}
 	}
 
+	var eTagsToDelete gosn.EncryptedItems
+	eTagsToDelete, err = tagsToDelete.Encrypt(session.Mk, session.Ak)
+
 	if len(tagsToDelete) > 0 {
 		pii := gosn.PutItemsInput{
-			Items:     tagsToDelete,
+			Items:     eTagsToDelete,
 			SyncToken: syncToken,
 			Session:   session,
 		}
@@ -293,7 +299,7 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 		}
 	}
 
-	var tagsToAdd []gosn.Item
+	var tagsToAdd gosn.Items
 	for _, tag := range input.tagTitles {
 		if !tagExists(allTags, tag) {
 			newTagContent := gosn.NewTagContent()
@@ -304,10 +310,14 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 			tagsToAdd = append(tagsToAdd, *newTag)
 		}
 	}
+
+	var eTagsToAdd gosn.EncryptedItems
+	eTagsToAdd, err = tagsToAdd.Encrypt(input.session.Mk, input.session.Ak)
+
 	if len(tagsToAdd) > 0 {
 		putItemsInput := gosn.PutItemsInput{
 			Session: input.session,
-			Items:   tagsToAdd,
+			Items:   eTagsToAdd,
 		}
 		var putItemsOutput gosn.PutItemsOutput
 		putItemsOutput, err = gosn.PutItems(putItemsInput)

@@ -199,7 +199,7 @@ func (input *WipeConfig) Run() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	var itemsToDel []gosn.Item
+	var itemsToDel gosn.Items
 	for _, item := range pi {
 		if item.Deleted {
 			continue
@@ -216,9 +216,14 @@ func (input *WipeConfig) Run() (int, error) {
 		}
 	}
 	// delete items
+	var eItemsToDel gosn.EncryptedItems
+	eItemsToDel, err = itemsToDel.Encrypt(input.Session.Mk, input.Session.Ak)
+	if err != nil {
+		return 0, err
+	}
 	putItemsInput := gosn.PutItemsInput{
 		Session:   input.Session,
-		Items:     itemsToDel,
+		Items:     eItemsToDel,
 		SyncToken: output.SyncToken,
 	}
 	_, err = gosn.PutItems(putItemsInput)
@@ -253,12 +258,12 @@ func (input *FixupConfig) Run() error {
 	di, err = ei.Decrypt(input.Session.Mk, input.Session.Ak)
 	var pi gosn.Items
 	pi, err = di.Parse()
-	var missingContentType []gosn.Item
-	var missingContent []gosn.Item
-	var notesToTitleFix []gosn.Item
+	var missingContentType gosn.Items
+	var missingContent gosn.Items
+	var notesToTitleFix gosn.Items
 
 	var allIDs []string
-	var allItems []gosn.Item
+	var allItems gosn.Items
 
 	for _, item := range pi {
 		allIDs = append(allIDs, item.UUID)
@@ -283,7 +288,7 @@ func (input *FixupConfig) Run() error {
 		}
 	}
 
-	var itemsWithRefsToUpdate []gosn.Item
+	var itemsWithRefsToUpdate gosn.Items
 	for _, item := range allItems {
 		var newRefs []gosn.ItemReference
 		var needsFix bool
@@ -310,9 +315,11 @@ func (input *FixupConfig) Run() error {
 		var response string
 		_, err = fmt.Scanln(&response)
 		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
+			var eItemsWithRefsToUpdate gosn.EncryptedItems
+			eItemsWithRefsToUpdate, err = itemsWithRefsToUpdate.Encrypt(input.Session.Mk, input.Session.Ak)
 			putItemsInput := gosn.PutItemsInput{
 				Session: input.Session,
-				Items:   itemsWithRefsToUpdate,
+				Items:   eItemsWithRefsToUpdate,
 			}
 			_, err = gosn.PutItems(putItemsInput)
 			if err != nil {
@@ -330,9 +337,14 @@ func (input *FixupConfig) Run() error {
 		var response string
 		_, err = fmt.Scanln(&response)
 		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
+			var eMissingContentType gosn.EncryptedItems
+			eMissingContentType, err = missingContentType.Encrypt(input.Session.Mk, input.Session.Ak)
+			if err != nil {
+				return err
+			}
 			putItemsInput := gosn.PutItemsInput{
 				Session: input.Session,
-				Items:   missingContentType,
+				Items:   eMissingContentType,
 			}
 			_, err = gosn.PutItems(putItemsInput)
 			if err != nil {
@@ -351,9 +363,11 @@ func (input *FixupConfig) Run() error {
 		var response string
 		_, err = fmt.Scanln(&response)
 		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
+			var eMissingContent gosn.EncryptedItems
+			eMissingContent, err = missingContent.Encrypt(input.Session.Mk, input.Session.Ak)
 			putItemsInput := gosn.PutItemsInput{
 				Session: input.Session,
-				Items:   missingContent,
+				Items:   eMissingContent,
 			}
 			_, err = gosn.PutItems(putItemsInput)
 			if err != nil {
@@ -372,9 +386,11 @@ func (input *FixupConfig) Run() error {
 		var response string
 		_, err = fmt.Scanln(&response)
 		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
+			var eNotesToTitleFix gosn.EncryptedItems
+			eNotesToTitleFix, err = notesToTitleFix.Encrypt(input.Session.Mk, input.Session.Ak)
 			putItemsInput := gosn.PutItemsInput{
 				Session: input.Session,
-				Items:   notesToTitleFix,
+				Items:   eNotesToTitleFix,
 			}
 			_, err = gosn.PutItems(putItemsInput)
 			if err != nil {

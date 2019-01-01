@@ -73,7 +73,7 @@ func genRandomText(paragraphs int) string {
 	return strBuilder.String()
 }
 
-func genNotes(num, textParas int) (notes []gosn.Item) {
+func genNotes(num, textParas int) (notes gosn.Items) {
 	for i := 1; i <= num; i++ {
 		noteContent := gosn.NewNoteContent()
 		noteContent.Title = fmt.Sprintf("%d.%s", i, genRandomText(1))
@@ -86,7 +86,7 @@ func genNotes(num, textParas int) (notes []gosn.Item) {
 	return notes
 }
 
-func genTags(num int64) (tags []gosn.Item) {
+func genTags(num int64) (tags gosn.Items) {
 	for i := int64(1); i <= num; i++ {
 		tag := gosn.NewTag()
 		tagContent := gosn.NewTagContent()
@@ -101,7 +101,10 @@ func genTags(num int64) (tags []gosn.Item) {
 func createNotes(session gosn.Session, num int, paras int) error {
 	var pii gosn.PutItemsInput
 	pii.Session = session
-	pii.Items = genNotes(num, paras)
+	gendNotes := genNotes(num, paras)
+	var eGendNotes gosn.EncryptedItems
+	eGendNotes, _ = gendNotes.Encrypt(session.Mk, session.Ak)
+	pii.Items = eGendNotes
 	_, err := gosn.PutItems(pii)
 	return err
 }
@@ -109,7 +112,10 @@ func createNotes(session gosn.Session, num int, paras int) error {
 func createTags(session gosn.Session, num int64) error {
 	var pii gosn.PutItemsInput
 	pii.Session = session
-	pii.Items = genTags(num)
+	gendTags := genTags(num)
+	var eGendTags gosn.EncryptedItems
+	eGendTags, _ = gendTags.Encrypt(session.Mk, session.Ak)
+	pii.Items = eGendTags
 	_, err := gosn.PutItems(pii)
 	return err
 }

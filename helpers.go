@@ -33,9 +33,9 @@ func writeGob(filePath string, object interface{}) error {
 	file, err := os.Create(filePath)
 	if err == nil {
 		encoder := gob.NewEncoder(file)
-		encoder.Encode(object)
+		_ = encoder.Encode(object)
 	}
-	file.Close()
+	_ = file.Close()
 	return err
 }
 
@@ -45,6 +45,6 @@ func readGob(filePath string, object interface{}) error {
 		decoder := gob.NewDecoder(file)
 		err = decoder.Decode(object)
 	}
-	file.Close()
+	_ = file.Close()
 	return err
 }
