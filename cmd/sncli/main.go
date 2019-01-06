@@ -523,7 +523,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						getSettingssIF := gosn.ItemFilters{
 							MatchAny: matchAny,
 							Filters: []gosn.Filter{
-								{Type: "Settings"},
+								{Type: "Setting"},
 							},
 						}
 
