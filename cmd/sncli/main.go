@@ -550,9 +550,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if err != nil {
 							return err
 						}
-						for _, f := range rawSettings {
-							fmt.Printf("RAW SETTING: %+v\n%+v\n", f, f.Content)
-						}
 						var settingsYAML []sncli.SettingYAML
 						var settingsJSON []sncli.SettingJSON
 						var numResults int
@@ -1204,6 +1201,10 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Usage: "ignore warning",
 				},
 				cli.BoolFlag{
+					Name:  "settings",
+					Usage: "wipe settings also",
+				},
+				cli.BoolFlag{
 					Name:   "no-stdout",
 					Usage:  "don't display stdout",
 					Hidden: true,
@@ -1225,6 +1226,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				wipeConfig := sncli.WipeConfig{
 					Session: session,
+					Settings: c.Bool("settings"),
 				}
 				var numWiped int
 

@@ -187,8 +187,9 @@ type DeleteNoteConfig struct {
 }
 
 type WipeConfig struct {
-	Session gosn.Session
-	Debug   bool
+	Session  gosn.Session
+	Debug    bool
+	Settings bool
 }
 
 type StatsConfig struct {
@@ -237,14 +238,18 @@ func (input *WipeConfig) Run() (int, error) {
 		if item.Deleted {
 			continue
 		}
-		switch item.ContentType {
-		case "Tag":
+
+		switch {
+		case item.ContentType == "Tag":
 			item.Deleted = true
 			item.Content = gosn.NewTagContent()
 			itemsToDel = append(itemsToDel, item)
-		case "Note":
+		case item.ContentType == "Note":
 			item.Deleted = true
 			item.Content = gosn.NewNoteContent()
+			itemsToDel = append(itemsToDel, item)
+		case input.Settings:
+			item.Deleted = true
 			itemsToDel = append(itemsToDel, item)
 		}
 	}
