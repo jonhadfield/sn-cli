@@ -47,6 +47,16 @@ type TagContentJSON struct {
 	ItemReferences []ItemReferenceJSON `json:"references"`
 	AppData        AppDataContentJSON  `json:"appData"`
 }
+type SettingContentYAML struct {
+	Title          string              `yaml:"title"`
+	ItemReferences []ItemReferenceYAML `yaml:"references"`
+	AppData        AppDataContentYAML  `yaml:"appData"`
+}
+type SettingContentJSON struct {
+	Title          string              `json:"title"`
+	ItemReferences []ItemReferenceJSON `json:"references"`
+	AppData        AppDataContentJSON  `json:"appData"`
+}
 type NoteContentYAML struct {
 	Title          string              `yaml:"title"`
 	Text           string              `json:"text"`
@@ -83,6 +93,22 @@ type NoteJSON struct {
 	UpdatedAt   string          `json:"updated_at"`
 }
 
+type SettingYAML struct {
+	UUID        string             `yaml:"uuid"`
+	Content     SettingContentYAML `yaml:"content"`
+	ContentType string             `yaml:"content_type"`
+	CreatedAt   string             `yaml:"created_at"`
+	UpdatedAt   string             `yaml:"updated_at"`
+}
+
+type SettingJSON struct {
+	UUID        string             `json:"uuid"`
+	Content     SettingContentJSON `json:"content"`
+	ContentType string             `json:"content_type"`
+	CreatedAt   string             `json:"created_at"`
+	UpdatedAt   string             `json:"updated_at"`
+}
+
 type NoteYAML struct {
 	UUID        string          `yaml:"uuid"`
 	Content     NoteContentYAML `yaml:"content"`
@@ -109,6 +135,13 @@ type AddTagConfig struct {
 }
 
 type GetTagConfig struct {
+	Session gosn.Session
+	Filters gosn.ItemFilters
+	Output  string
+	Debug   bool
+}
+
+type GetSettingsConfig struct {
 	Session gosn.Session
 	Filters gosn.ItemFilters
 	Output  string

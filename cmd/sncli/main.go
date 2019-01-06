@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"github.com/jonhadfield/sn-cli"
+	"gopkg.in/urfave/cli.v1"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -15,10 +17,8 @@ import (
 	"fmt"
 
 	"github.com/jonhadfield/gosn"
-	"github.com/jonhadfield/sn-cli"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/urfave/cli.v1"
 	"gopkg.in/yaml.v2"
 )
 
@@ -476,7 +476,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			Name:  "get",
 			Usage: "get items",
 			BashComplete: func(c *cli.Context) {
-				addTasks := []string{"tag", "note"}
+				addTasks := []string{"tag", "note", "settings"}
 				if c.NArg() > 0 {
 					return
 				}
@@ -485,6 +485,148 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 			},
 			Subcommands: []cli.Command{
+				{
+					Name:    "settings",
+					Aliases: []string{"setting"},
+					Usage:   "get settings",
+					Flags: []cli.Flag{
+						cli.BoolFlag{
+							Name:  "count",
+							Usage: "display count only",
+						},
+						cli.StringFlag{
+							Name:  "output",
+							Value: "json",
+							Usage: "output format",
+						},
+						cli.BoolFlag{
+							Name:   "no-stdout",
+							Usage:  "don't display stdout",
+							Hidden: true,
+						},
+					},
+					OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
+						return err
+					},
+					Action: func(c *cli.Context) error {
+						if !c.Bool("no-stdout") {
+							display = true
+						}
+
+						var matchAny bool
+						if c.Bool("match-all") {
+							matchAny = false
+						}
+						//regex := c.Bool("regex")
+						count := c.Bool("count")
+
+						getSettingssIF := gosn.ItemFilters{
+							MatchAny: matchAny,
+							Filters: []gosn.Filter{
+								{Type: "Settings"},
+							},
+						}
+
+						settings := getSettings()
+						if err != nil {
+							return err
+						}
+						var session gosn.Session
+						session, _, err = getSession(c.GlobalString("server"), settings, c.GlobalBool("save-session"))
+						if err != nil {
+							return err
+						}
+
+						// TODO: validate output
+						output := c.String("output")
+						appGetSettingsConfig := sncli.GetSettingsConfig{
+							Session: session,
+							Filters: getSettingssIF,
+							Output:  output,
+							Debug:   c.GlobalBool("debug"),
+						}
+						var rawSettings gosn.Items
+						rawSettings, err = appGetSettingsConfig.Run()
+						if err != nil {
+							return err
+						}
+						for _, f := range rawSettings {
+							fmt.Printf("RAW SETTING: %+v\n%+v\n", f, f.Content)
+						}
+						var settingsYAML []sncli.SettingYAML
+						var settingsJSON []sncli.SettingJSON
+						var numResults int
+						for _, rt := range rawSettings {
+							numResults++
+							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
+								tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
+									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+								}
+								tagContentAppDataContent := sncli.AppDataContentYAML{
+									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailYAML,
+								}
+
+								settingContentYAML := sncli.SettingContentYAML{
+									Title:          rt.Content.GetTitle(),
+									ItemReferences: itemRefsToYaml(rt.Content.References()),
+									AppData:        tagContentAppDataContent,
+								}
+
+								settingsYAML = append(settingsYAML, sncli.SettingYAML{
+									UUID:        rt.UUID,
+									ContentType: rt.ContentType,
+									Content:     settingContentYAML,
+									UpdatedAt:   rt.UpdatedAt,
+									CreatedAt:   rt.CreatedAt,
+								})
+							}
+							if !count && strings.ToLower(output) == "json" {
+								settingContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
+									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+								}
+								settingContentAppDataContent := sncli.AppDataContentJSON{
+									OrgStandardNotesSN: settingContentOrgStandardNotesSNDetailJSON,
+								}
+
+								settingContentJSON := sncli.SettingContentJSON{
+									Title:          rt.Content.GetTitle(),
+									ItemReferences: itemRefsToJSON(rt.Content.References()),
+									AppData:        settingContentAppDataContent,
+								}
+
+								settingsJSON = append(settingsJSON, sncli.SettingJSON{
+									UUID:        rt.UUID,
+									ContentType: rt.ContentType,
+									Content:     settingContentJSON,
+									UpdatedAt:   rt.UpdatedAt,
+									CreatedAt:   rt.CreatedAt,
+								})
+							}
+						}
+						if numResults <= 0 {
+							if count {
+								msg = "0"
+							} else {
+								msg = "no matches."
+							}
+						} else if count {
+							msg = strconv.Itoa(numResults)
+						} else {
+							output = c.String("output")
+							var bOutput []byte
+							switch strings.ToLower(output) {
+							case "json":
+								bOutput, err = json.MarshalIndent(settingsJSON, "", "    ")
+							case "yaml":
+								bOutput, err = yaml.Marshal(settingsYAML)
+							}
+							if len(bOutput) > 0 {
+								fmt.Println(string(bOutput))
+							}
+						}
+						return err
+					},
+				},
 				{
 					Name:    "tag",
 					Aliases: []string{"tags"},
@@ -883,8 +1025,16 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Name:  "output (default: current directory)",
 					Usage: "output path",
 				},
+				cli.BoolFlag{
+					Name:   "no-stdout",
+					Usage:  "don't display stdout",
+					Hidden: true,
+				},
 			},
 			Action: func(c *cli.Context) error {
+				if !c.Bool("no-stdout") {
+					display = true
+				}
 				outputPath := strings.TrimSpace(c.String("output"))
 				if outputPath == "" {
 					currDir, err := os.Getwd()
@@ -908,6 +1058,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Debug:   c.GlobalBool("debug"),
 				}
 				err = appExportConfig.Run()
+				if err == nil {
+					msg = fmt.Sprintf("encrypted export written to: %s", outputPath)
+				}
 				return err
 			},
 		},
@@ -927,10 +1080,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
+				if !c.Bool("no-stdout") {
+					display = true
+				}
 				inputPath := strings.TrimSpace(c.String("file"))
-				fmt.Println(inputPath)
 				if inputPath == "" {
-					err = errors.New("missing import path")
+					return errors.New("please specify path using --file")
 				}
 				settings := getSettings()
 				var session gosn.Session
@@ -945,6 +1100,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Debug:   c.GlobalBool("debug"),
 				}
 				err = appImportConfig.Run()
+				if err == nil {
+					msg = fmt.Sprintf("import successful")
+				}
 				return err
 
 			},
