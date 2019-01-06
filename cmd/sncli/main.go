@@ -99,6 +99,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		cli.BoolFlag{Name: "debug"},
 		cli.StringFlag{Name: "server"},
 		cli.BoolFlag{Name: "save-session"},
+		cli.BoolFlag{Name: "no-stdout"},
 	}
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		_, _ = fmt.Fprintf(c.App.Writer, "\ninvalid command: \"%s\" \n\n", command)
@@ -132,16 +133,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Name:  "title",
 							Usage: "new tag title (separate multiple with commas)",
 						},
-						cli.BoolFlag{
-							Name:   "no-stdout",
-							Usage:  "don't display stdout",
-							Hidden: true,
-						},
 					},
 					Action: func(c *cli.Context) error {
-						if !c.Bool("no-stdout") {
+						if !c.GlobalBool("no-stdout") {
 							display = true
 						}
+
 						tagInput := c.String("title")
 						if strings.TrimSpace(tagInput) == "" {
 							if cErr := cli.ShowSubcommandHelp(c); err != nil {
@@ -201,14 +198,10 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Name:  "replace",
 							Usage: "replace note with same title",
 						},
-						cli.BoolFlag{
-							Name:   "no-stdout",
-							Usage:  "don't display stdout",
-							Hidden: true,
-						},
+
 					},
 					Action: func(c *cli.Context) error {
-						if !c.Bool("no-stdout") {
+						if !c.GlobalBool("no-stdout") {
 							display = true
 						}
 						title := c.String("title")
@@ -289,14 +282,10 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Name:  "uuid",
 							Usage: "unique id of note to delete (separate multiple with commas)",
 						},
-						cli.BoolFlag{
-							Name:   "no-stdout",
-							Usage:  "don't display stdout",
-							Hidden: true,
-						},
+
 					},
 					Action: func(c *cli.Context) error {
-						if !c.Bool("no-stdout") {
+						if !c.GlobalBool("no-stdout") {
 							display = true
 						}
 						titleIn := strings.TrimSpace(c.String("title"))
@@ -354,11 +343,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						cli.StringFlag{
 							Name:  "uuid",
 							Usage: "unique id of note to delete (separate multiple with commas)",
-						},
-						cli.BoolFlag{
-							Name:   "no-stdout",
-							Usage:  "don't display stdout",
-							Hidden: true,
 						},
 					},
 					Action: func(c *cli.Context) error {
@@ -425,14 +409,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Name:  "ignore-case",
 					Usage: "ignore case when matching",
 				},
-				cli.BoolFlag{
-					Name:   "no-stdout",
-					Usage:  "don't display stdout",
-					Hidden: true,
-				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.Bool("no-stdout") {
+				if !c.GlobalBool("no-stdout") {
 					display = true
 				}
 				findTitle := c.String("find-title")
@@ -499,17 +478,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Value: "json",
 							Usage: "output format",
 						},
-						cli.BoolFlag{
-							Name:   "no-stdout",
-							Usage:  "don't display stdout",
-							Hidden: true,
-						},
 					},
 					OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
 						return err
 					},
 					Action: func(c *cli.Context) error {
-						if !c.Bool("no-stdout") {
+						if !c.GlobalBool("no-stdout") {
 							display = true
 						}
 
@@ -654,17 +628,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Value: "json",
 							Usage: "output format",
 						},
-						cli.BoolFlag{
-							Name:   "no-stdout",
-							Usage:  "don't display stdout",
-							Hidden: true,
-						},
 					},
 					OnUsageError: func(c *cli.Context, err error, isSubcommand bool) error {
 						return err
 					},
 					Action: func(c *cli.Context) error {
-						if !c.Bool("no-stdout") {
+						if !c.GlobalBool("no-stdout") {
 							display = true
 						}
 						inTitle := strings.TrimSpace(c.String("title"))
@@ -844,14 +813,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Value: "json",
 							Usage: "output format",
 						},
-						cli.BoolFlag{
-							Name:   "no-stdout",
-							Usage:  "don't display stdout",
-							Hidden: true,
-						},
 					},
 					Action: func(c *cli.Context) error {
-						if !c.Bool("no-stdout") {
+						if !c.GlobalBool("no-stdout") {
 							display = true
 						}
 						uuid := c.String("uuid")
@@ -1022,14 +986,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Name:  "output (default: current directory)",
 					Usage: "output path",
 				},
-				cli.BoolFlag{
-					Name:   "no-stdout",
-					Usage:  "don't display stdout",
-					Hidden: true,
-				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.Bool("no-stdout") {
+				if !c.GlobalBool("no-stdout") {
 					display = true
 				}
 				outputPath := strings.TrimSpace(c.String("output"))
@@ -1077,7 +1036,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.Bool("no-stdout") {
+				if !c.GlobalBool("no-stdout") {
 					display = true
 				}
 				inputPath := strings.TrimSpace(c.String("file"))
@@ -1118,14 +1077,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Name:  "email",
 					Usage: "email address",
 				},
-				cli.BoolFlag{
-					Name:   "no-stdout",
-					Usage:  "don't display stdout",
-					Hidden: true,
-				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.Bool("no-stdout") {
+				if !c.GlobalBool("no-stdout") {
 					display = true
 				}
 				var apiServer string
@@ -1204,14 +1158,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Name:  "settings",
 					Usage: "wipe settings also",
 				},
-				cli.BoolFlag{
-					Name:   "no-stdout",
-					Usage:  "don't display stdout",
-					Hidden: true,
-				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.Bool("no-stdout") {
+				if !c.GlobalBool("no-stdout") {
 					display = true
 				}
 				settings := getSettings()
@@ -1225,7 +1174,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					return err
 				}
 				wipeConfig := sncli.WipeConfig{
-					Session: session,
+					Session:  session,
 					Settings: c.Bool("settings"),
 				}
 				var numWiped int
