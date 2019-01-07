@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"github.com/jonhadfield/sn-cli"
-	"gopkg.in/urfave/cli.v1"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -17,8 +15,10 @@ import (
 	"fmt"
 
 	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/sn-cli"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
+	"gopkg.in/urfave/cli.v1"
 	"gopkg.in/yaml.v2"
 )
 
@@ -198,7 +198,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Name:  "replace",
 							Usage: "replace note with same title",
 						},
-
 					},
 					Action: func(c *cli.Context) error {
 						if !c.GlobalBool("no-stdout") {
@@ -282,7 +281,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Name:  "uuid",
 							Usage: "unique id of note to delete (separate multiple with commas)",
 						},
-
 					},
 					Action: func(c *cli.Context) error {
 						if !c.GlobalBool("no-stdout") {
