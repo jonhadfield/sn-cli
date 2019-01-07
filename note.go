@@ -112,13 +112,10 @@ func (input *GetNoteConfig) Run() (output gosn.Items, err error) {
 		return
 	}
 	gio.Items.DeDupe()
-	ei := gio.Items
-	var di gosn.DecryptedItems
-	di, err = ei.Decrypt(input.Session.Mk, input.Session.Ak)
+	output, err = gio.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return
 	}
-	output, err = di.Parse()
 	output.Filter(input.Filters)
 	return
 }
@@ -176,13 +173,11 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 
 	gio.Items.DeDupe()
 	ei := gio.Items
-	var di gosn.DecryptedItems
-	di, err = ei.Decrypt(session.Mk, session.Ak)
+	var notes gosn.Items
+	notes, err = ei.DecryptAndParse(session.Mk, session.Ak)
 	if err != nil {
 		return
 	}
-	var notes gosn.Items
-	notes, err = di.Parse()
 	notes.Filter(itemFilter)
 	var notesToDelete gosn.Items
 	for _, item := range notes {

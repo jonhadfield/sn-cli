@@ -222,14 +222,8 @@ func (input *WipeConfig) Run() (int, error) {
 		return 0, err
 	}
 	output.Items.DeDupe()
-	ei := output.Items
-	var di gosn.DecryptedItems
-	di, err = ei.Decrypt(input.Session.Mk, input.Session.Ak)
-	if err != nil {
-		return 0, err
-	}
 	var pi gosn.Items
-	pi, err = di.Parse()
+	pi, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return 0, err
 	}
@@ -291,11 +285,9 @@ func (input *FixupConfig) Run() error {
 		return err
 	}
 	output.Items.DeDupe()
-	ei := output.Items
-	var di gosn.DecryptedItems
-	di, err = ei.Decrypt(input.Session.Mk, input.Session.Ak)
 	var pi gosn.Items
-	pi, err = di.Parse()
+	pi, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
+
 	var missingContentType gosn.Items
 	var missingContent gosn.Items
 	var notesToTitleFix gosn.Items

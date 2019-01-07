@@ -39,19 +39,13 @@ func (i *ImportConfig) Run() error {
 	if err != nil {
 		return err
 	}
-	var decItemsToImport gosn.DecryptedItems
-	decItemsToImport, err = encItemsToImport.Decrypt(i.Session.Mk, i.Session.Ak)
-	if err != nil {
-		return err
-	}
 	var itemsToImport gosn.Items
-	itemsToImport, err = decItemsToImport.Parse()
+	itemsToImport, err = encItemsToImport.DecryptAndParse(i.Session.Mk, i.Session.Ak)
 	if err != nil {
 		return err
 	}
 
 	// get existing encItemsToImport
-	var existingDecryptedItems gosn.DecryptedItems
 	var existingItems gosn.Items
 	gii := gosn.GetItemsInput{
 		Session: i.Session,
@@ -61,8 +55,7 @@ func (i *ImportConfig) Run() error {
 	if err != nil {
 		return err
 	}
-	existingDecryptedItems, err = gio.Items.Decrypt(i.Session.Mk, i.Session.Ak)
-	existingItems, err = existingDecryptedItems.Parse()
+	existingItems, err = gio.Items.DecryptAndParse(i.Session.Mk, i.Session.Ak)
 	if err != nil {
 		return err
 	}

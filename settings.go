@@ -17,10 +17,8 @@ func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 	}
 	var output gosn.GetItemsOutput
 	output, err = gosn.GetItems(getItemsInput)
-
 	output.Items.DeDupe()
-	ei := output.Items
-	settings, err = ei.DecryptAndParse(input.Session.Mk, input.Session.Ak)
+	settings, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return nil, err
 	}

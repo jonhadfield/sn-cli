@@ -40,10 +40,8 @@ func TestWipeWith50(t *testing.T) {
 
 	gno.Items.DeDupe()
 	ei := gno.Items
-	var di gosn.DecryptedItems
-	di, err = ei.Decrypt(testSession.Mk, testSession.Ak)
 	var pi gosn.Items
-	pi, err = di.Parse()
+	pi, err = ei.DecryptAndParse(testSession.Mk, testSession.Ak)
 	pi.Filter(filters)
 
 	assert.Equal(t, 50, len(pi))
