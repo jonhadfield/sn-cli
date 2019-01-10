@@ -17,6 +17,9 @@ func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 	}
 	var output gosn.GetItemsOutput
 	output, err = gosn.GetItems(getItemsInput)
+	if err != nil {
+		return nil, err
+	}
 	output.Items.DeDupe()
 	settings, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
 	if err != nil {

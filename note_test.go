@@ -37,11 +37,12 @@ func TestWipeWith50(t *testing.T) {
 	}
 	var gno gosn.GetItemsOutput
 	gno, err = gosn.GetItems(gni)
-
+	assert.NoError(t, err)
 	gno.Items.DeDupe()
 	ei := gno.Items
 	var pi gosn.Items
 	pi, err = ei.DecryptAndParse(testSession.Mk, testSession.Ak)
+	assert.NoError(t, err)
 	pi.Filter(filters)
 
 	assert.Equal(t, 50, len(pi))

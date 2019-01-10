@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -11,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"fmt"
 
 	"github.com/jonhadfield/gosn"
 	"github.com/jonhadfield/sn-cli"
@@ -46,6 +45,10 @@ type Settings struct {
 
 func main() {
 	usr, err := user.Current()
+	if err != nil {
+		fmt.Printf("error: %+v\n", err)
+		os.Exit(1)
+	}
 	settingsPath = path.Join(usr.HomeDir, ".sn-cli")
 	msg, display, err := startCLI(os.Args)
 	if err != nil {
@@ -156,7 +159,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 
-						tags := commaSplit(tagInput)
+						tags := sncli.CommaSplit(tagInput)
 						appAddTagConfig := sncli.AddTagConfig{
 							Session: session,
 							Tags:    tags,
@@ -228,7 +231,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 
-						processedTags := commaSplit(c.String("tag"))
+						processedTags := sncli.CommaSplit(c.String("tag"))
 
 						AddNoteConfig := sncli.AddNoteConfig{
 							Session: session,
@@ -303,8 +306,8 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if err != nil {
 							return err
 						}
-						tags := commaSplit(titleIn)
-						uuids := commaSplit(uuidIn)
+						tags := sncli.CommaSplit(titleIn)
+						uuids := sncli.CommaSplit(uuidIn)
 
 						DeleteTagConfig := sncli.DeleteTagConfig{
 							Session:   session,
@@ -361,7 +364,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if err != nil {
 							return err
 						}
-						processedNotes := commaSplit(title)
+						processedNotes := sncli.CommaSplit(title)
 
 						DeleteNoteConfig := sncli.DeleteNoteConfig{
 							Session:    session,
@@ -429,7 +432,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					fmt.Println("you must provide either text, title, or tag to search for")
 					return cli.ShowSubcommandHelp(c)
 				}
-				processedTags := commaSplit(newTags)
+				processedTags := sncli.CommaSplit(newTags)
 
 				appConfig := sncli.TagItemsConfig{
 					Session:    session,
@@ -537,7 +540,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 								settingContentYAML := sncli.SettingContentYAML{
 									Title:          rt.Content.GetTitle(),
-									ItemReferences: itemRefsToYaml(rt.Content.References()),
+									ItemReferences: sncli.ItemRefsToYaml(rt.Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
@@ -559,7 +562,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 								settingContentJSON := sncli.SettingContentJSON{
 									Title:          rt.Content.GetTitle(),
-									ItemReferences: itemRefsToJSON(rt.Content.References()),
+									ItemReferences: sncli.ItemRefsToJSON(rt.Content.References()),
 									AppData:        settingContentAppDataContent,
 								}
 
@@ -576,7 +579,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							if count {
 								msg = "0"
 							} else {
-								msg = "no matches."
+								msg = msgNoMatches
 							}
 						} else if count {
 							msg = strconv.Itoa(numResults)
@@ -650,7 +653,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 						// add uuid filters
 						if inUUID != "" {
-							for _, uuid := range commaSplit(inUUID) {
+							for _, uuid := range sncli.CommaSplit(inUUID) {
 								titleFilter := gosn.Filter{
 									Type:       "Tag",
 									Key:        "uuid",
@@ -667,7 +670,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 
 						if inTitle != "" {
-							for _, title := range commaSplit(inTitle) {
+							for _, title := range sncli.CommaSplit(inTitle) {
 								titleFilter := gosn.Filter{
 									Type:       "Tag",
 									Key:        "Title",
@@ -722,7 +725,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 								tagContentYAML := sncli.TagContentYAML{
 									Title:          rt.Content.GetTitle(),
-									ItemReferences: itemRefsToYaml(rt.Content.References()),
+									ItemReferences: sncli.ItemRefsToYaml(rt.Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
@@ -744,7 +747,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 								tagContentJSON := sncli.TagContentJSON{
 									Title:          rt.Content.GetTitle(),
-									ItemReferences: itemRefsToJSON(rt.Content.References()),
+									ItemReferences: sncli.ItemRefsToJSON(rt.Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
@@ -761,7 +764,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							if count {
 								msg = "0"
 							} else {
-								msg = "no matches."
+								msg = msgNoMatches
 							}
 						} else if count {
 							msg = strconv.Itoa(numResults)
@@ -856,7 +859,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
 						}
-						processedTags := commaSplit(c.String("tag"))
+						processedTags := sncli.CommaSplit(c.String("tag"))
 
 						if len(processedTags) > 0 {
 							for _, t := range processedTags {
@@ -904,7 +907,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 								noteContentYAML := sncli.NoteContentYAML{
 									Title:          rt.Content.GetTitle(),
 									Text:           rt.Content.GetText(),
-									ItemReferences: itemRefsToYaml(rt.Content.References()),
+									ItemReferences: sncli.ItemRefsToYaml(rt.Content.References()),
 									AppData:        noteContentAppDataContent,
 								}
 
@@ -926,7 +929,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 								noteContentJSON := sncli.NoteContentJSON{
 									Title:          rt.Content.GetTitle(),
 									Text:           rt.Content.GetText(),
-									ItemReferences: itemRefsToJSON(rt.Content.References()),
+									ItemReferences: sncli.ItemRefsToJSON(rt.Content.References()),
 									AppData:        noteContentAppDataContent,
 								}
 
@@ -944,7 +947,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							if count {
 								msg = "0"
 							} else {
-								msg = "no matches."
+								msg = msgNoMatches
 							}
 						} else if count {
 							msg = strconv.Itoa(numResults)
@@ -1382,36 +1385,4 @@ func getSession(server string, settings *Settings, cache bool) (gosn.Session, st
 	}
 
 	return sess, email, err
-}
-
-func itemRefsToYaml(irs []gosn.ItemReference) []sncli.ItemReferenceYAML {
-	var iRefs []sncli.ItemReferenceYAML
-	for _, ref := range irs {
-		iRef := sncli.ItemReferenceYAML{
-			UUID:        ref.UUID,
-			ContentType: ref.ContentType,
-		}
-		iRefs = append(iRefs, iRef)
-	}
-	return iRefs
-}
-
-func itemRefsToJSON(irs []gosn.ItemReference) []sncli.ItemReferenceJSON {
-	var iRefs []sncli.ItemReferenceJSON
-	for _, ref := range irs {
-		iRef := sncli.ItemReferenceJSON{
-			UUID:        ref.UUID,
-			ContentType: ref.ContentType,
-		}
-		iRefs = append(iRefs, iRef)
-	}
-	return iRefs
-}
-
-func commaSplit(input string) []string {
-	o := strings.Split(input, ",")
-	if len(o) == 1 && len(o[0]) == 0 {
-		return nil
-	}
-	return o
 }

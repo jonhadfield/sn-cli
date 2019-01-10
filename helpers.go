@@ -4,6 +4,8 @@ import (
 	"encoding/gob"
 	"os"
 	"strings"
+
+	"github.com/jonhadfield/gosn"
 )
 
 func StringInSlice(inStr string, inSlice []string, matchCase bool) bool {
@@ -47,4 +49,36 @@ func readGob(filePath string, object interface{}) error {
 	}
 	_ = file.Close()
 	return err
+}
+
+func ItemRefsToYaml(irs []gosn.ItemReference) []ItemReferenceYAML {
+	iRefs := make([]ItemReferenceYAML, len(irs))
+	for _, ref := range irs {
+		iRef := ItemReferenceYAML{
+			UUID:        ref.UUID,
+			ContentType: ref.ContentType,
+		}
+		iRefs = append(iRefs, iRef)
+	}
+	return iRefs
+}
+
+func ItemRefsToJSON(irs []gosn.ItemReference) []ItemReferenceJSON {
+	iRefs := make([]ItemReferenceJSON, len(irs))
+	for _, ref := range irs {
+		iRef := ItemReferenceJSON{
+			UUID:        ref.UUID,
+			ContentType: ref.ContentType,
+		}
+		iRefs = append(iRefs, iRef)
+	}
+	return iRefs
+}
+
+func CommaSplit(input string) []string {
+	o := strings.Split(input, ",")
+	if len(o) == 1 && len(o[0]) == 0 {
+		return nil
+	}
+	return o
 }

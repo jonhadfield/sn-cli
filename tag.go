@@ -102,7 +102,9 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 
 	var eTagsToPush gosn.EncryptedItems
 	eTagsToPush, err = tagsToPush.Encrypt(input.session.Mk, input.session.Ak)
-
+	if err != nil {
+		return
+	}
 	if len(tagsToPush) > 0 {
 		pii := gosn.PutItemsInput{
 			Items:     eTagsToPush,
@@ -165,7 +167,9 @@ func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
 	}
 	var output gosn.GetItemsOutput
 	output, err = gosn.GetItems(getItemsInput)
-
+	if err != nil {
+		return nil, err
+	}
 	output.Items.DeDupe()
 	tags, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
 	if err != nil {
@@ -202,6 +206,9 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 		SyncToken: syncToken,
 	}
 	output, err := gosn.GetItems(getItemsInput)
+	if err != nil {
+		return 0, output.SyncToken, err
+	}
 	output.Items.DeDupe()
 	var tags gosn.Items
 	tags, err = output.Items.DecryptAndParse(session.Mk, session.Ak)
@@ -240,7 +247,7 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 		newSyncToken = putItemsOutput.ResponseBody.SyncToken
 	}
 	noDeleted = len(tagsToDelete)
-	return
+	return noDeleted, newSyncToken, err
 }
 
 type addTagsInput struct {

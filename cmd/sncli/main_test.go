@@ -46,11 +46,13 @@ func TestAddDeleteNote(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, msg, msgAddSuccess)
 	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
+	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
 	msg, _, err = startCLI([]string{"sncli", "delete", "note", "--title", "testNote"})
 	assert.NoError(t, err)
 	assert.Equal(t, msg, fmt.Sprintf("1 %s", msgDeleted))
 	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
+	assert.NoError(t, err)
 	assert.Equal(t, "0", msg)
 }
 

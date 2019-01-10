@@ -37,7 +37,8 @@ func (input *StatsConfig) Run() error {
 	var oldestNote, newestNote, lastUpdatedNote time.Time
 	var deletedItemsUUIDs []string
 	var missingContentUUIDs []string
-	var allUUIDs, duplicateUUIDs []string
+	allUUIDs := make([]string, len(items))
+	var duplicateUUIDs []string
 	var tCounter typeCounter
 	tCounter.counts = make(map[string]int64)
 	for _, item := range items {

@@ -49,7 +49,7 @@ func CliSignIn(email, password, apiServer string) (session gosn.Session, err err
 		}
 	}
 	session = sOutput.Session
-	return
+	return session, err
 }
 
 func GetCredentials(inServer string) (email, password, apiServer, errMsg string) {
@@ -90,5 +90,5 @@ func GetCredentials(inServer string) (email, password, apiServer, errMsg string)
 	default:
 		apiServer = SNServerURL
 	}
-	return
+	return email, password, apiServer, errMsg
 }

@@ -58,7 +58,9 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 	newNoteItems := gosn.Items{*newNote}
 	var eNewNoteItems gosn.EncryptedItems
 	eNewNoteItems, err = newNoteItems.Encrypt(input.session.Mk, input.session.Ak)
-
+	if err != nil {
+		return
+	}
 	pii := gosn.PutItemsInput{
 		Session:   input.session,
 		SyncToken: input.syncToken,
@@ -84,7 +86,7 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 		}
 	}
 
-	return
+	return newSyncToken, noteUUID, err
 }
 
 func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
@@ -205,5 +207,5 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 		noDeleted = len(notesToDelete)
 		newSyncToken = putItemsOutput.ResponseBody.SyncToken
 	}
-	return
+	return noDeleted, newSyncToken, err
 }

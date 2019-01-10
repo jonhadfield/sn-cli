@@ -26,6 +26,9 @@ func (i *ExportConfig) Run() error {
 		Session: i.Session,
 	}
 	gio, err := gosn.GetItems(gii)
+	if err != nil {
+		return err
+	}
 	err = writeGob(i.File, gio.Items)
 	return err
 }
@@ -91,6 +94,9 @@ func (i *ImportConfig) Run() error {
 
 	var encFinalList gosn.EncryptedItems
 	encFinalList, err = finalList.Encrypt(i.Session.Mk, i.Session.Ak)
+	if err != nil {
+		return err
+	}
 	// push item
 	pii := gosn.PutItemsInput{
 		Session: i.Session,
