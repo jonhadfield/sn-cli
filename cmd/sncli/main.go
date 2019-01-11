@@ -1225,8 +1225,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			},
 		},
 		{
-			Name:  "test-data",
-			Usage: "create test data",
+			Name:   "test-data",
+			Usage:  "create test data",
+			Hidden: true,
 			Subcommands: []cli.Command{
 				{
 					Name:  "tags",
