@@ -24,8 +24,11 @@ COMMANDS:
 Please raise an issue if you find any problems.*
 
 ## changelog
-
-0.0.5 - added option to save session (unencrypted for now)
+0.0.9 - minor fix  
+0.0.8 - add encrypted export and import feature  
+0.0.7 - add fixup option to resolve note and tag issues, retry logic for item puts  
+0.0.6 - fix count issue  
+0.0.5 - added option to save session (unencrypted for now)  
 0.0.4 - added Windows support  
 0.0.3 - added note content from file  
 0.0.2 - added bash completion  
@@ -37,7 +40,7 @@ Please raise an issue if you find any problems.*
 features in progess:
 - ~~bash completion~~ DONE
 - ~~test and document for Windows users~~ DONE
-- export: plaintext or encrypted
+- ~~export: plaintext or encrypted~~ DONE
 - local caching of encrypted items
 - option to securely persist session between commands
 - manage preferences
