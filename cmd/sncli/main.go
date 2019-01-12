@@ -469,6 +469,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Name:    "settings",
 					Aliases: []string{"setting"},
 					Usage:   "get settings",
+					Hidden:  true,
 					Flags: []cli.Flag{
 						cli.BoolFlag{
 							Name:  "count",
