@@ -13,11 +13,13 @@ COMMANDS:
      delete     delete items
      tag        tag items
      get        get items
+     export     export data
+     import     import data
      register   register a new user
      stats      show statistics
      wipe       deletes all tags and notes
      fixup      find and fix item issues
-     test-data  create test data
+     test-data  create test data (hidden option)
 ```
 
 *NOTE: This is a very early release so please take a backup using one of the official apps before using this to make any changes.
