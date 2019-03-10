@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 
 	"golang.org/x/crypto/ssh/terminal"
 
@@ -69,7 +70,7 @@ func GetCredentials(inServer string) (email, password, apiServer, errMsg string)
 		password = viper.GetString("password")
 	} else {
 		fmt.Print("password: ")
-		bytePassword, err := terminal.ReadPassword(0)
+		bytePassword, err := terminal.ReadPassword(syscall.Stdin)
 		fmt.Println()
 		if err == nil {
 			password = string(bytePassword)
