@@ -70,7 +70,7 @@ func GetCredentials(inServer string) (email, password, apiServer, errMsg string)
 		password = viper.GetString("password")
 	} else {
 		fmt.Print("password: ")
-		bytePassword, err := terminal.ReadPassword(syscall.Stdin)
+		bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 		fmt.Println()
 		if err == nil {
 			password = string(bytePassword)
