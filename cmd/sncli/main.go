@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/jonhadfield/gosn"
@@ -1098,20 +1099,13 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				var password string
 				fmt.Print("password: ")
-				var bytePassword []byte
-				bytePassword, err = terminal.ReadPassword(0)
+				bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+				fmt.Println()
 				if err == nil {
 					password = string(bytePassword)
-					fmt.Println()
 				}
-				if len(password) == 0 {
-					return errors.New("password cannot be empty")
-				}
-				if err != nil {
-					return err
-				}
-				if strings.TrimSpace(password) == "" {
-					return errors.New("password not defined")
+				if len(strings.TrimSpace(password)) == 0 {
+					return errors.New("password required")
 				}
 				registerConfig := sncli.RegisterConfig{
 					Email:     c.String("email"),
