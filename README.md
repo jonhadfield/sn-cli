@@ -26,7 +26,8 @@ COMMANDS:
 Please raise an issue if you find any problems.*
 
 ## changelog
-0.0.11 - fix ReadPassword bug on Windows    
+0.0.12 - fix Register bug on Windows  
+0.0.11 - fix ReadPassword bug on Windows  
 0.0.10 - update dependencies and fix gosn issue  
 0.0.9 - minor fix  
 0.0.8 - add encrypted export and import feature  
