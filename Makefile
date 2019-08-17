@@ -17,7 +17,7 @@ fmt:
 	goimports -w .
 
 lint:
-	golangci-lint run --enable-all --disable lll
+	golangci-lint run --enable-all --disable lll --disable misspell --disable gochecknoglobals
 
 ci: lint test
 
