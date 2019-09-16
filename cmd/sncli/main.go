@@ -23,9 +23,9 @@ import (
 	"github.com/jonhadfield/gosn"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	keyring "github.com/zalando/go-keyring"
+	"github.com/zalando/go-keyring"
 	"golang.org/x/crypto/ssh/terminal"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 const (
