@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	sncli "github.com/jonhadfield/sn-cli"
 	"io"
 	"log"
 	"os"
@@ -20,12 +21,11 @@ import (
 	"time"
 
 	"github.com/jonhadfield/gosn"
-	"github.com/jonhadfield/sn-cli"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	"github.com/zalando/go-keyring"
+	keyring "github.com/zalando/go-keyring"
 	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -1605,7 +1605,6 @@ func GetSessionFromKeyring(key string) (session string, err error) {
 	}
 	return session, err
 }
-
 
 //func GetSession(loadSession bool, sessionKey, server string) (session gosn.Session, email string, err error) {
 //	if loadSession {

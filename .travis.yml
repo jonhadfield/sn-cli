@@ -1,18 +1,14 @@
 language: go
 
 go:
-  - 1.12.x
+  - 1.13.x
+  - tip
 
 os:
   - linux
   - osx
 
 sudo: false
-
-#before_install:
-#- go get github.com/axw/gocov/gocov
-#- go get github.com/mattn/goveralls
-#- if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 
 install: true
 
@@ -22,4 +18,3 @@ env:
 script:
   - go build
   - go test -v -p 1 -parallel 1 -failfast ./...
-#  - $GOPATH/bin/goveralls -service=travis-ci
