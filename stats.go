@@ -15,7 +15,8 @@ func (input *StatsConfig) Run() error {
 		gosn.SetDebugLogger(log.Println)
 	}
 	getItemsInput := gosn.GetItemsInput{
-		Session: input.Session,
+		Session:  input.Session,
+		PageSize: SNPageSize,
 	}
 
 	var err error
