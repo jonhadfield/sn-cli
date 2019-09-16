@@ -11,10 +11,12 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
+	github.com/urfave/cli v1.22.1
 	github.com/zalando/go-keyring v0.0.0-20190715212148-76787ff3b3bd
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
 	golang.org/x/sys v0.0.0-20190712062909-fae7ac547cb7 // indirect
 	golang.org/x/text v0.3.2 // indirect
-	gopkg.in/urfave/cli.v1 v1.20.0
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+go 1.13
