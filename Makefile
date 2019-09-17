@@ -41,9 +41,14 @@ build-all:
 install:
 	go install ./cmd/...
 
+build-linux:
+	GOOS=linux   CGO_ENABLED=0 GOARCH=amd64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_linux_amd64"   cmd/sncli/main.go
+
 mac-install: build
 	install .local_dist/sncli_darwin_amd64 /usr/local/bin/sn
 
+linux-install: build-linux
+	sudo install .local_dist/sncli_linux_amd64 /usr/local/bin/sn
 
 critic:
 	gocritic check-project .
