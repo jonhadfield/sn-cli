@@ -2,56 +2,13 @@ package sncli
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"syscall"
 
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/jonhadfield/gosn"
 	"github.com/spf13/viper"
 )
-
-func CliSignIn(email, password, apiServer string) (session gosn.Session, err error) {
-	sInput := gosn.SignInInput{
-		Email:     email,
-		Password:  password,
-		APIServer: apiServer,
-	}
-	sOutput, signInErr := gosn.SignIn(sInput)
-	if signInErr != nil {
-		if signInErr.Error() == "requestMFA" {
-			var tokenValue string
-			if err != nil {
-				fmt.Println(err)
-				if tokenValue == "" {
-					err = fmt.Errorf("token required to authenticate this account")
-					return
-				}
-			} else {
-				fmt.Print("token: ")
-				_, err = fmt.Scanln(&tokenValue)
-				if err != nil {
-					return
-				}
-				sInput.TokenName = sOutput.TokenName
-				sInput.TokenVal = strings.TrimSpace(tokenValue)
-				sOutput, signInErr = gosn.SignIn(sInput)
-
-				session = sOutput.Session
-				if signInErr != nil {
-					err = signInErr
-					return
-				}
-			}
-		} else {
-			fmt.Println(signInErr.Error())
-			os.Exit(1)
-		}
-	}
-	session = sOutput.Session
-	return session, err
-}
 
 func GetCredentials(inServer string) (email, password, apiServer, errMsg string) {
 	switch {

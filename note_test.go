@@ -12,7 +12,7 @@ import (
 var testSession gosn.Session
 
 func TestMain(m *testing.M) {
-	testSession, _ = CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
+	testSession, _ = gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	os.Exit(m.Run())
 }
 
@@ -221,7 +221,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	defer cleanUp(&testSession)
 	numNotes := 100
 	textParas := 10
-	session, err := CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
+	session, err := gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	assert.NoError(t, err)
 	cleanUp(&session)
 

@@ -1371,7 +1371,7 @@ func getSessionFromUser(server string) (gosn.Session, string, error) {
 		fmt.Printf("\nerror: %s\n\n", errMsg)
 		return sess, email, err
 	}
-	sess, err = sncli.CliSignIn(email, password, apiServer)
+	sess, err = gosn.CliSignIn(email, password, apiServer)
 	if err != nil {
 		return sess, email, err
 
@@ -1598,7 +1598,7 @@ func GetSessionFromKeyring(key string) (session string, err error) {
 			return
 		}
 		if len(strings.Split(session, ";")) != 5 {
-			err = fmt.Errorf("invalid session or wrong encryption key provided")
+			err = fmt.Errorf("invalid session or wrong key provided")
 		}
 	} else {
 		session = rS
