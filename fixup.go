@@ -141,7 +141,7 @@ func (input *FixupConfig) Run() error {
 		if err != nil {
 			return err
 		}
-		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
+		if StringInSlice(response, []string{"y", "yes"}, false) {
 			var eMissingContent gosn.EncryptedItems
 			eMissingContent, err = missingContent.Encrypt(input.Session.Mk, input.Session.Ak)
 			if err != nil {
@@ -170,7 +170,7 @@ func (input *FixupConfig) Run() error {
 		if err != nil {
 			return err
 		}
-		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
+		if StringInSlice(response, []string{"y", "yes"}, false) {
 			var eNotesToTitleFix gosn.EncryptedItems
 			eNotesToTitleFix, err = notesToTitleFix.Encrypt(input.Session.Mk, input.Session.Ak)
 			if err != nil {

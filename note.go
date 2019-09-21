@@ -190,22 +190,23 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 		}
 	}
 
+	if notesToDelete == nil {
+		return
+	}
 	var eNotesToDelete gosn.EncryptedItems
 	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak)
 
-	if len(notesToDelete) > 0 {
-		pii := gosn.PutItemsInput{
-			Session:   session,
-			Items:     eNotesToDelete,
-			SyncToken: syncToken,
-		}
-		var putItemsOutput gosn.PutItemsOutput
-		putItemsOutput, err = gosn.PutItems(pii)
-		if err != nil {
-			return
-		}
-		noDeleted = len(notesToDelete)
-		newSyncToken = putItemsOutput.ResponseBody.SyncToken
+	pii := gosn.PutItemsInput{
+		Session:   session,
+		Items:     eNotesToDelete,
+		SyncToken: syncToken,
 	}
+	var putItemsOutput gosn.PutItemsOutput
+	putItemsOutput, err = gosn.PutItems(pii)
+	if err != nil {
+		return
+	}
+	noDeleted = len(notesToDelete)
+	newSyncToken = putItemsOutput.ResponseBody.SyncToken
 	return noDeleted, newSyncToken, err
 }
