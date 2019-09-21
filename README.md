@@ -19,6 +19,7 @@ COMMANDS:
      stats      show statistics
      wipe       deletes all tags and notes
      fixup      find and fix item issues
+     session    manage session credentials
      test-data  create test data (hidden option)
 ```
 
