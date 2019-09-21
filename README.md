@@ -22,10 +22,8 @@ COMMANDS:
      test-data  create test data (hidden option)
 ```
 
-*NOTE: This is a very early release so please take a backup using one of the official apps before using this to make any changes.
-Please raise an issue if you find any problems.*
-
 ## changelog
+0.0.13 - enable storing of session in MacOS and Linux with optional encryption  
 0.0.12 - fix Register bug on Windows  
 0.0.11 - fix ReadPassword bug on Windows  
 0.0.10 - update dependencies and fix gosn issue  
@@ -47,7 +45,7 @@ features in progess:
 - ~~test and document for Windows users~~ DONE
 - ~~export: plaintext or encrypted~~ DONE
 - local caching of encrypted items
-- option to securely persist session between commands
+- ~~option to securely persist session between commands~~ DONE
 - manage preferences
 - Windows MSI
 
