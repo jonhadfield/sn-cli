@@ -102,7 +102,7 @@ func GetSessionFromKeyring(key string) (session string, err error) {
 		if key == "" {
 			fmt.Printf("encryption key: ")
 			var byteKey []byte
-			byteKey, err = terminal.ReadPassword(syscall.Stdin)
+			byteKey, err = terminal.ReadPassword(int(syscall.Stdin))
 			fmt.Println()
 			if err == nil {
 				key = string(byteKey)
@@ -136,7 +136,7 @@ func AddSession(snServer, inKey string) (res string, err error) {
 	if inKey == "." {
 		var byteKey []byte
 		fmt.Print("session key: ")
-		byteKey, err = terminal.ReadPassword(syscall.Stdin)
+		byteKey, err = terminal.ReadPassword(int(syscall.Stdin))
 		if err != nil {
 			return
 		}
@@ -224,7 +224,7 @@ func GetSession(loadSession bool, sessionKey, server string) (session gosn.Sessi
 			if sessionKey == "" {
 				var byteKey []byte
 				fmt.Print("session key: ")
-				byteKey, err = terminal.ReadPassword(syscall.Stdin)
+				byteKey, err = terminal.ReadPassword(int(syscall.Stdin))
 				if err != nil {
 					return
 				}
