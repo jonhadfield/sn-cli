@@ -91,9 +91,13 @@ func Encrypt(key []byte, text string) string {
 	return base64.URLEncoding.EncodeToString(ciphertext)
 }
 
-func GetSessionFromKeyring(key string) (session string, err error) {
+func GetSessionFromKeyring(key string, k keyring.Keyring) (session string, err error) {
 	var rS string
-	rS, err = keyring.Get(KeyringService, KeyringApplicationName)
+	if k == nil {
+		rS, err = keyring.Get(KeyringService, KeyringApplicationName)
+	} else {
+		rS, err = k.Get(KeyringService, KeyringApplicationName)
+	}
 	if err != nil {
 		return
 	}
