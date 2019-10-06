@@ -206,7 +206,11 @@ func GetSessionFromUser(server string) (gosn.Session, string, error) {
 	var password, apiServer, errMsg string
 	email, password, apiServer, errMsg = GetCredentials(server)
 	if errMsg != "" {
-		fmt.Printf("\nerror: %s\n\n", errMsg)
+		if strings.Contains(errMsg, "password not defined") {
+			err = fmt.Errorf("password not defined")
+		} else {
+			fmt.Printf("\nerror: %s\n\n", errMsg)
+		}
 		return sess, email, err
 	}
 	sess, err = gosn.CliSignIn(email, password, apiServer)
