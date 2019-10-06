@@ -1297,7 +1297,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				if sStatus {
 					var s string
-					s, err = auth.GetSessionFromKeyring(sessKey)
+					s, err = auth.GetSessionFromKeyring(sessKey, nil)
 					if err != nil {
 						return err
 					}
