@@ -316,3 +316,26 @@ func Decrypt(key []byte, cryptoText string) (pt string, err error) {
 	pt = fmt.Sprintf("%s", ciphertext)
 	return
 }
+
+func SessionStatus(sKey string, k keyring.Keyring) (msg string, err error) {
+	var s, keyringContent string
+	keyringContent, err = k.Get(KeyringService, KeyringApplicationName)
+	if keyringContent == "" {
+		return "", errors.New("keyring is empty")
+	}
+	s, err = GetSessionFromKeyring(sKey, k)
+	if err != nil {
+		if strings.Contains(err.Error(), "illegal base64") {
+			err = errors.New("stored session is corrupt")
+		}
+		return
+	}
+	var email string
+	email, _, err = ParseSessionString(s)
+	if err != nil {
+		msg = fmt.Sprint("failed to parse session: ", err)
+		return
+	}
+	msg = fmt.Sprint("session found: ", email)
+	return
+}

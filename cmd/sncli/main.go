@@ -1083,8 +1083,8 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				if err != nil {
 					return err
 				}
-
-				session, _, err := auth.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+					c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
 				}
@@ -1296,18 +1296,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					return nil
 				}
 				if sStatus {
-					var s string
-					s, err = auth.GetSessionFromKeyring(sessKey, nil)
-					if err != nil {
-						return err
-					}
-					var email string
-					email, _, err = auth.ParseSessionString(s)
-					if err != nil {
-						msg = fmt.Sprint("failed to parse session: ", err)
-						return nil
-					}
-					msg = fmt.Sprint("session found: ", email)
+					msg, err = auth.SessionStatus(sessKey, nil)
 				}
 				return err
 			},
