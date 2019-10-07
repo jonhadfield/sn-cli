@@ -24,8 +24,8 @@ const (
 	SNServerURL              = "https://sync.standardnotes.org"
 	KeyringApplicationName   = "session"
 	KeyringService           = "StandardNotesCLI"
-	msgSessionRemovalSuccess = "session removed successfully"
-	msgSessionRemovalFailure = "failed to remove session"
+	MsgSessionRemovalSuccess = "session removed successfully"
+	MsgSessionRemovalFailure = "failed to remove session"
 )
 
 func GetCredentials(inServer string) (email, password, apiServer, errMsg string) {
@@ -91,63 +91,31 @@ func Encrypt(key []byte, text string) string {
 	return base64.URLEncoding.EncodeToString(ciphertext)
 }
 
-func GetSessionFromKeyring(key string, k keyring.Keyring) (session string, err error) {
-	var rS string
+func GetSessionFromKeyring(k keyring.Keyring) (s string, err error) {
 	if k == nil {
-		rS, err = keyring.Get(KeyringService, KeyringApplicationName)
-	} else {
-		rS, err = k.Get(KeyringService, KeyringApplicationName)
+		return keyring.Get(KeyringService, KeyringApplicationName)
 	}
-	if err != nil {
-		return
-	}
-	// check if Session is encrypted
-	if len(strings.Split(rS, ";")) != 5 {
-		if key == "" {
-			fmt.Printf("encryption key: ")
-			var byteKey []byte
-			byteKey, err = terminal.ReadPassword(int(syscall.Stdin))
-			fmt.Println()
-			if err == nil {
-				key = string(byteKey)
-			}
-			if len(strings.TrimSpace(key)) == 0 {
-				err = fmt.Errorf("key required")
-				return
-			}
-		}
-		if session, err = Decrypt([]byte(key), rS); err != nil {
-			return
-		}
-		if len(strings.Split(session, ";")) != 5 {
-			err = fmt.Errorf("invalid session or wrong key provided")
-		}
-	} else {
-		session = rS
-	}
-	return session, err
+	return k.Get(KeyringService, KeyringApplicationName)
 }
 
-func AddSession(snServer, inKey string) (res string, err error) {
+func AddSession(snServer, inKey string, k keyring.Keyring) (res string, err error) {
 	// check if session exists in keyring
 	var s string
-	s, err = keyring.Get(KeyringService, KeyringApplicationName)
+	s, err = GetSessionFromKeyring(k)
 	// only return an error if there's an issue accessing the keyring
 	if err != nil && !strings.Contains(err.Error(), "secret not found in keyring") {
 		return
 	}
-
 	if inKey == "." {
 		var byteKey []byte
 		fmt.Print("session key: ")
-		byteKey, err = terminal.ReadPassword(int(syscall.Stdin))
+		byteKey, err = terminal.ReadPassword(syscall.Stdin)
 		if err != nil {
 			return
 		}
 		inKey = string(byteKey)
 		fmt.Println()
 	}
-
 	if s != "" {
 		fmt.Print("replace existing session (y|n): ")
 		var resp string
@@ -164,35 +132,55 @@ func AddSession(snServer, inKey string) (res string, err error) {
 		return fmt.Sprint("failed to get session: ", err), err
 	}
 
-	rS := MakeSessionString(email, session)
+	rS := makeSessionString(email, session)
 	if inKey != "" {
 		key := []byte(inKey)
 		rS = Encrypt(key, MakeSessionString(email, session))
 	}
-	err = keyring.Set(KeyringService, KeyringApplicationName, rS)
+	err = writeSession(rS, k)
 	if err != nil {
 		return fmt.Sprint("failed to set session: ", err), err
 	}
 	return "session added successfully", err
 }
 
-func SessionExists() error {
-	eS, err := keyring.Get(KeyringService, KeyringApplicationName)
+func writeSession(s string, k keyring.Keyring) error {
+	if k == nil {
+		return keyring.Set(KeyringService, KeyringApplicationName, s)
+	}
+	return k.Set(KeyringService, KeyringApplicationName, s)
+}
+
+func makeSessionString(email string, session gosn.Session) string {
+	return fmt.Sprintf("%s;%s;%s;%s;%s", email, session.Server, session.Token, session.Ak, session.Mk)
+}
+
+func SessionExists(k keyring.Keyring) error {
+	s, err := GetSessionFromKeyring(k)
 	if err != nil {
 		return err
 	}
-	if len(eS) == 0 {
+	if len(s) == 0 {
 		return errors.New("session is empty")
 	}
 	return nil
 }
 
-func RemoveSession() string {
-	err := keyring.Delete(KeyringService, KeyringApplicationName)
-	if err != nil {
-		return fmt.Sprintf("%s: %s", msgSessionRemovalFailure, err.Error())
+// RemoveSession removes the SN session from the keyring
+func RemoveSession(k keyring.Keyring) string {
+	var err error
+	if err = SessionExists(k); err != nil {
+		return fmt.Sprintf("%s: %s", MsgSessionRemovalFailure, err.Error())
 	}
-	return msgSessionRemovalSuccess
+	if k == nil {
+		err = keyring.Delete(KeyringService, KeyringApplicationName)
+	} else {
+		err = k.Delete(KeyringService, KeyringApplicationName)
+	}
+	if err != nil {
+		return fmt.Sprintf("%s: %s", MsgSessionRemovalFailure, err.Error())
+	}
+	return MsgSessionRemovalSuccess
 }
 
 func MakeSessionString(email string, session gosn.Session) string {
@@ -317,13 +305,48 @@ func Decrypt(key []byte, cryptoText string) (pt string, err error) {
 	return
 }
 
+func getSessionContent(key, rawSession string) (session string, err error) {
+	// check if Session is encrypted
+	if len(strings.Split(rawSession, ";")) != 5 {
+		if key == "" {
+			fmt.Printf("encryption key: ")
+			var byteKey []byte
+			byteKey, err = terminal.ReadPassword(int(syscall.Stdin))
+			fmt.Println()
+			if err == nil {
+				key = string(byteKey)
+			}
+			if len(strings.TrimSpace(key)) == 0 {
+				err = fmt.Errorf("key required")
+				return
+			}
+		}
+		if session, err = Decrypt([]byte(key), rawSession); err != nil {
+			return
+		}
+		if len(strings.Split(session, ";")) != 5 {
+			err = fmt.Errorf("invalid session or wrong key provided")
+		}
+	} else {
+		session = rawSession
+	}
+	return
+}
+
 func SessionStatus(sKey string, k keyring.Keyring) (msg string, err error) {
-	var s, keyringContent string
+	var rawSession, keyringContent string
 	keyringContent, err = k.Get(KeyringService, KeyringApplicationName)
 	if keyringContent == "" {
 		return "", errors.New("keyring is empty")
 	}
-	s, err = GetSessionFromKeyring(sKey, k)
+	rawSession, err = GetSessionFromKeyring(k)
+	if err != nil {
+		return
+	}
+	// now decrypt if needed
+	var session string
+	session, err = getSessionContent(sKey, rawSession)
+
 	if err != nil {
 		if strings.Contains(err.Error(), "illegal base64") {
 			err = errors.New("stored session is corrupt")
@@ -331,7 +354,7 @@ func SessionStatus(sKey string, k keyring.Keyring) (msg string, err error) {
 		return
 	}
 	var email string
-	email, _, err = ParseSessionString(s)
+	email, _, err = ParseSessionString(session)
 	if err != nil {
 		msg = fmt.Sprint("failed to parse session: ", err)
 		return

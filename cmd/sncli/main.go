@@ -1278,7 +1278,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				sStatus := c.Bool("status")
 				sessKey := c.String("session-key")
 				if sStatus || sRemove {
-					if err = auth.SessionExists(); err != nil {
+					if err = auth.SessionExists(nil); err != nil {
 						return err
 					}
 				}
@@ -1288,11 +1288,11 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					os.Exit(1)
 				}
 				if sAdd {
-					msg, err = auth.AddSession(c.GlobalString("server"), sessKey)
+					msg, err = auth.AddSession(c.GlobalString("server"), sessKey, nil)
 					return err
 				}
 				if sRemove {
-					msg = auth.RemoveSession()
+					msg = auth.RemoveSession(nil)
 					return nil
 				}
 				if sStatus {
