@@ -334,14 +334,13 @@ func getSessionContent(key, rawSession string) (session string, err error) {
 }
 
 func SessionStatus(sKey string, k keyring.Keyring) (msg string, err error) {
-	var rawSession, keyringContent string
-	keyringContent, err = k.Get(KeyringService, KeyringApplicationName)
-	if keyringContent == "" {
-		return "", errors.New("keyring is empty")
-	}
+	var rawSession string
 	rawSession, err = GetSessionFromKeyring(k)
 	if err != nil {
 		return
+	}
+	if len(rawSession) == 0 {
+		return "", errors.New("keyring is empty")
 	}
 	// now decrypt if needed
 	var session string
