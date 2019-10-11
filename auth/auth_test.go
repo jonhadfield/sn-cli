@@ -2,11 +2,12 @@ package auth
 
 import (
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/jonhadfield/gosn"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 type MockKeyRingDodgy struct {
