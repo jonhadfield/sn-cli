@@ -58,17 +58,17 @@ export SN_SERVER=<https://myserver.example.com>   # optional, if running persona
 Using a session is different from storing credentials as you no longer need to authenticate. As a result, if using 2FA (Two Factor Authentication), you won't need to enter your token value each time.  
 ##### add session
 ```
-sn-cli session --add   # session will be stored after successful authentication
+sn session --add   # session will be stored after successful authentication
 ```
 To encrypt your session when adding:
 ```
-sn-cli session --add --session-key   # either enter key as part of command, or '.' to hide its input
+sn session --add --session-key   # either enter key as part of command, or '.' to hide its input
 ```
 ##### using a session
 Prefix any command with ```--use-session``` to automatically retrieve and use the session.
 If your session is encrypted, you will be prompted for the session key. To specify the key on the command line:
 ```
-sn-cli --use-session --session-key <key> <command>
+sn --use-session --session-key <key> <command>
 ```
 
 ## bash autocompletion
