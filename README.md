@@ -3,8 +3,6 @@ a command-line interface for [Standard Notes](https://standardnotes.org/).
 
 [![Build Status](https://www.travis-ci.org/jonhadfield/sn-cli.svg?branch=master)](https://www.travis-ci.org/jonhadfield/sn-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/jonhadfield/sn-cli)](https://goreportcard.com/report/github.com/jonhadfield/sn-cli)
 
-
-
 ## current features
 
 ```
@@ -23,72 +21,55 @@ COMMANDS:
      test-data  create test data (hidden option)
 ```
 
-## changelog
-0.0.13 - enable storing of session in MacOS and Linux with optional encryption  
-0.0.12 - fix Register bug on Windows  
-0.0.11 - fix ReadPassword bug on Windows  
-0.0.10 - update dependencies and fix gosn issue  
-0.0.9 - minor fix  
-0.0.8 - add encrypted export and import feature  
-0.0.7 - add fixup option to resolve note and tag issues, retry logic for item puts  
-0.0.6 - fix count issue  
-0.0.5 - added option to save session (unencrypted for now)  
-0.0.4 - added Windows support  
-0.0.3 - added note content from file  
-0.0.2 - added bash completion  
-0.0.1 - initial  
-
-
-## roadmap
-
-features in progess:
-- ~~bash completion~~ DONE
-- ~~test and document for Windows users~~ DONE
-- ~~export: plaintext or encrypted~~ DONE
-- local caching of encrypted items
-- ~~option to securely persist session between commands~~ DONE
-- manage preferences
-- Windows MSI
-
 ## installation
 Download the latest release here: https://github.com/jonhadfield/sn-cli/releases
 
-#### macOS and Linux
-  
+### macOS and Linux
+
 Install:  
 ``
 $ install <sn-cli binary> /usr/local/bin/sn
 ``  
-#### Windows
+
+### Windows
   
 An installer is planned, but for now...  
 Download the binary 'sncli_windows_amd64.exe' and rename to sn.exe
 
+## running
 
 To see commands and options:  
 ``
 $ sn --help
 ``
+### authentication
 
-## authentication
+By default, your credentials will be requested every time, but you can store them using either environment variables or, on MacOS and Linux, store your session using the native Keychain application.
 
-sn-cli will automatically prompt for credentials (including 2FA, if set) each time you run a command.  
-Instead, you can set your email and/or password using environment variables:
+#### environment variables
+Note: if using 2FA, the token value will be requested each time
+```
+export SN_EMAIL=<email address>
+export SN_PASSWORD=<password>
+export SN_SERVER=<https://myserver.example.com>   # optional, if running personal server
+```
 
-Setting email and password:  
-``
-$ export SN_EMAIL=<email_address>  
-``  
-``
-$ export SN_PASSWORD=<password>  
-``
-
-## using your own server
-
-To override the Standard Notes server:  
-``
-$ export SN_SERVER=https://<your_server_url>
-``
+#### session (macOS Keychain / Gnome Keyring)
+Using a session is different from storing credentials as you no longer need to authenticate. As a result, if using 2FA (Two Factor Authentication), you won't need to enter your token value each time.  
+##### add session
+```
+sn-cli session --add   # session will be stored after successful authentication
+```
+To encrypt your session when adding:
+```
+sn-cli session --add --session-key   # either enter key as part of command, or '.' to hide its input
+```
+##### using a session
+Prefix any command with ```--use-session``` to automatically retrieve and use the session.
+If your session is encrypted, you will be prompted for the session key. To specify the key on the command line:
+```
+sn-cli --use-session --session-key <key> <command>
+```
 
 ## bash autocompletion
 
