@@ -78,8 +78,11 @@ func TestMakeSessionString(t *testing.T) {
 
 func TestWriteSession(t *testing.T) {
 	var kEmpty MockKeyRingDodgy
+
 	assert.Error(t, writeSession("example", kEmpty))
+
 	var kDefined MockKeyRingDefined
+
 	assert.NoError(t, SessionExists(kDefined))
 }
 
@@ -88,6 +91,7 @@ func TestAddSession(t *testing.T) {
 	assert.NoError(t, viper.BindEnv("email"))
 	assert.NoError(t, viper.BindEnv("password"))
 	assert.NoError(t, viper.BindEnv("server"))
+
 	serverURL := os.Getenv("SN_SERVER")
 	if serverURL == "" {
 		serverURL = SNServerURL
@@ -99,15 +103,21 @@ func TestAddSession(t *testing.T) {
 
 func TestSessionExists(t *testing.T) {
 	var kEmpty MockKeyRingUnDefined
+
 	assert.Error(t, SessionExists(kEmpty))
+
 	var kDefined MockKeyRingDefined
+
 	assert.NoError(t, SessionExists(kDefined))
 }
 
 func TestRemoveSession(t *testing.T) {
 	var kUndefined MockKeyRingUnDefined
+
 	assert.Contains(t, RemoveSession(kUndefined), "failed")
+
 	var kDefined MockKeyRingDefined
+
 	assert.Contains(t, RemoveSession(kDefined), "success")
 }
 

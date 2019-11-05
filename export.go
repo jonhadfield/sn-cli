@@ -22,27 +22,33 @@ func (i *ExportConfig) Run() error {
 	if i.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
+
 	gii := gosn.GetItemsInput{
 		Session: i.Session,
 	}
+
 	gio, err := gosn.GetItems(gii)
 	if err != nil {
 		return err
 	}
-	err = writeGob(i.File, gio.Items)
-	return err
+
+	return writeGob(i.File, gio.Items)
 }
 
 func (i *ImportConfig) Run() error {
 	if i.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
+
 	var encItemsToImport gosn.EncryptedItems
+
 	err := readGob(i.File, &encItemsToImport)
 	if err != nil {
 		return err
 	}
+
 	var itemsToImport gosn.Items
+
 	itemsToImport, err = encItemsToImport.DecryptAndParse(i.Session.Mk, i.Session.Ak)
 	if err != nil {
 		return err
@@ -50,27 +56,36 @@ func (i *ImportConfig) Run() error {
 
 	// get existing encItemsToImport
 	var existingItems gosn.Items
+
 	gii := gosn.GetItemsInput{
 		Session: i.Session,
 	}
+
 	var gio gosn.GetItemsOutput
+
 	gio, err = gosn.GetItems(gii)
+
 	if err != nil {
 		return err
 	}
+
 	existingItems, err = gio.Items.DecryptAndParse(i.Session.Mk, i.Session.Ak)
+
 	if err != nil {
 		return err
 	}
+
 	var finalList gosn.Items
 	// for each (tag and note) item to import, check if uuid exists
 	for _, itemToImport := range itemsToImport {
 		var done, found bool
+
 		for _, existingItem := range existingItems {
 			// if uuid exists
 			if itemToImport.UUID == existingItem.UUID {
 				// if item deleted, push with new uuid
 				found = true
+
 				if existingItem.Deleted {
 					itemToImport.UUID = gosn.GenUUID()
 					finalList = append(finalList, itemToImport)
@@ -81,6 +96,7 @@ func (i *ImportConfig) Run() error {
 					done = true
 				}
 			}
+
 			if done {
 				break
 			}
@@ -89,10 +105,10 @@ func (i *ImportConfig) Run() error {
 		if !found {
 			finalList = append(finalList, itemToImport)
 		}
-
 	}
 
 	var encFinalList gosn.EncryptedItems
+
 	encFinalList, err = finalList.Encrypt(i.Session.Mk, i.Session.Ak)
 	if err != nil {
 		return err
@@ -104,5 +120,6 @@ func (i *ImportConfig) Run() error {
 	}
 
 	_, err = gosn.PutItems(pii)
+
 	return err
 }

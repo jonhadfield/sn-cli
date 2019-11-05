@@ -202,31 +202,41 @@ func referenceExists(item gosn.Item, refID string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
 func (input *WipeConfig) Run() (int, error) {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
+
 	getItemsInput := gosn.GetItemsInput{
 		Session: input.Session,
 	}
+
 	var err error
 	// get all existing Tags and Notes and mark for deletion
 	var output gosn.GetItemsOutput
+
 	output, err = gosn.GetItems(getItemsInput)
 	if err != nil {
 		return 0, err
 	}
+
 	output.Items.DeDupe()
+
 	var pi gosn.Items
+
 	pi, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return 0, err
 	}
+
 	var itemsToDel gosn.Items
+
 	for _, item := range pi {
 		if item.Deleted {
 			continue
@@ -248,18 +258,22 @@ func (input *WipeConfig) Run() (int, error) {
 	}
 	// delete items
 	var eItemsToDel gosn.EncryptedItems
+
 	eItemsToDel, err = itemsToDel.Encrypt(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return 0, err
 	}
+
 	putItemsInput := gosn.PutItemsInput{
 		Session:   input.Session,
 		Items:     eItemsToDel,
 		SyncToken: output.SyncToken,
 	}
+
 	_, err = gosn.PutItems(putItemsInput)
 	if err != nil {
 		return 0, err
 	}
+
 	return len(itemsToDel), err
 }

@@ -19,8 +19,8 @@ func StringInSlice(inStr string, inSlice []string, matchCase bool) bool {
 				return true
 			}
 		}
-
 	}
+
 	return false
 }
 
@@ -28,6 +28,7 @@ func outList(input []string, sep string) string {
 	if len(input) == 0 {
 		return "-"
 	}
+
 	return strings.Join(input, sep)
 }
 
@@ -37,7 +38,9 @@ func writeGob(filePath string, object interface{}) error {
 		encoder := gob.NewEncoder(file)
 		_ = encoder.Encode(object)
 	}
+
 	_ = file.Close()
+
 	return err
 }
 
@@ -47,12 +50,15 @@ func readGob(filePath string, object interface{}) error {
 		decoder := gob.NewDecoder(file)
 		err = decoder.Decode(object)
 	}
+
 	_ = file.Close()
+
 	return err
 }
 
 func ItemRefsToYaml(irs []gosn.ItemReference) []ItemReferenceYAML {
 	iRefs := make([]ItemReferenceYAML, len(irs))
+
 	for _, ref := range irs {
 		iRef := ItemReferenceYAML{
 			UUID:        ref.UUID,
@@ -60,11 +66,13 @@ func ItemRefsToYaml(irs []gosn.ItemReference) []ItemReferenceYAML {
 		}
 		iRefs = append(iRefs, iRef)
 	}
+
 	return iRefs
 }
 
 func ItemRefsToJSON(irs []gosn.ItemReference) []ItemReferenceJSON {
 	iRefs := make([]ItemReferenceJSON, len(irs))
+
 	for _, ref := range irs {
 		iRef := ItemReferenceJSON{
 			UUID:        ref.UUID,
@@ -72,6 +80,7 @@ func ItemRefsToJSON(irs []gosn.ItemReference) []ItemReferenceJSON {
 		}
 		iRefs = append(iRefs, iRef)
 	}
+
 	return iRefs
 }
 
@@ -80,5 +89,6 @@ func CommaSplit(input string) []string {
 	if len(o) == 1 && len(o[0]) == 0 {
 		return nil
 	}
+
 	return o
 }

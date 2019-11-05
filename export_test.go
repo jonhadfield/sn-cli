@@ -14,6 +14,7 @@ import (
 func TestExportOneNote(t *testing.T) {
 	cleanUp(&testSession)
 	defer cleanUp(&testSession)
+
 	note := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
 	note.Content = noteContent
@@ -24,6 +25,7 @@ func TestExportOneNote(t *testing.T) {
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	pii := gosn.PutItemsInput{
 		Session: testSession,
 		Items:   encItemsToPut,
@@ -44,6 +46,7 @@ func TestExportOneNote(t *testing.T) {
 		Session: testSession,
 		File:    tmpfn,
 	}
+
 	if runErr := ec.Run(); runErr != nil {
 		panic(runErr)
 	}
@@ -52,21 +55,26 @@ func TestExportOneNote(t *testing.T) {
 	if expErr := readGob(tmpfn, &writtenEncryptedItems); expErr != nil {
 		panic(expErr)
 	}
+
 	var writtenItems gosn.Items
 	writtenItems, err = writtenEncryptedItems.DecryptAndParse(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	var found bool
+
 	for _, item := range writtenItems {
 		if item.UUID == note.UUID {
 			found = true
 			break
 		}
 	}
+
 	assert.True(t, found)
 }
 
 func TestExportWipeImportOneNote(t *testing.T) {
 	defer cleanUp(&testSession)
+
 	note := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
 	note.Content = noteContent
@@ -77,6 +85,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	pii := gosn.PutItemsInput{
 		Session: testSession,
 		Items:   encItemsToPut,
@@ -96,6 +105,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 		Session: testSession,
 		File:    tmpfn,
 	}
+
 	if ecErr := ec.Run(); ecErr != nil {
 		panic(ecErr)
 	}
@@ -114,18 +124,23 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	gii := gosn.GetItemsInput{
 		Session: testSession,
 	}
+
 	var gio gosn.GetItemsOutput
 	gio, err = gosn.GetItems(gii)
 	assert.NoError(t, err)
+
 	var items gosn.Items
 	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	var found bool
+
 	for _, i := range items {
 		if i.Equals(*note) {
 			found = true
 		}
 	}
+
 	assert.True(t, found)
 }
 
@@ -143,6 +158,7 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	pii := gosn.PutItemsInput{
 		Session: testSession,
 		Items:   encItemsToPut,
@@ -173,6 +189,7 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	}
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	pii = gosn.PutItemsInput{
 		Session: testSession,
 		Items:   encItemsToPut,
@@ -194,18 +211,23 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	gii := gosn.GetItemsInput{
 		Session: testSession,
 	}
+
 	var gio gosn.GetItemsOutput
 	gio, err = gosn.GetItems(gii)
 	assert.NoError(t, err)
+
 	var items gosn.Items
 	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	var found bool
+
 	for _, i := range items {
 		if i.Equals(*originalNote) {
 			found = true
 		}
 	}
+
 	assert.True(t, found)
 }
 
@@ -222,6 +244,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	pii := gosn.PutItemsInput{
 		Session: testSession,
 		Items:   encItemsToPut,
@@ -242,6 +265,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 		Session: testSession,
 		File:    tmpfn,
 	}
+
 	if ecErr := ec.Run(); ecErr != nil {
 		panic(ecErr)
 	}
@@ -254,6 +278,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	}
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	pii = gosn.PutItemsInput{
 		Session: testSession,
 		Items:   encItemsToPut,
@@ -274,18 +299,24 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	gii := gosn.GetItemsInput{
 		Session: testSession,
 	}
+
 	var gio gosn.GetItemsOutput
 	gio, err = gosn.GetItems(gii)
 	assert.NoError(t, err)
+
 	var items gosn.Items
 	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak)
+
 	assert.NoError(t, err)
+
 	var found bool
+
 	for _, i := range items {
 		if i.Equals(*originalTag) {
 			found = true
 		}
 	}
+
 	assert.True(t, found)
 }
 
@@ -301,6 +332,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	pii := gosn.PutItemsInput{
 		Session: testSession,
 		Items:   encItemsToPut,
@@ -321,6 +353,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 		Session: testSession,
 		File:    tmpfn,
 	}
+
 	if ecErr := ec.Run(); ecErr != nil {
 		panic(ecErr)
 	}
@@ -334,6 +367,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	}
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	pii = gosn.PutItemsInput{
 		Session: testSession,
 		Items:   encItemsToPut,
@@ -352,17 +386,22 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	gii := gosn.GetItemsInput{
 		Session: testSession,
 	}
+
 	var gio gosn.GetItemsOutput
 	gio, err = gosn.GetItems(gii)
 	assert.NoError(t, err)
+
 	var items gosn.Items
 	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
+
 	var found bool
+
 	for _, i := range items {
 		if i.Equals(*copyOfOriginalTag) {
 			found = true
 		}
 	}
+
 	assert.True(t, found)
 }

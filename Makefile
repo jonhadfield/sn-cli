@@ -50,6 +50,9 @@ mac-install: build
 linux-install: build-linux
 	sudo install .local_dist/sncli_linux_amd64 /usr/local/bin/sn
 
+find-updates:
+	go list -u -m -json all | go-mod-outdated -update -direct
+
 critic:
 	gocritic check-project .
 

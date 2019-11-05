@@ -21,6 +21,8 @@ func (input *RegisterConfig) Run() error {
 		Password:  input.Password,
 		APIServer: input.APIServer,
 	}
+
 	_, err := registerInput.Register()
+
 	return err
 }

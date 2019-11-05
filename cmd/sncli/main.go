@@ -44,22 +44,27 @@ func main() {
 		fmt.Printf("error: %+v\n", err)
 		os.Exit(1)
 	}
+
 	if display && msg != "" {
 		fmt.Println(msg)
 	}
+
 	os.Exit(0)
 }
 
 func startCLI(args []string) (msg string, display bool, err error) {
 	viper.SetEnvPrefix("sn")
+
 	err = viper.BindEnv("email")
 	if err != nil {
 		return "", false, err
 	}
+
 	err = viper.BindEnv("password")
 	if err != nil {
 		return "", false, err
 	}
+
 	err = viper.BindEnv("server")
 	if err != nil {
 		return "", false, err
@@ -198,15 +203,17 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							if cErr := cli.ShowSubcommandHelp(c); err != nil {
 								panic(cErr)
 							}
+
 							return errors.New("note title not defined")
 						}
 						if strings.TrimSpace(text) == "" {
 							if cErr := cli.ShowSubcommandHelp(c); err != nil {
 								panic(cErr)
 							}
-							return errors.New("note text not defined")
 
+							return errors.New("note text not defined")
 						}
+
 						session, _, err := auth.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
@@ -226,7 +233,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if err = AddNoteConfig.Run(); err != nil {
 							return fmt.Errorf("failed to add note. %+v", err)
 						}
+
 						msg = msgAddSuccess
+
 						return nil
 					},
 				},
@@ -1322,6 +1331,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		},
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))
+
 	return msg, display, app.Run(args)
 }
 
@@ -1331,5 +1341,6 @@ func numTrue(in ...bool) (total int) {
 			total++
 		}
 	}
+
 	return
 }

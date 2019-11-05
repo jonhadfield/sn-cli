@@ -35,20 +35,24 @@ func TestWipeWith50(t *testing.T) {
 	gni := gosn.GetItemsInput{
 		Session: testSession,
 	}
+
 	var gno gosn.GetItemsOutput
 	gno, err = gosn.GetItems(gni)
 	assert.NoError(t, err)
 	gno.Items.DeDupe()
 	ei := gno.Items
+
 	var pi gosn.Items
 	pi, err = ei.DecryptAndParse(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
 	pi.Filter(filters)
 
 	assert.Equal(t, 50, len(pi))
+
 	wipeConfig := WipeConfig{
 		Session: testSession,
 	}
+
 	var deleted int
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
@@ -82,6 +86,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 		Session: testSession,
 		Filters: iFilter,
 	}
+
 	var preRes, postRes gosn.Items
 
 	preRes, err = gnc.Run()
@@ -93,6 +98,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 		Session:   testSession,
 		NoteUUIDs: []string{newItemUUID},
 	}
+
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
 	assert.Equal(t, noDeleted, 1)
@@ -117,6 +123,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 		Session:    testSession,
 		NoteTitles: []string{"TestNoteOne"},
 	}
+
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
 	assert.Equal(t, noDeleted, 1)
@@ -136,6 +143,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 		Session: testSession,
 		Filters: iFilter,
 	}
+
 	var postRes gosn.Items
 	postRes, err = gnc.Run()
 	assert.NoError(t, err, err)
@@ -158,6 +166,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 		NoteTitles: []string{"^T.*ote..[def]"},
 		Regex:      true,
 	}
+
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
 	assert.Equal(t, noDeleted, 1)
@@ -177,6 +186,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 		Session: testSession,
 		Filters: iFilter,
 	}
+
 	var postRes gosn.Items
 	postRes, err = gnc.Run()
 
@@ -210,15 +220,16 @@ func TestGetNote(t *testing.T) {
 		Session: testSession,
 		Filters: itemFilters,
 	}
+
 	var output gosn.Items
 	output, err = getNoteConfig.Run()
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(output))
-
 }
 
 func TestCreateOneHundredNotes(t *testing.T) {
 	defer cleanUp(&testSession)
+
 	numNotes := 100
 	textParas := 10
 	session, err := gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
@@ -239,14 +250,17 @@ func TestCreateOneHundredNotes(t *testing.T) {
 		Session: session,
 		Filters: filter,
 	}
+
 	var res gosn.Items
 	res, err = gnc.Run()
 	assert.NoError(t, err)
 
 	assert.True(t, len(res) >= numNotes)
+
 	wipeConfig := WipeConfig{
 		Session: session,
 	}
+
 	var deleted int
 	deleted, err = wipeConfig.Run()
 	assert.NoError(t, err)
@@ -257,6 +271,7 @@ func cleanUp(session *gosn.Session) {
 	wipeConfig := WipeConfig{
 		Session: *session,
 	}
+
 	_, err := wipeConfig.Run()
 	if err != nil {
 		panic(err)

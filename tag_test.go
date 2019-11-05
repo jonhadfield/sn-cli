@@ -11,16 +11,19 @@ import (
 func TestAddDeleteTagByTitle(t *testing.T) {
 	sOutput, err := gosn.SignIn(sInput)
 	assert.NoError(t, err, err)
+
 	addTagConfig := AddTagConfig{
 		Session: sOutput.Session,
 		Tags:    []string{"TestTagOne", "TestTagTwo"},
 	}
 	err = addTagConfig.Run()
 	assert.NoError(t, err, err)
+
 	deleteTagConfig := DeleteTagConfig{
 		Session:   sOutput.Session,
 		TagTitles: []string{"TestTagOne", "TestTagTwo"},
 	}
+
 	var noDeleted int
 	noDeleted, err = deleteTagConfig.Run()
 	assert.Equal(t, 2, noDeleted)
@@ -29,8 +32,10 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 
 func TestGetTag(t *testing.T) {
 	defer cleanUp(&testSession)
+
 	sOutput, err := gosn.SignIn(sInput)
 	assert.NoError(t, err, err)
+
 	testTagTitles := []string{"TestTagOne", "TestTagTwo"}
 	addTagConfig := AddTagConfig{
 		Session: sOutput.Session,
@@ -52,15 +57,16 @@ func TestGetTag(t *testing.T) {
 			Comparison: "==",
 		})
 	}
+
 	getTagConfig := GetTagConfig{
 		Session: sOutput.Session,
 		Filters: getTagFilters,
 	}
+
 	var output gosn.Items
 	output, err = getTagConfig.Run()
 	assert.NoError(t, err, err)
 	assert.EqualValues(t, len(output), 2, "expected two items but got: %+v", output)
-
 }
 
 func _addNotes(session gosn.Session, input map[string]string) error {
@@ -70,11 +76,13 @@ func _addNotes(session gosn.Session, input map[string]string) error {
 			Title:   k,
 			Text:    v,
 		}
+
 		err := addNoteConfig.Run()
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -85,20 +93,22 @@ func _deleteNotesByTitle(session gosn.Session, input map[string]string) (noDelet
 			NoteTitles: []string{k},
 		}
 		_, err = deleteNoteConfig.Run()
+
 		if err != nil {
 			return noDeleted, err
 		}
 		noDeleted++
 	}
+
 	return noDeleted, err
 }
 
 func _deleteTagsByTitle(session gosn.Session, input []string) (noDeleted int, err error) {
-
 	deleteTagConfig := DeleteTagConfig{
 		Session:   session,
 		TagTitles: input,
 	}
+
 	return deleteTagConfig.Run()
 }
 
@@ -154,6 +164,7 @@ func TestTaggingOfNotes(t *testing.T) {
 	if len(retNotes) != 2 {
 		t.Errorf("expected two notes but got: %d", len(retNotes))
 	}
+
 	_, err = _deleteNotesByTitle(sOutput.Session, notes)
 	assert.NoError(t, err, err)
 

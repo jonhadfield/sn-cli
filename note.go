@@ -8,6 +8,7 @@ import (
 
 func (input *AddNoteConfig) Run() error {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
@@ -21,10 +22,12 @@ func (input *AddNoteConfig) Run() error {
 		syncToken: syncToken,
 		session:   input.Session,
 	}
+
 	syncToken, newNoteUUID, err := addNote(ani)
 	if err != nil {
 		return err
 	}
+
 	if len(ani.tagTitles) > 0 {
 		tni := tagNotesInput{
 			matchNoteUUIDs: []string{newNoteUUID},
@@ -54,23 +57,28 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 	newNoteContent.Text = input.noteText
 	newNote.Content = newNoteContent
 	newNote.UUID = gosn.GenUUID()
-
 	newNoteItems := gosn.Items{*newNote}
+
 	var eNewNoteItems gosn.EncryptedItems
+
 	eNewNoteItems, err = newNoteItems.Encrypt(input.session.Mk, input.session.Ak)
 	if err != nil {
 		return
 	}
+
 	pii := gosn.PutItemsInput{
 		Session:   input.session,
 		SyncToken: input.syncToken,
 		Items:     eNewNoteItems,
 	}
+
 	var putItemsOutput gosn.PutItemsOutput
+
 	putItemsOutput, err = gosn.PutItems(pii)
 	if err != nil {
 		return
 	}
+
 	newSyncToken = putItemsOutput.ResponseBody.SyncToken
 
 	if len(input.tagTitles) > 0 {
@@ -80,6 +88,7 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 			newTags:        input.tagTitles,
 			syncToken:      newSyncToken,
 		}
+
 		_, err = tagNotes(tni)
 		if err != nil {
 			return
@@ -91,39 +100,51 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 
 func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
+
 	noDeleted, _, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "")
+
 	return noDeleted, err
 }
 
 func (input *GetNoteConfig) Run() (output gosn.Items, err error) {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
+
 	getItemsInput := gosn.GetItemsInput{
 		PageSize:  input.PageSize,
 		BatchSize: input.BatchSize,
 		Session:   input.Session,
 	}
+
 	var gio gosn.GetItemsOutput
+
 	gio, err = gosn.GetItems(getItemsInput)
 	if err != nil {
 		return
 	}
+
 	gio.Items.DeDupe()
+
 	output, err = gio.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return
 	}
+
 	output.Filter(input.Filters)
+
 	return
 }
 
 func deleteNotes(session gosn.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string) (noDeleted int, newSyncToken string, err error) {
 	var getNotesFilters []gosn.Filter
+
 	switch {
 	case len(noteTitles) > 0:
 		for _, title := range noteTitles {
@@ -131,6 +152,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 			if regex {
 				comparison = "~"
 			}
+
 			getNotesFilters = append(getNotesFilters, gosn.Filter{
 				Key:        "Title",
 				Value:      title,
@@ -143,6 +165,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 		if regex {
 			comparison = "~"
 		}
+
 		getNotesFilters = append(getNotesFilters, gosn.Filter{
 			Key:        "Text",
 			Value:      noteText,
@@ -159,6 +182,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 			})
 		}
 	}
+
 	itemFilter := gosn.ItemFilters{
 		Filters:  getNotesFilters,
 		MatchAny: true,
@@ -168,6 +192,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 		Session:   session,
 		SyncToken: syncToken,
 	}
+
 	gio, err := gosn.GetItems(getItemsInput)
 	if err != nil {
 		return
@@ -175,13 +200,18 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 
 	gio.Items.DeDupe()
 	ei := gio.Items
+
 	var notes gosn.Items
+
 	notes, err = ei.DecryptAndParse(session.Mk, session.Ak)
 	if err != nil {
 		return
 	}
+
 	notes.Filter(itemFilter)
+
 	var notesToDelete gosn.Items
+
 	for _, item := range notes {
 		if item.Content != nil && item.ContentType == "Note" {
 			item.Content.SetText("")
@@ -193,6 +223,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 	if notesToDelete == nil {
 		return
 	}
+
 	var eNotesToDelete gosn.EncryptedItems
 	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak)
 
@@ -201,12 +232,17 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 		Items:     eNotesToDelete,
 		SyncToken: syncToken,
 	}
+
 	var putItemsOutput gosn.PutItemsOutput
+
 	putItemsOutput, err = gosn.PutItems(pii)
 	if err != nil {
 		return
 	}
+
 	noDeleted = len(notesToDelete)
+
 	newSyncToken = putItemsOutput.ResponseBody.SyncToken
+
 	return noDeleted, newSyncToken, err
 }

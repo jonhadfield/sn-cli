@@ -70,6 +70,7 @@ func genRandomText(paragraphs int) string {
 	for i := 1; i <= paragraphs; i++ {
 		strBuilder.WriteString(testParas[randInt(0, len(testParas))])
 	}
+
 	return strBuilder.String()
 }
 
@@ -83,6 +84,7 @@ func genNotes(num, textParas int) (notes gosn.Items) {
 		note.ContentType = "Note"
 		notes = append(notes, *note)
 	}
+
 	return notes
 }
 
@@ -95,6 +97,7 @@ func genTags(num int64) (tags gosn.Items) {
 		tag.Content = tagContent
 		tags = append(tags, *tag)
 	}
+
 	return tags
 }
 
@@ -102,10 +105,13 @@ func createNotes(session gosn.Session, num int, paras int) error {
 	var pii gosn.PutItemsInput
 	pii.Session = session
 	gendNotes := genNotes(num, paras)
+
 	var eGendNotes gosn.EncryptedItems
+
 	eGendNotes, _ = gendNotes.Encrypt(session.Mk, session.Ak)
 	pii.Items = eGendNotes
 	_, err := gosn.PutItems(pii)
+
 	return err
 }
 
@@ -113,10 +119,13 @@ func createTags(session gosn.Session, num int64) error {
 	var pii gosn.PutItemsInput
 	pii.Session = session
 	gendTags := genTags(num)
+
 	var eGendTags gosn.EncryptedItems
+
 	eGendTags, _ = gendTags.Encrypt(session.Mk, session.Ak)
 	pii.Items = eGendTags
 	_, err := gosn.PutItems(pii)
+
 	return err
 }
 
@@ -135,17 +144,20 @@ type TestDataCreateTagsConfig struct {
 
 func (input *TestDataCreateTagsConfig) Run() error {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
+
 	return createTags(input.Session, input.NumTags)
 }
 
 func (input *TestDataCreateNotesConfig) Run() error {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
-	return createNotes(input.Session, input.NumNotes, input.NumParas)
 
+	return createNotes(input.Session, input.NumNotes, input.NumParas)
 }

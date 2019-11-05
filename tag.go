@@ -24,6 +24,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 		tagTitles: input.newTags,
 		syncToken: input.syncToken,
 	}
+
 	newSyncToken, err = addTags(ati)
 	if err != nil {
 		return newSyncToken, err
@@ -45,34 +46,43 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 		Session:   input.session,
 		SyncToken: input.syncToken,
 	}
+
 	var output gosn.GetItemsOutput
+
 	output, err = gosn.GetItems(getItemsInput)
 	if err != nil {
 		return newSyncToken, err
 	}
 
 	output.Items.DeDupe()
+
 	var items gosn.Items
+
 	items, err = output.Items.DecryptAndParse(input.session.Mk, input.session.Ak)
 	if err != nil {
 		return output.SyncToken, err
 	}
+
 	items.Filter(itemFilter)
 
 	var allTags []gosn.Item
+
 	var allNotes []gosn.Item
 	// create slices of notes and tags
 	for _, item := range items {
 		if item.Deleted {
 			continue
 		}
+
 		if item.ContentType == "Tag" {
 			allTags = append(allTags, item)
 		}
+
 		if item.ContentType == "Note" {
 			allNotes = append(allNotes, item)
 		}
 	}
+
 	typeUUIDs := make(map[string][]string)
 	// loop through all notes and create a list of those that
 	// match the note title or exist in note text
@@ -89,6 +99,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 	// update existing (and just created) tags to reference matching uuids
 	// determine which TAGS need updating and create list to sync back to server
 	var tagsToPush gosn.Items
+
 	for _, t := range allTags {
 		// if tag title is in ones to add then update tag with new references
 		if StringInSlice(t.Content.GetTitle(), input.newTags, true) {
@@ -101,33 +112,41 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 	}
 
 	var eTagsToPush gosn.EncryptedItems
+
 	eTagsToPush, err = tagsToPush.Encrypt(input.session.Mk, input.session.Ak)
 	if err != nil {
 		return
 	}
+
 	if len(tagsToPush) > 0 {
 		pii := gosn.PutItemsInput{
 			Items:     eTagsToPush,
 			SyncToken: input.syncToken,
 			Session:   input.session,
 		}
+
 		var putItemsOutput gosn.PutItemsOutput
+
 		putItemsOutput, err = gosn.PutItems(pii)
 		if err != nil {
 			return
 		}
+
 		newSyncToken = putItemsOutput.ResponseBody.SyncToken
+
 		return newSyncToken, err
 	}
-	return newSyncToken, nil
 
+	return newSyncToken, nil
 }
 
 func (input *TagItemsConfig) Run() error {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
+
 	tni := tagNotesInput{
 		matchTitle: input.FindTitle,
 		matchText:  input.FindText,
@@ -135,13 +154,15 @@ func (input *TagItemsConfig) Run() error {
 		newTags:    input.NewTags,
 		session:    input.Session,
 	}
-	_, err := tagNotes(tni)
-	return err
 
+	_, err := tagNotes(tni)
+
+	return err
 }
 
 func (input *AddTagConfig) Run() error {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
@@ -151,13 +172,15 @@ func (input *AddTagConfig) Run() error {
 		tagTitles: input.Tags,
 		session:   input.Session,
 	}
-	var err error
-	_, err = addTags(ati)
+
+	_, err := addTags(ati)
+
 	return err
 }
 
 func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
@@ -165,26 +188,35 @@ func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
 	getItemsInput := gosn.GetItemsInput{
 		Session: input.Session,
 	}
+
 	var output gosn.GetItemsOutput
+
 	output, err = gosn.GetItems(getItemsInput)
 	if err != nil {
 		return nil, err
 	}
+
 	output.Items.DeDupe()
+
 	tags, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return nil, err
 	}
+
 	tags.Filter(input.Filters)
+
 	return
 }
 
 func (input *DeleteTagConfig) Run() (noDeleted int, err error) {
 	gosn.SetErrorLogger(log.Println)
+
 	if input.Debug {
 		gosn.SetDebugLogger(log.Println)
 	}
+
 	noDeleted, _, err = deleteTags(input.Session, input.TagTitles, input.TagUUIDs, "")
+
 	return noDeleted, err
 }
 
@@ -205,23 +237,30 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 		Session:   session,
 		SyncToken: syncToken,
 	}
+
 	output, err := gosn.GetItems(getItemsInput)
 	if err != nil {
 		return 0, output.SyncToken, err
 	}
+
 	output.Items.DeDupe()
+
 	var tags gosn.Items
+
 	tags, err = output.Items.DecryptAndParse(session.Mk, session.Ak)
 	if err != nil {
 		return 0, output.SyncToken, err
 	}
+
 	tags.Filter(deleteFilter)
 
 	var tagsToDelete gosn.Items
+
 	for _, item := range tags {
 		if item.Deleted {
 			continue
 		}
+
 		if item.ContentType == "Tag" &&
 			(StringInSlice(item.UUID, tagUUIDs, true) ||
 				StringInSlice(item.Content.GetTitle(), tagTitles, true)) {
@@ -239,14 +278,19 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 			SyncToken: syncToken,
 			Session:   session,
 		}
+
 		var putItemsOutput gosn.PutItemsOutput
+
 		putItemsOutput, err = gosn.PutItems(pii)
 		if err != nil {
 			return
 		}
+
 		newSyncToken = putItemsOutput.ResponseBody.SyncToken
 	}
+
 	noDeleted = len(tagsToDelete)
+
 	return noDeleted, newSyncToken, err
 }
 
@@ -273,28 +317,37 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 		SyncToken: input.syncToken,
 		Session:   input.session,
 	}
+
 	output, err := gosn.GetItems(getItemsInput)
 	if err != nil {
 		return
 	}
+
 	output.Items.DeDupe()
+
 	var tags gosn.Items
+
 	tags, err = output.Items.DecryptAndParse(input.session.Mk, input.session.Ak)
 	if err != nil {
 		return output.SyncToken, err
 	}
+
 	tags.Filter(addFilter)
+
 	var allTags gosn.Items
+
 	for _, item := range tags {
 		if item.Deleted {
 			continue
 		}
+
 		if item.ContentType == "Tag" {
 			allTags = append(allTags, item)
 		}
 	}
 
 	var tagsToAdd gosn.Items
+
 	for _, tag := range input.tagTitles {
 		if !tagExists(allTags, tag) {
 			newTagContent := gosn.NewTagContent()
@@ -314,20 +367,26 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 			Session: input.session,
 			Items:   eTagsToAdd,
 		}
+
 		var putItemsOutput gosn.PutItemsOutput
+
 		putItemsOutput, err = gosn.PutItems(putItemsInput)
 		if err != nil {
 			return
 		}
+
 		newSyncToken = putItemsOutput.ResponseBody.SyncToken
 	}
+
 	return
 }
 
 func upsertTagReferences(tag gosn.Item, typeUUIDs map[string][]string) (gosn.Item, bool) {
 	// create item reference
 	var newReferences []gosn.ItemReference
+
 	var changed bool
+
 	for k, v := range typeUUIDs {
 		for _, ref := range v {
 			if !referenceExists(tag, ref) {
@@ -338,11 +397,11 @@ func upsertTagReferences(tag gosn.Item, typeUUIDs map[string][]string) (gosn.Ite
 			}
 		}
 	}
+
 	if len(newReferences) > 0 {
 		changed = true
 		newContent := tag.Content
 		newContent.UpsertReferences(newReferences)
-
 		tag.Content = newContent
 	}
 
@@ -355,5 +414,6 @@ func tagExists(existing []gosn.Item, find string) bool {
 			return true
 		}
 	}
+
 	return false
 }
