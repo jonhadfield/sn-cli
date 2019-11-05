@@ -238,9 +238,10 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 		SyncToken: syncToken,
 	}
 
-	output, err := gosn.GetItems(getItemsInput)
+	var output gosn.GetItemsOutput
+	output, err = gosn.GetItems(getItemsInput)
 	if err != nil {
-		return 0, output.SyncToken, err
+		return 0, "", err
 	}
 
 	output.Items.DeDupe()
