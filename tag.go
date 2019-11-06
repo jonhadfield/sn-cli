@@ -239,6 +239,7 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 	}
 
 	var output gosn.GetItemsOutput
+
 	output, err = gosn.GetItems(getItemsInput)
 	if err != nil {
 		return 0, "", err

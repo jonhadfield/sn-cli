@@ -11,7 +11,7 @@ import (
 func StringInSlice(inStr string, inSlice []string, matchCase bool) bool {
 	for i := range inSlice {
 		if matchCase {
-			if strings.ToLower(inStr) == strings.ToLower(inSlice[i]) {
+			if strings.EqualFold(inStr, inSlice[i]) {
 				return true
 			}
 		} else {

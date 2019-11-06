@@ -1028,7 +1028,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					msg = fmt.Sprintf("import successful")
 				}
 				return err
-
 			},
 		},
 		{
@@ -1102,7 +1101,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				err = statsConfig.Run()
 				return err
-
 			},
 		},
 		{
@@ -1156,7 +1154,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			Name:  "fixup",
 			Usage: "find and fix item issues",
 			Action: func(c *cli.Context) error {
-
 				session, _, err := auth.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
@@ -1209,7 +1206,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 						fmt.Println(msgCreateSuccess)
 						return nil
-
 					},
 				},
 				{
@@ -1250,7 +1246,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 						err = appTestDataCreateNotesConfig.Run()
 						return err
-
 					},
 				},
 			},

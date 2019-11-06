@@ -225,7 +225,11 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 	}
 
 	var eNotesToDelete gosn.EncryptedItems
+
 	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak)
+	if err != nil {
+		return
+	}
 
 	pii := gosn.PutItemsInput{
 		Session:   session,
