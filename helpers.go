@@ -92,3 +92,12 @@ func CommaSplit(input string) []string {
 
 	return o
 }
+
+func RemoveDeleted(in gosn.Items) (out gosn.Items) {
+	for _, i := range in {
+		if !i.Deleted {
+			out = append(out, i)
+		}
+	}
+	return
+}

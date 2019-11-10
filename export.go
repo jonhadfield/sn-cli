@@ -31,8 +31,15 @@ func (i *ExportConfig) Run() error {
 	if err != nil {
 		return err
 	}
+	// strip deleted items
+	var out gosn.EncryptedItems
+	for _, i := range gio.Items {
+		if !i.Deleted {
+			out = append(out, i)
+		}
+	}
 
-	return writeGob(i.File, gio.Items)
+	return writeGob(i.File, out)
 }
 
 func (i *ImportConfig) Run() error {

@@ -683,6 +683,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 
+						// strip deleted items
+						rawTags = sncli.RemoveDeleted(rawTags)
+
 						var tagsYAML []sncli.TagYAML
 						var tagsJSON []sncli.TagJSON
 						var numResults int
@@ -862,6 +865,10 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if err != nil {
 							return err
 						}
+
+						// strip deleted items
+						rawNotes = sncli.RemoveDeleted(rawNotes)
+
 						var numResults int
 						var notesYAML []sncli.NoteYAML
 						var notesJSON []sncli.NoteJSON

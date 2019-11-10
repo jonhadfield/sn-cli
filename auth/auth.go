@@ -14,7 +14,7 @@ import (
 	"syscall"
 
 	"github.com/jonhadfield/gosn"
-	"github.com/zalando/go-keyring"
+	keyring "github.com/zalando/go-keyring"
 	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/spf13/viper"
