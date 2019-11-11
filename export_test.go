@@ -30,7 +30,6 @@ func TestExportOneNote(t *testing.T) {
 		Session: testSession,
 		Items:   encItemsToPut,
 	}
-	//var pio gosn.PutItemsOutput
 	_, err = gosn.PutItems(pii)
 	assert.NoError(t, err)
 

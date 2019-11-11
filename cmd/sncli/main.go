@@ -13,7 +13,6 @@ import (
 	"time"
 
 	sncli "github.com/jonhadfield/sn-cli"
-	"github.com/jonhadfield/sn-cli/auth"
 	keyring "github.com/zalando/go-keyring"
 	yaml "gopkg.in/yaml.v2"
 
@@ -144,7 +143,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							return errors.New("tag title not defined")
 						}
-						session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -214,7 +213,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return errors.New("note text not defined")
 						}
 
-						session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -288,7 +287,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							return errors.New("title or uuid required")
 						}
-						session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -342,7 +341,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							return errors.New("")
 						}
-						session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -402,7 +401,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				findText := c.String("find-text")
 				findTag := c.String("find-tag")
 				newTags := c.String("title")
-				session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+				session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 					c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
@@ -482,7 +481,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							},
 						}
 
-						session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -663,7 +662,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							})
 						}
 
-						session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -849,7 +848,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 						}
 
-						session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -979,7 +978,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					filePath := fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
 					outputPath = currDir + string(os.PathSeparator) + filePath
 				}
-				session, _, err := auth.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, _, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
 				}
@@ -1020,7 +1019,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					return errors.New("please specify path using --file")
 				}
 
-				session, _, err := auth.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, _, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
 				}
@@ -1098,7 +1097,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				if err != nil {
 					return err
 				}
-				session, _, err := auth.GetSession(c.GlobalBool("use-session"),
+				session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 					c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
@@ -1127,7 +1126,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				if !c.GlobalBool("no-stdout") {
 					display = true
 				}
-				session, email, err := auth.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, email, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
 				}
@@ -1161,7 +1160,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			Name:  "fixup",
 			Usage: "find and fix item issues",
 			Action: func(c *cli.Context) error {
-				session, _, err := auth.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, _, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
 				}
@@ -1197,7 +1196,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if numTags <= 0 {
 							return cli.ShowSubcommandHelp(c)
 						}
-						session, _, err := auth.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"),
+						session, _, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"),
 							c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -1240,7 +1239,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return cli.ShowSubcommandHelp(c)
 						}
 						var session gosn.Session
-						session, _, err = auth.GetSessionFromUser(c.GlobalString("server"))
+						session, _, err = gosn.GetSessionFromUser(c.GlobalString("server"))
 						if err != nil {
 							return err
 						}
@@ -1289,7 +1288,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				sStatus := c.Bool("status")
 				sessKey := c.String("session-key")
 				if sStatus || sRemove {
-					if err = auth.SessionExists(nil); err != nil {
+					if err = gosn.SessionExists(nil); err != nil {
 						return err
 					}
 				}
@@ -1299,15 +1298,15 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					os.Exit(1)
 				}
 				if sAdd {
-					msg, err = auth.AddSession(c.GlobalString("server"), sessKey, nil)
+					msg, err = gosn.AddSession(c.GlobalString("server"), sessKey, nil)
 					return err
 				}
 				if sRemove {
-					msg = auth.RemoveSession(nil)
+					msg = gosn.RemoveSession(nil)
 					return nil
 				}
 				if sStatus {
-					msg, err = auth.SessionStatus(sessKey, nil)
+					msg, err = gosn.SessionStatus(sessKey, nil)
 				}
 				return err
 			},
@@ -1319,12 +1318,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			Action: func(c *cli.Context) error {
 				var session gosn.Session
 				var email string
-				session, email, err = auth.GetSessionFromUser(c.GlobalString("server"))
+				session, email, err = gosn.GetSessionFromUser(c.GlobalString("server"))
 				if err != nil {
 					return err
 				}
 				service := "StandardNotesCLI"
-				err = keyring.Set(service, "session", auth.MakeSessionString(email, session))
+				err = keyring.Set(service, "session", gosn.MakeSessionString(email, session))
 				if err != nil {
 					log.Fatal(err)
 				}

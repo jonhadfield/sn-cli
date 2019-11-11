@@ -12,7 +12,11 @@ import (
 var testSession gosn.Session
 
 func TestMain(m *testing.M) {
-	testSession, _ = gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
+	var err error
+	testSession, err = gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
+	if err != nil {
+		panic(err)
+	}
 	os.Exit(m.Run())
 }
 
