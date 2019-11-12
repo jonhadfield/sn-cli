@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	bold   = color.New(color.Bold).SprintFunc()
-	red    = color.New(color.FgRed).SprintFunc()
-	green  = color.New(color.FgGreen).SprintFunc()
-	yellow = color.New(color.FgYellow).SprintFunc()
+	Bold   = color.New(color.Bold).SprintFunc()
+	Red    = color.New(color.FgRed).SprintFunc()
+	Green  = color.New(color.FgGreen).SprintFunc()
+	Yellow = color.New(color.FgYellow).SprintFunc()
 )
 
 func (input *StatsConfig) Run() error {
@@ -134,11 +134,11 @@ func (input *StatsConfig) Run() error {
 		return notes[i].ContentSize > notes[j].ContentSize
 	})
 
-	fmt.Println(green("COUNTS"))
+	fmt.Println(Green("COUNTS"))
 	tCounter.present()
 	//fmt.Println("Deleted:", len(deletedItemsUUIDs))
 
-	fmt.Println(green("\nSTATS"))
+	fmt.Println(Green("\nSTATS"))
 	var statLines []string
 	if len(notes) > 0 {
 		statLines = append(statLines, fmt.Sprintf("Oldest | %v", timeSince(oldestNote.Local())))
@@ -163,7 +163,7 @@ func (input *StatsConfig) Run() error {
 		fmt.Println("no notes returned")
 	}
 
-	fmt.Println(green("\nISSUES"))
+	fmt.Println(Green("\nISSUES"))
 	if allEmpty(duplicateUUIDs, missingContentUUIDs, missingContentTypeUUIDs) {
 		fmt.Println("None")
 	}

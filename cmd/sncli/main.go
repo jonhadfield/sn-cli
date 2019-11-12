@@ -16,6 +16,7 @@ import (
 	keyring "github.com/zalando/go-keyring"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/divan/num2words"
 	"github.com/jonhadfield/gosn"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
@@ -23,13 +24,13 @@ import (
 )
 
 const (
-	msgAddSuccess      = "added."
-	msgDeleted         = "deleted."
-	msgCreateSuccess   = "created."
-	msgRegisterSuccess = "registered."
-	msgTagSuccess      = "tagged."
-	msgItemsDeleted    = "items deleted."
-	msgNoMatches       = "no matches."
+	msgAddSuccess      = "Added"
+	msgDeleted         = "Deleted"
+	msgCreateSuccess   = "Created"
+	msgRegisterSuccess = "Registered"
+	msgTagSuccess      = "Tagged"
+	msgItemsDeleted    = "Items deleted"
+	msgNoMatches       = "No matches"
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
@@ -158,7 +159,8 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if err = appAddTagConfig.Run(); err != nil {
 							return fmt.Errorf("failed to add tag: %+v", err)
 						}
-						msg = msgAddSuccess
+						msg = sncli.Green(msgAddSuccess + " tag")
+
 						return nil
 					},
 				},
@@ -233,7 +235,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return fmt.Errorf("failed to add note. %+v", err)
 						}
 
-						msg = msgAddSuccess
+						msg = sncli.Green(msgAddSuccess + " note")
 
 						return nil
 					},
@@ -306,7 +308,13 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if err != nil {
 							return fmt.Errorf("failed to delete tag. %+v", err)
 						}
-						msg = fmt.Sprintf("%d %s", noDeleted, msgDeleted)
+
+						if noDeleted > 0 {
+							msg = sncli.Green(fmt.Sprintf("%s tag", msgDeleted))
+						} else {
+							msg = sncli.Yellow("Tag not found")
+						}
+
 						return nil
 					},
 				},
@@ -333,6 +341,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
+						if !c.GlobalBool("no-stdout") {
+							display = true
+						}
 						title := strings.TrimSpace(c.String("title"))
 						uuid := strings.TrimSpace(c.String("uuid"))
 						if title == "" && uuid == "" {
@@ -357,7 +368,24 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if noDeleted, err = DeleteNoteConfig.Run(); err != nil {
 							return fmt.Errorf("failed to delete note. %+v", err)
 						}
-						msg = fmt.Sprintf("%d %s", noDeleted, msgDeleted)
+
+						if noDeleted > 0 {
+							msg = sncli.Green(fmt.Sprintf("%s tag", msgDeleted))
+						} else {
+							msg = sncli.Yellow("Tag not found")
+						}
+
+						if noDeleted == 0 {
+							msg = sncli.Yellow(fmt.Sprintf("Note not found"))
+							return nil
+						}
+						strNote := "notes"
+						if noDeleted == 1 {
+							strNote = "note"
+						}
+
+						msg = sncli.Green(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strNote))
+
 						return nil
 					},
 				},
