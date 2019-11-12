@@ -6,7 +6,16 @@ import (
 	"sort"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/jonhadfield/gosn"
+	"github.com/ryanuber/columnize"
+)
+
+var (
+	bold   = color.New(color.Bold).SprintFunc()
+	red    = color.New(color.FgRed).SprintFunc()
+	green  = color.New(color.FgGreen).SprintFunc()
+	yellow = color.New(color.FgYellow).SprintFunc()
 )
 
 func (input *StatsConfig) Run() error {
@@ -43,9 +52,11 @@ func (input *StatsConfig) Run() error {
 
 	var oldestNote, newestNote, lastUpdatedNote time.Time
 
-	var deletedItemsUUIDs []string
+	//var deletedItemsUUIDs []string
 
 	var missingContentUUIDs []string
+
+	var missingContentTypeUUIDs []string
 
 	allUUIDs := make([]string, len(items))
 
@@ -65,7 +76,12 @@ func (input *StatsConfig) Run() error {
 		allUUIDs = append(allUUIDs, item.UUID)
 
 		if item.Deleted {
-			deletedItemsUUIDs = append(deletedItemsUUIDs, item.UUID)
+			tCounter.update("Deleted")
+			//deletedItemsUUIDs = append(deletedItemsUUIDs, item.UUID)
+		}
+
+		if !item.Deleted && item.ContentType == "" {
+			missingContentTypeUUIDs = append(missingContentTypeUUIDs, item.UUID)
 		}
 
 		if item.ContentType == "Note" {
@@ -118,17 +134,19 @@ func (input *StatsConfig) Run() error {
 		return notes[i].ContentSize > notes[j].ContentSize
 	})
 
-	fmt.Println("\n-- item counts")
+	fmt.Println(green("COUNTS"))
 	tCounter.present()
-	fmt.Println("deleted items:", len(deletedItemsUUIDs))
+	//fmt.Println("Deleted:", len(deletedItemsUUIDs))
 
-	fmt.Println("\n-- note stats")
-
+	fmt.Println(green("\nSTATS"))
+	var statLines []string
 	if len(notes) > 0 {
-		fmt.Println("oldest: ", timeSince(oldestNote.Local()))
-		fmt.Println("newest: ", timeSince(newestNote.Local()))
-		fmt.Println("updated:", timeSince(lastUpdatedNote.Local()))
-		fmt.Println("largest:")
+		statLines = append(statLines, fmt.Sprintf("Oldest | %v", timeSince(oldestNote.Local())))
+		statLines = append(statLines, fmt.Sprintf("Newest | %v", timeSince(newestNote.Local())))
+		statLines = append(statLines, fmt.Sprintf("Updated | %v", timeSince(lastUpdatedNote.Local())))
+		fmt.Println(columnize.SimpleFormat(statLines))
+
+		fmt.Println("Largest:")
 
 		var finalItem int
 
@@ -145,11 +163,30 @@ func (input *StatsConfig) Run() error {
 		fmt.Println("no notes returned")
 	}
 
-	fmt.Println("\n-- issues")
-	fmt.Println("duplicate note UUIDs: ", outList(duplicateUUIDs, ", "))
-	fmt.Println("missing content UUIDs:", outList(missingContentUUIDs, ", "))
+	fmt.Println(green("\nISSUES"))
+	if allEmpty(duplicateUUIDs, missingContentUUIDs, missingContentTypeUUIDs) {
+		fmt.Println("None")
+	}
+	if len(duplicateUUIDs) > 0 {
+		fmt.Println("Duplicate note UUIDs: ", outList(duplicateUUIDs, ", "))
+	}
+	if len(missingContentUUIDs) > 0 {
+		fmt.Println("Missing content UUIDs:", outList(missingContentUUIDs, ", "))
+	}
+	if len(missingContentTypeUUIDs) > 0 {
+		fmt.Println("Missing content type UUIDs:", outList(missingContentTypeUUIDs, ", "))
+	}
 
 	return err
+}
+
+func allEmpty(in ...[]string) bool {
+	for _, i := range in {
+		if len(i) > 0 {
+			return false
+		}
+	}
+	return true
 }
 
 type typeCounter struct {
@@ -172,14 +209,21 @@ func (in *typeCounter) update(itemType string) {
 }
 
 func (in *typeCounter) present() {
-	fmt.Printf("Notes: %d\n", in.counts["Note"])
-	fmt.Printf("Tags:  %d\n\n", in.counts["Tag"])
+
+	var lines []string
+	lines = append(lines, fmt.Sprintf("Notes ^ %d", in.counts["Note"]))
+	lines = append(lines, fmt.Sprintf("Tags ^ %d", in.counts["Tag"]))
 
 	for name, count := range in.counts {
 		if name != "Tag" && name != "Note" {
-			fmt.Printf("%s: %d\n", name, count)
+			lines = append(lines, fmt.Sprintf("%s ^ %d", name, count))
 		}
 	}
+	lines = append(lines, fmt.Sprintf("Deleted ^ %d", in.counts["Deleted"]))
+
+	config := columnize.DefaultConfig()
+	config.Delim = "^"
+	fmt.Println(columnize.Format(lines, config))
 }
 
 func timeSince(inTime time.Time) string {
