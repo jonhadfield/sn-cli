@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -13,7 +12,6 @@ import (
 	"time"
 
 	sncli "github.com/jonhadfield/sn-cli"
-	keyring "github.com/zalando/go-keyring"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/divan/num2words"
@@ -1358,25 +1356,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				if sStatus {
 					msg, err = gosn.SessionStatus(sessKey, nil)
-				}
-				return err
-			},
-		},
-		{
-			Name:   "store-session",
-			Usage:  "store the session credentials",
-			Hidden: false,
-			Action: func(c *cli.Context) error {
-				var session gosn.Session
-				var email string
-				session, email, err = gosn.GetSessionFromUser(c.GlobalString("server"))
-				if err != nil {
-					return err
-				}
-				service := "StandardNotesCLI"
-				err = keyring.Set(service, "session", gosn.MakeSessionString(email, session))
-				if err != nil {
-					log.Fatal(err)
 				}
 				return err
 			},
