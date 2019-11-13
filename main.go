@@ -127,10 +127,15 @@ type TagItemsConfig struct {
 	Debug      bool
 }
 
-type AddTagConfig struct {
+type AddTagsInput struct {
 	Session gosn.Session
 	Tags    []string
 	Debug   bool
+}
+
+type AddTagsOutput struct {
+	Added, Existing []string
+	SyncToken       string
 }
 
 type GetTagConfig struct {
@@ -167,7 +172,7 @@ type DeleteTagConfig struct {
 	Debug     bool
 }
 
-type AddNoteConfig struct {
+type AddNoteInput struct {
 	Session gosn.Session
 	Title   string
 	Text    string

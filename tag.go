@@ -25,9 +25,11 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 		syncToken: input.syncToken,
 	}
 
-	newSyncToken, err = addTags(ati)
+	var ato addTagsOutput
+
+	ato, err = addTags(ati)
 	if err != nil {
-		return newSyncToken, err
+		return
 	}
 	// get notes and tags
 	getNotesFilter := gosn.Filter{
@@ -44,14 +46,14 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 
 	getItemsInput := gosn.GetItemsInput{
 		Session:   input.session,
-		SyncToken: input.syncToken,
+		SyncToken: ato.newSyncToken,
 	}
 
 	var output gosn.GetItemsOutput
 
 	output, err = gosn.GetItems(getItemsInput)
 	if err != nil {
-		return newSyncToken, err
+		return
 	}
 
 	output.Items.DeDupe()
@@ -60,7 +62,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 
 	items, err = output.Items.DecryptAndParse(input.session.Mk, input.session.Ak)
 	if err != nil {
-		return output.SyncToken, err
+		return
 	}
 
 	items.Filter(itemFilter)
@@ -160,7 +162,7 @@ func (input *TagItemsConfig) Run() error {
 	return err
 }
 
-func (input *AddTagConfig) Run() error {
+func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	gosn.SetErrorLogger(log.Println)
 
 	if input.Debug {
@@ -168,14 +170,20 @@ func (input *AddTagConfig) Run() error {
 	}
 
 	ati := addTagsInput{
-
 		tagTitles: input.Tags,
 		session:   input.Session,
 	}
 
-	_, err := addTags(ati)
+	ato, err := addTags(ati)
+	if err != nil {
+		return
+	}
 
-	return err
+	output.Added = ato.added
+	output.Existing = ato.existing
+	output.SyncToken = ato.newSyncToken
+
+	return
 }
 
 func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
@@ -302,7 +310,13 @@ type addTagsInput struct {
 	syncToken string
 }
 
-func addTags(input addTagsInput) (newSyncToken string, err error) {
+type addTagsOutput struct {
+	newSyncToken string
+	added        []string
+	existing     []string
+}
+
+func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	addNotesFilter := gosn.Filter{
 		Type: "Note",
 	}
@@ -316,8 +330,8 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 	}
 
 	getItemsInput := gosn.GetItemsInput{
-		SyncToken: input.syncToken,
-		Session:   input.session,
+		SyncToken: ati.syncToken,
+		Session:   ati.session,
 	}
 
 	output, err := gosn.GetItems(getItemsInput)
@@ -329,9 +343,9 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 
 	var tags gosn.Items
 
-	tags, err = output.Items.DecryptAndParse(input.session.Mk, input.session.Ak)
+	tags, err = output.Items.DecryptAndParse(ati.session.Mk, ati.session.Ak)
 	if err != nil {
-		return output.SyncToken, err
+		return
 	}
 
 	tags.Filter(addFilter)
@@ -350,23 +364,31 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 
 	var tagsToAdd gosn.Items
 
-	for _, tag := range input.tagTitles {
-		if !tagExists(allTags, tag) {
-			newTagContent := gosn.NewTagContent()
-			newTag := gosn.NewTag()
-			newTagContent.Title = tag
-			newTag.Content = newTagContent
-			newTag.UUID = gosn.GenUUID()
-			tagsToAdd = append(tagsToAdd, *newTag)
+	for _, tag := range ati.tagTitles {
+		if tagExists(allTags, tag) {
+			ato.existing = append(ato.existing, tag)
+			continue
 		}
+
+		newTagContent := gosn.NewTagContent()
+		newTag := gosn.NewTag()
+		newTagContent.Title = tag
+		newTag.Content = newTagContent
+		newTag.UUID = gosn.GenUUID()
+		tagsToAdd = append(tagsToAdd, *newTag)
+		ato.added = append(ato.added, tag)
 	}
 
-	var eTagsToAdd gosn.EncryptedItems
-	eTagsToAdd, err = tagsToAdd.Encrypt(input.session.Mk, input.session.Ak)
-
 	if len(tagsToAdd) > 0 {
+		var eTagsToAdd gosn.EncryptedItems
+
+		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Mk, ati.session.Ak)
+		if err != nil {
+			return
+		}
+
 		putItemsInput := gosn.PutItemsInput{
-			Session: input.session,
+			Session: ati.session,
 			Items:   eTagsToAdd,
 		}
 
@@ -377,10 +399,10 @@ func addTags(input addTagsInput) (newSyncToken string, err error) {
 			return
 		}
 
-		newSyncToken = putItemsOutput.ResponseBody.SyncToken
+		ato.newSyncToken = putItemsOutput.ResponseBody.SyncToken
 	}
 
-	return
+	return ato, err
 }
 
 func upsertTagReferences(tag gosn.Item, typeUUIDs map[string][]string) (gosn.Item, bool) {

@@ -6,7 +6,7 @@ import (
 	"github.com/jonhadfield/gosn"
 )
 
-func (input *AddNoteConfig) Run() error {
+func (input *AddNoteInput) Run() error {
 	gosn.SetErrorLogger(log.Println)
 
 	if input.Debug {

@@ -86,11 +86,18 @@ func ItemRefsToJSON(irs []gosn.ItemReference) []ItemReferenceJSON {
 
 func CommaSplit(input string) []string {
 	o := strings.Split(input, ",")
-	if len(o) == 1 && len(o[0]) == 0 {
+
+	// strip space
+	var s []string
+	for _, i := range o {
+		s = append(s, strings.TrimSpace(i))
+	}
+
+	if len(s) == 1 && len(s[0]) == 0 {
 		return nil
 	}
 
-	return o
+	return s
 }
 
 func RemoveDeleted(in gosn.Items) (out gosn.Items) {
@@ -99,5 +106,6 @@ func RemoveDeleted(in gosn.Items) (out gosn.Items) {
 			out = append(out, i)
 		}
 	}
+
 	return
 }

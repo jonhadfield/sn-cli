@@ -12,12 +12,18 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 	sOutput, err := gosn.SignIn(sInput)
 	assert.NoError(t, err, err)
 
-	addTagConfig := AddTagConfig{
+	addTagConfig := AddTagsInput{
 		Session: sOutput.Session,
 		Tags:    []string{"TestTagOne", "TestTagTwo"},
 	}
-	err = addTagConfig.Run()
-	assert.NoError(t, err, err)
+
+	var ato AddTagsOutput
+	ato, err = addTagConfig.Run()
+	assert.NoError(t, err)
+	assert.Contains(t, ato.Added, "TestTagOne")
+	assert.Contains(t, ato.Added, "TestTagTwo")
+	assert.Empty(t, ato.Existing)
+	assert.NotEmpty(t, ato.SyncToken)
 
 	deleteTagConfig := DeleteTagConfig{
 		Session:   sOutput.Session,
@@ -37,12 +43,19 @@ func TestGetTag(t *testing.T) {
 	assert.NoError(t, err, err)
 
 	testTagTitles := []string{"TestTagOne", "TestTagTwo"}
-	addTagConfig := AddTagConfig{
+	addTagInput := AddTagsInput{
 		Session: sOutput.Session,
 		Tags:    testTagTitles,
 	}
-	err = addTagConfig.Run()
+
+	var ato AddTagsOutput
+	ato, err = addTagInput.Run()
 	assert.NoError(t, err, err)
+	assert.NoError(t, err)
+	assert.Contains(t, ato.Added, "TestTagOne")
+	assert.Contains(t, ato.Added, "TestTagTwo")
+	assert.Empty(t, ato.Existing)
+	assert.NotEmpty(t, ato.SyncToken)
 
 	// create filters
 	getTagFilters := gosn.ItemFilters{
@@ -71,7 +84,7 @@ func TestGetTag(t *testing.T) {
 
 func _addNotes(session gosn.Session, input map[string]string) error {
 	for k, v := range input {
-		addNoteConfig := AddNoteConfig{
+		addNoteConfig := AddNoteInput{
 			Session: session,
 			Title:   k,
 			Text:    v,

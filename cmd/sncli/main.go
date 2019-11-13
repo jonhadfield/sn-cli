@@ -25,6 +25,7 @@ import (
 
 const (
 	msgAddSuccess      = "Added"
+	msgAlreadyExisting = "Already existing"
 	msgDeleted         = "Deleted"
 	msgCreateSuccess   = "Created"
 	msgRegisterSuccess = "Registered"
@@ -137,29 +138,48 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							display = true
 						}
 
+						// validate input
 						tagInput := c.String("title")
 						if strings.TrimSpace(tagInput) == "" {
-							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+							if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
 								panic(cErr)
 							}
 							return errors.New("tag title not defined")
 						}
+
+						// get session
 						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
 						}
 
+						// prepare input
 						tags := sncli.CommaSplit(tagInput)
-						appAddTagConfig := sncli.AddTagConfig{
+						addTagInput := sncli.AddTagsInput{
 							Session: session,
 							Tags:    tags,
 							Debug:   c.GlobalBool("debug"),
 						}
-						if err = appAddTagConfig.Run(); err != nil {
-							return fmt.Errorf("failed to add tag: %+v", err)
+
+						// attempt to add tags
+						var ato sncli.AddTagsOutput
+						ato, err = addTagInput.Run()
+						if err != nil {
+							return fmt.Errorf(sncli.Red(err))
 						}
-						msg = sncli.Green(msgAddSuccess + " tag")
+
+						// present results
+						if len(ato.Added) > 0 {
+							msg = sncli.Green(msgAddSuccess+": ", strings.Join(ato.Added, ", "))
+						}
+						if len(ato.Existing) > 0 {
+							// add line break if output already added
+							if len(msg) > 0 {
+								msg += "\n"
+							}
+							msg += sncli.Yellow(msgAlreadyExisting + ": " + strings.Join(ato.Existing, ", "))
+						}
 
 						return nil
 					},
@@ -198,6 +218,8 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if !c.GlobalBool("no-stdout") {
 							display = true
 						}
+
+						// get input
 						title := c.String("title")
 						text := c.String("text")
 						if strings.TrimSpace(title) == "" {
@@ -215,6 +237,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return errors.New("note text not defined")
 						}
 
+						// get session
 						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
@@ -223,7 +246,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 						processedTags := sncli.CommaSplit(c.String("tag"))
 
-						AddNoteConfig := sncli.AddNoteConfig{
+						AddNoteInput := sncli.AddNoteInput{
 							Session: session,
 							Title:   title,
 							Text:    text,
@@ -231,7 +254,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							Replace: false,
 							Debug:   c.GlobalBool("debug"),
 						}
-						if err = AddNoteConfig.Run(); err != nil {
+						if err = AddNoteInput.Run(); err != nil {
 							return fmt.Errorf("failed to add note. %+v", err)
 						}
 

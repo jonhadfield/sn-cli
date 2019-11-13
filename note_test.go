@@ -13,10 +13,12 @@ var testSession gosn.Session
 
 func TestMain(m *testing.M) {
 	var err error
+
 	testSession, err = gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	if err != nil {
 		panic(err)
 	}
+
 	os.Exit(m.Run())
 }
 
@@ -67,7 +69,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	defer cleanUp(&testSession)
 
 	// create note
-	addNoteConfig := AddNoteConfig{
+	addNoteConfig := AddNoteInput{
 		Session: testSession,
 		Title:   "TestNoteOne",
 		Text:    "TestNoteOneText",
@@ -116,7 +118,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 func TestAddDeleteNoteByTitle(t *testing.T) {
 	defer cleanUp(&testSession)
 
-	addNoteConfig := AddNoteConfig{
+	addNoteConfig := AddNoteInput{
 		Session: testSession,
 		Title:   "TestNoteOne",
 	}
@@ -157,7 +159,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 	defer cleanUp(&testSession)
 	// add note
-	addNoteConfig := AddNoteConfig{
+	addNoteConfig := AddNoteInput{
 		Session: testSession,
 		Title:   "TestNoteOne",
 	}
@@ -202,7 +204,7 @@ func TestGetNote(t *testing.T) {
 	defer cleanUp(&testSession)
 
 	// create one note
-	addNoteConfig := AddNoteConfig{
+	addNoteConfig := AddNoteInput{
 		Session: testSession,
 		Title:   "TestNoteOne",
 	}

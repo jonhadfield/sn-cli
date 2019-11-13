@@ -74,11 +74,11 @@ func TestTagNotesByTextWithNewTags(t *testing.T) {
 	msg, _, err = startCLI([]string{"sncli", "--no-stdout", "add", "note", "--title", "TestNoteTwo", "--text", "test note two"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
-	msg, _, err = startCLI([]string{"sncli", "--no-stdout", "tag", "--find-text", "test note", "--title", "testTagOne,testTagTwo"})
+	_, _, err = startCLI([]string{"sncli", "--no-stdout", "tag", "--find-text", "test note", "--title", "testTagOne,testTagTwo"})
 	assert.NoError(t, err)
-	msg, _, err = startCLI([]string{"sncli", "--no-stdout", "delete", "note", "--title", "TestNoteOne,TestNoteTwo"})
+	_, _, err = startCLI([]string{"sncli", "--no-stdout", "delete", "note", "--title", "TestNoteOne,TestNoteTwo"})
 	assert.NoError(t, err, err)
-	msg, _, err = startCLI([]string{"sncli", "--no-stdout", "delete", "tag", "--title", "testTagOne,testTagTwo"})
+	_, _, err = startCLI([]string{"sncli", "--no-stdout", "delete", "tag", "--title", "testTagOne,testTagTwo"})
 	assert.NoError(t, err, err)
 }
 
@@ -90,7 +90,7 @@ func TestAddOneNoteGetCount(t *testing.T) {
 	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
-	msg, _, err = startCLI([]string{"sncli", "delete", "note", "--title", "testAddOneNoteGetCount Title"})
+	_, _, err = startCLI([]string{"sncli", "delete", "note", "--title", "testAddOneNoteGetCount Title"})
 	assert.NoError(t, err, err)
 }
 
@@ -101,7 +101,7 @@ func TestAddOneTagGetCount(t *testing.T) {
 	msg, _, err = startCLI([]string{"sncli", "get", "tag", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
-	msg, _, err = startCLI([]string{"sncli", "delete", "tag", "--title", "testAddOneTagGetCount Title"})
+	_, _, err = startCLI([]string{"sncli", "delete", "tag", "--title", "testAddOneTagGetCount Title"})
 	assert.NoError(t, err, err)
 }
 
@@ -136,8 +136,10 @@ func TestFinalWipeAndCountZero(t *testing.T) {
 	var msg string
 
 	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
+	assert.NoError(t, err)
 	assert.Equal(t, "0", msg)
 
 	msg, _, err = startCLI([]string{"sncli", "get", "tag", "--count"})
+	assert.NoError(t, err)
 	assert.Equal(t, "0", msg)
 }

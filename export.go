@@ -33,6 +33,7 @@ func (i *ExportConfig) Run() error {
 	}
 	// strip deleted items
 	var out gosn.EncryptedItems
+
 	for _, i := range gio.Items {
 		if !i.Deleted {
 			out = append(out, i)
