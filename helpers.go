@@ -90,7 +90,10 @@ func CommaSplit(input string) []string {
 	// strip leading and trailing space
 	var s []string
 	for _, i := range o {
-		s = append(s, strings.TrimSpace(i))
+		ti := strings.TrimSpace(i)
+		if len(ti) > 0 {
+			s = append(s, strings.TrimSpace(i))
+		}
 	}
 
 	if len(s) == 1 && len(s[0]) == 0 {
