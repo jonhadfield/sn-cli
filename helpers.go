@@ -85,9 +85,9 @@ func ItemRefsToJSON(irs []gosn.ItemReference) []ItemReferenceJSON {
 }
 
 func CommaSplit(input string) []string {
+	// split input
 	o := strings.Split(input, ",")
-
-	// strip space
+	// strip leading and trailing space
 	var s []string
 	for _, i := range o {
 		s = append(s, strings.TrimSpace(i))
