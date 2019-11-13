@@ -85,7 +85,8 @@ func (input *FixupConfig) Run() error {
 				if !StringInSlice(ref.UUID, allIDs, false) {
 					needsFix = true
 
-					fmt.Printf("item: %s references missing item id: %s\n", item.Content.GetTitle(), ref.UUID)
+					o := fmt.Sprintf("item: %s references missing item: %s\n", item.Content.GetTitle(), ref.UUID)
+					fmt.Print(Yellow(o))
 				} else {
 					newRefs = append(newRefs, ref)
 				}
@@ -123,15 +124,17 @@ func (input *FixupConfig) Run() error {
 				return err
 			}
 
-			fmt.Printf("fixed references in %d items\n", len(itemsWithRefsToUpdate))
+			o := fmt.Sprintf("fixed references in %d items\n", len(itemsWithRefsToUpdate))
+			fmt.Print(Green(o))
 		}
 	} else {
-		fmt.Println("no items with invalid references")
+		fmt.Println(Green("no items with invalid references"))
 	}
 
 	// check for items without content type
 	if len(missingContentType) > 0 {
-		fmt.Printf("found %d notes with missing content type. delete? ", len(missingContentType))
+		o := fmt.Sprintf("found %d notes with missing content type. delete? ", len(missingContentType))
+		fmt.Print(Yellow(o))
 
 		var response string
 
@@ -154,15 +157,17 @@ func (input *FixupConfig) Run() error {
 				return err
 			}
 
-			fmt.Printf("fixed %d items\n", len(missingContentType))
+			o := fmt.Sprintf("fixed %d items\n", len(missingContentType))
+			fmt.Print(Yellow(o))
 		}
 	} else {
-		fmt.Println("no items with missing content type")
+		fmt.Println(Green("no items with missing content type"))
 	}
 
 	// check for items with missing content
 	if len(missingContent) > 0 {
-		fmt.Printf("found %d notes with missing content. delete? ", len(missingContent))
+		o := fmt.Sprintf("found %d notes with missing content. delete? ", len(missingContent))
+		fmt.Print(Yellow(o))
 
 		var response string
 		_, err = fmt.Scanln(&response)
@@ -192,13 +197,13 @@ func (input *FixupConfig) Run() error {
 			fmt.Printf("fixed %d items\n", len(missingContent))
 		}
 	} else {
-		fmt.Println("no items with missing content")
+		fmt.Println(Green("no items with missing content"))
 	}
 
 	// check for items with missing titles
 	if len(notesToTitleFix) > 0 {
-		fmt.Printf("found %d items with missing titles. fix? ", len(notesToTitleFix))
-
+		o := fmt.Sprintf("found %d items with missing titles. fix? ", len(notesToTitleFix))
+		fmt.Print(Yellow(o))
 		var response string
 
 		_, err = fmt.Scanln(&response)
@@ -227,7 +232,7 @@ func (input *FixupConfig) Run() error {
 			fmt.Printf("fixed %d items", len(notesToTitleFix))
 		}
 	} else {
-		fmt.Println("no items with missing titles")
+		fmt.Println(Green("no items with missing titles"))
 	}
 
 	return err
