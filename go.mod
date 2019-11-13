@@ -16,7 +16,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/urfave/cli v1.22.1
 	github.com/zalando/go-keyring v0.0.0-20190913082157-62750a1ff80d
-	golang.org/x/crypto v0.0.0-20191111213947-16651526fdb4
+	golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708
 	golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/yaml.v2 v2.2.5
