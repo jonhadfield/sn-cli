@@ -1,7 +1,6 @@
 package sncli
 
 import (
-	"log"
 	"strings"
 
 	"github.com/jonhadfield/gosn"
@@ -60,7 +59,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 
 	var items gosn.Items
 
-	items, err = output.Items.DecryptAndParse(input.session.Mk, input.session.Ak)
+	items, err = output.Items.DecryptAndParse(input.session.Mk, input.session.Ak, false)
 	if err != nil {
 		return
 	}
@@ -115,7 +114,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 
 	var eTagsToPush gosn.EncryptedItems
 
-	eTagsToPush, err = tagsToPush.Encrypt(input.session.Mk, input.session.Ak)
+	eTagsToPush, err = tagsToPush.Encrypt(input.session.Mk, input.session.Ak, false)
 	if err != nil {
 		return
 	}
@@ -143,12 +142,6 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 }
 
 func (input *TagItemsConfig) Run() error {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	tni := tagNotesInput{
 		matchTitle: input.FindTitle,
 		matchText:  input.FindText,
@@ -163,12 +156,6 @@ func (input *TagItemsConfig) Run() error {
 }
 
 func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	ati := addTagsInput{
 		tagTitles: input.Tags,
 		session:   input.Session,
@@ -187,12 +174,6 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 }
 
 func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	getItemsInput := gosn.GetItemsInput{
 		Session: input.Session,
 	}
@@ -206,7 +187,7 @@ func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
 
 	output.Items.DeDupe()
 
-	tags, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
+	tags, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
 	if err != nil {
 		return nil, err
 	}
@@ -217,12 +198,6 @@ func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
 }
 
 func (input *DeleteTagConfig) Run() (noDeleted int, err error) {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	noDeleted, _, err = deleteTags(input.Session, input.TagTitles, input.TagUUIDs, "")
 
 	return noDeleted, err
@@ -257,7 +232,7 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 
 	var tags gosn.Items
 
-	tags, err = output.Items.DecryptAndParse(session.Mk, session.Ak)
+	tags, err = output.Items.DecryptAndParse(session.Mk, session.Ak, false)
 	if err != nil {
 		return 0, output.SyncToken, err
 	}
@@ -280,7 +255,7 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 	}
 
 	var eTagsToDelete gosn.EncryptedItems
-	eTagsToDelete, err = tagsToDelete.Encrypt(session.Mk, session.Ak)
+	eTagsToDelete, err = tagsToDelete.Encrypt(session.Mk, session.Ak, false)
 
 	if len(tagsToDelete) > 0 {
 		pii := gosn.PutItemsInput{
@@ -343,7 +318,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 
 	var tags gosn.Items
 
-	tags, err = output.Items.DecryptAndParse(ati.session.Mk, ati.session.Ak)
+	tags, err = output.Items.DecryptAndParse(ati.session.Mk, ati.session.Ak, false)
 	if err != nil {
 		return
 	}
@@ -382,7 +357,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	if len(tagsToAdd) > 0 {
 		var eTagsToAdd gosn.EncryptedItems
 
-		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Mk, ati.session.Ak)
+		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Mk, ati.session.Ak, false)
 		if err != nil {
 			return
 		}

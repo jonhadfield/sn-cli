@@ -74,6 +74,7 @@ func TestTagNotesByTextWithNewTags(t *testing.T) {
 	msg, _, err = startCLI([]string{"sncli", "--no-stdout", "add", "note", "--title", "TestNoteTwo", "--text", "test note two"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
+
 	_, _, err = startCLI([]string{"sncli", "--no-stdout", "tag", "--find-text", "test note", "--title", "testTagOne,testTagTwo"})
 	assert.NoError(t, err)
 	_, _, err = startCLI([]string{"sncli", "--no-stdout", "delete", "note", "--title", "TestNoteOne,TestNoteTwo"})
@@ -90,6 +91,7 @@ func TestAddOneNoteGetCount(t *testing.T) {
 	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
+
 	_, _, err = startCLI([]string{"sncli", "delete", "note", "--title", "testAddOneNoteGetCount Title"})
 	assert.NoError(t, err, err)
 }
@@ -101,6 +103,7 @@ func TestAddOneTagGetCount(t *testing.T) {
 	msg, _, err = startCLI([]string{"sncli", "get", "tag", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
+
 	_, _, err = startCLI([]string{"sncli", "delete", "tag", "--title", "testAddOneTagGetCount Title"})
 	assert.NoError(t, err, err)
 }

@@ -1,8 +1,6 @@
 package sncli
 
 import (
-	"log"
-
 	"github.com/jonhadfield/gosn"
 )
 
@@ -19,12 +17,9 @@ type ImportConfig struct {
 }
 
 func (i *ExportConfig) Run() error {
-	if i.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	gii := gosn.GetItemsInput{
 		Session: i.Session,
+		Debug:   i.Debug,
 	}
 
 	gio, err := gosn.GetItems(gii)
@@ -44,10 +39,6 @@ func (i *ExportConfig) Run() error {
 }
 
 func (i *ImportConfig) Run() error {
-	if i.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	var encItemsToImport gosn.EncryptedItems
 
 	err := readGob(i.File, &encItemsToImport)
@@ -57,7 +48,7 @@ func (i *ImportConfig) Run() error {
 
 	var itemsToImport gosn.Items
 
-	itemsToImport, err = encItemsToImport.DecryptAndParse(i.Session.Mk, i.Session.Ak)
+	itemsToImport, err = encItemsToImport.DecryptAndParse(i.Session.Mk, i.Session.Ak, i.Debug)
 	if err != nil {
 		return err
 	}
@@ -77,7 +68,7 @@ func (i *ImportConfig) Run() error {
 		return err
 	}
 
-	existingItems, err = gio.Items.DecryptAndParse(i.Session.Mk, i.Session.Ak)
+	existingItems, err = gio.Items.DecryptAndParse(i.Session.Mk, i.Session.Ak, i.Debug)
 
 	if err != nil {
 		return err
@@ -117,7 +108,7 @@ func (i *ImportConfig) Run() error {
 
 	var encFinalList gosn.EncryptedItems
 
-	encFinalList, err = finalList.Encrypt(i.Session.Mk, i.Session.Ak)
+	encFinalList, err = finalList.Encrypt(i.Session.Mk, i.Session.Ak, i.Debug)
 	if err != nil {
 		return err
 	}

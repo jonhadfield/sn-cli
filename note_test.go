@@ -49,7 +49,7 @@ func TestWipeWith50(t *testing.T) {
 	ei := gno.Items
 
 	var pi gosn.Items
-	pi, err = ei.DecryptAndParse(testSession.Mk, testSession.Ak)
+	pi, err = ei.DecryptAndParse(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 	pi.Filter(filters)
 

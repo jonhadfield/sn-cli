@@ -23,7 +23,7 @@ func TestExportOneNote(t *testing.T) {
 	itemsToPut := gosn.Items{
 		*note,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	pii := gosn.PutItemsInput{
@@ -56,7 +56,7 @@ func TestExportOneNote(t *testing.T) {
 	}
 
 	var writtenItems gosn.Items
-	writtenItems, err = writtenEncryptedItems.DecryptAndParse(testSession.Mk, testSession.Ak)
+	writtenItems, err = writtenEncryptedItems.DecryptAndParse(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	var found bool
@@ -82,7 +82,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	itemsToPut := gosn.Items{
 		*note,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	pii := gosn.PutItemsInput{
@@ -129,7 +129,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	assert.NoError(t, err)
 
 	var items gosn.Items
-	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak)
+	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	var found bool
@@ -155,7 +155,7 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	itemsToPut := gosn.Items{
 		*originalNote,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	pii := gosn.PutItemsInput{
@@ -186,7 +186,7 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	itemsToPut = gosn.Items{
 		*updatedNote,
 	}
-	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
+	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	pii = gosn.PutItemsInput{
@@ -216,7 +216,7 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	assert.NoError(t, err)
 
 	var items gosn.Items
-	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak)
+	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	var found bool
@@ -241,7 +241,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	itemsToPut := gosn.Items{
 		*originalTag,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	pii := gosn.PutItemsInput{
@@ -275,7 +275,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	itemsToPut = gosn.Items{
 		*updatedTag,
 	}
-	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
+	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	pii = gosn.PutItemsInput{
@@ -304,7 +304,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	assert.NoError(t, err)
 
 	var items gosn.Items
-	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak)
+	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
 
 	assert.NoError(t, err)
 
@@ -329,7 +329,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	itemsToPut := gosn.Items{
 		*originalTag,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	pii := gosn.PutItemsInput{
@@ -364,7 +364,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	itemsToPut = gosn.Items{
 		*originalTag,
 	}
-	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak)
+	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	pii = gosn.PutItemsInput{
@@ -391,7 +391,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	assert.NoError(t, err)
 
 	var items gosn.Items
-	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak)
+	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
 	var found bool

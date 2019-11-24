@@ -2,7 +2,6 @@ package sncli
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -108,7 +107,7 @@ func createNotes(session gosn.Session, num int, paras int) error {
 
 	var eGendNotes gosn.EncryptedItems
 
-	eGendNotes, _ = gendNotes.Encrypt(session.Mk, session.Ak)
+	eGendNotes, _ = gendNotes.Encrypt(session.Mk, session.Ak, true)
 	pii.Items = eGendNotes
 	_, err := gosn.PutItems(pii)
 
@@ -122,7 +121,7 @@ func createTags(session gosn.Session, num int64) error {
 
 	var eGendTags gosn.EncryptedItems
 
-	eGendTags, _ = gendTags.Encrypt(session.Mk, session.Ak)
+	eGendTags, _ = gendTags.Encrypt(session.Mk, session.Ak, true)
 	pii.Items = eGendTags
 	_, err := gosn.PutItems(pii)
 
@@ -143,21 +142,9 @@ type TestDataCreateTagsConfig struct {
 }
 
 func (input *TestDataCreateTagsConfig) Run() error {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	return createTags(input.Session, input.NumTags)
 }
 
 func (input *TestDataCreateNotesConfig) Run() error {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	return createNotes(input.Session, input.NumNotes, input.NumParas)
 }

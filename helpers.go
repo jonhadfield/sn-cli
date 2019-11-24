@@ -89,6 +89,7 @@ func CommaSplit(input string) []string {
 	o := strings.Split(input, ",")
 	// strip leading and trailing space
 	var s []string
+
 	for _, i := range o {
 		ti := strings.TrimSpace(i)
 		if len(ti) > 0 {

@@ -2,7 +2,6 @@ package sncli
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"time"
 
@@ -19,15 +18,10 @@ var (
 )
 
 func (input *StatsConfig) Run() error {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	getItemsInput := gosn.GetItemsInput{
 		Session:  input.Session,
 		PageSize: SNPageSize,
+		Debug:    input.Debug,
 	}
 
 	var err error
@@ -43,7 +37,7 @@ func (input *StatsConfig) Run() error {
 
 	var items gosn.Items
 
-	items, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
+	items, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
 	if err != nil {
 		return err
 	}

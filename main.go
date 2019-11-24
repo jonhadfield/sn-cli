@@ -1,8 +1,6 @@
 package sncli
 
 import (
-	"log"
-
 	"github.com/jonhadfield/gosn"
 )
 
@@ -212,14 +210,9 @@ func referenceExists(item gosn.Item, refID string) bool {
 }
 
 func (input *WipeConfig) Run() (int, error) {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	getItemsInput := gosn.GetItemsInput{
 		Session: input.Session,
+		Debug: input.Debug,
 	}
 
 	var err error
@@ -235,7 +228,7 @@ func (input *WipeConfig) Run() (int, error) {
 
 	var pi gosn.Items
 
-	pi, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
+	pi, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
 	if err != nil {
 		return 0, err
 	}
@@ -264,7 +257,7 @@ func (input *WipeConfig) Run() (int, error) {
 	// delete items
 	var eItemsToDel gosn.EncryptedItems
 
-	eItemsToDel, err = itemsToDel.Encrypt(input.Session.Mk, input.Session.Ak)
+	eItemsToDel, err = itemsToDel.Encrypt(input.Session.Mk, input.Session.Ak, input.Debug)
 	if err != nil {
 		return 0, err
 	}

@@ -1,20 +1,13 @@
 package sncli
 
 import (
-	"log"
-
 	"github.com/jonhadfield/gosn"
 )
 
 func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	getItemsInput := gosn.GetItemsInput{
 		Session: input.Session,
+		Debug: input.Debug,
 	}
 
 	var output gosn.GetItemsOutput
@@ -26,7 +19,7 @@ func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 
 	output.Items.DeDupe()
 
-	settings, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
+	settings, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
 	if err != nil {
 		return nil, err
 	}

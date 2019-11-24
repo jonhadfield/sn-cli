@@ -2,7 +2,6 @@ package sncli
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/jonhadfield/gosn"
@@ -14,14 +13,9 @@ type FixupConfig struct {
 }
 
 func (input *FixupConfig) Run() error {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	getItemsInput := gosn.GetItemsInput{
 		Session: input.Session,
+		Debug:   input.Debug,
 	}
 
 	var err error
@@ -36,7 +30,7 @@ func (input *FixupConfig) Run() error {
 	output.Items.DeDupe()
 
 	var pi gosn.Items
-	pi, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
+	pi, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
 
 	var missingContentType gosn.Items
 
@@ -109,7 +103,7 @@ func (input *FixupConfig) Run() error {
 		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
 			var eItemsWithRefsToUpdate gosn.EncryptedItems
 
-			eItemsWithRefsToUpdate, err = itemsWithRefsToUpdate.Encrypt(input.Session.Mk, input.Session.Ak)
+			eItemsWithRefsToUpdate, err = itemsWithRefsToUpdate.Encrypt(input.Session.Mk, input.Session.Ak, input.Debug)
 			if err != nil {
 				return err
 			}
@@ -141,7 +135,7 @@ func (input *FixupConfig) Run() error {
 		_, err = fmt.Scanln(&response)
 		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
 			var eMissingContentType gosn.EncryptedItems
-			eMissingContentType, err = missingContentType.Encrypt(input.Session.Mk, input.Session.Ak)
+			eMissingContentType, err = missingContentType.Encrypt(input.Session.Mk, input.Session.Ak, input.Debug)
 
 			if err != nil {
 				return err
@@ -179,7 +173,7 @@ func (input *FixupConfig) Run() error {
 		if StringInSlice(response, []string{"y", "yes"}, false) {
 			var eMissingContent gosn.EncryptedItems
 
-			eMissingContent, err = missingContent.Encrypt(input.Session.Mk, input.Session.Ak)
+			eMissingContent, err = missingContent.Encrypt(input.Session.Mk, input.Session.Ak, input.Debug)
 			if err != nil {
 				return err
 			}
@@ -204,6 +198,7 @@ func (input *FixupConfig) Run() error {
 	if len(notesToTitleFix) > 0 {
 		o := fmt.Sprintf("found %d items with missing titles. fix? ", len(notesToTitleFix))
 		fmt.Print(Yellow(o))
+
 		var response string
 
 		_, err = fmt.Scanln(&response)
@@ -214,7 +209,7 @@ func (input *FixupConfig) Run() error {
 		if StringInSlice(response, []string{"y", "yes"}, false) {
 			var eNotesToTitleFix gosn.EncryptedItems
 
-			eNotesToTitleFix, err = notesToTitleFix.Encrypt(input.Session.Mk, input.Session.Ak)
+			eNotesToTitleFix, err = notesToTitleFix.Encrypt(input.Session.Mk, input.Session.Ak, input.Debug)
 			if err != nil {
 				return err
 			}

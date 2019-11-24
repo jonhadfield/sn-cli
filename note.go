@@ -1,18 +1,10 @@
 package sncli
 
 import (
-	"log"
-
 	"github.com/jonhadfield/gosn"
 )
 
 func (input *AddNoteInput) Run() error {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	var syncToken, newNoteUUID string
 
 	ani := addNoteInput{
@@ -61,7 +53,7 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 
 	var eNewNoteItems gosn.EncryptedItems
 
-	eNewNoteItems, err = newNoteItems.Encrypt(input.session.Mk, input.session.Ak)
+	eNewNoteItems, err = newNoteItems.Encrypt(input.session.Mk, input.session.Ak, false)
 	if err != nil {
 		return
 	}
@@ -99,28 +91,17 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 }
 
 func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	noDeleted, _, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "")
 
 	return noDeleted, err
 }
 
 func (input *GetNoteConfig) Run() (output gosn.Items, err error) {
-	gosn.SetErrorLogger(log.Println)
-
-	if input.Debug {
-		gosn.SetDebugLogger(log.Println)
-	}
-
 	getItemsInput := gosn.GetItemsInput{
 		PageSize:  input.PageSize,
 		BatchSize: input.BatchSize,
 		Session:   input.Session,
+		Debug:     input.Debug,
 	}
 
 	var gio gosn.GetItemsOutput
@@ -132,7 +113,7 @@ func (input *GetNoteConfig) Run() (output gosn.Items, err error) {
 
 	gio.Items.DeDupe()
 
-	output, err = gio.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak)
+	output, err = gio.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
 	if err != nil {
 		return
 	}
@@ -203,7 +184,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 
 	var notes gosn.Items
 
-	notes, err = ei.DecryptAndParse(session.Mk, session.Ak)
+	notes, err = ei.DecryptAndParse(session.Mk, session.Ak, false)
 	if err != nil {
 		return
 	}
@@ -226,7 +207,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 
 	var eNotesToDelete gosn.EncryptedItems
 
-	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak)
+	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak, false)
 	if err != nil {
 		return
 	}
