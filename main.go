@@ -7,7 +7,7 @@ import (
 const (
 	timeLayout  = "2006-01-02T15:04:05.000Z"
 	SNServerURL = "https://sync.standardnotes.org"
-	SNPageSize  = 300
+	SNPageSize  = 500
 )
 
 type ItemReferenceYAML struct {
