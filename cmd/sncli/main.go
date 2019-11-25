@@ -1153,7 +1153,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				statsConfig := sncli.StatsConfig{
 					Session: session,
-					Debug:   c.GlobalBool("use-session"),
+					Debug:   c.GlobalBool("debug"),
 				}
 				err = statsConfig.Run()
 				return err
@@ -1183,7 +1183,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				wipeConfig := sncli.WipeConfig{
 					Session:  session,
 					Settings: c.Bool("settings"),
-					Debug:    c.GlobalBool("use-session"),
+					Debug:    c.GlobalBool("debug"),
 				}
 				var numWiped int
 
