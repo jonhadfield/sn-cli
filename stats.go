@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"sort"
 	"time"
 
@@ -59,6 +60,10 @@ func (input *StatsConfig) Run() error {
 	tCounter.counts = make(map[string]int64)
 
 	for _, item := range items {
+		if item.ContentType == "SN|Component" {
+			spew.Dump(item)
+		}
+
 		tCounter.update(item.ContentType)
 
 		if StringInSlice(item.UUID, allUUIDs, false) {

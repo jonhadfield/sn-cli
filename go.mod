@@ -2,6 +2,7 @@ module github.com/jonhadfield/sn-cli
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/fatih/color v1.7.0
 	github.com/jonhadfield/gosn v0.0.1
@@ -21,5 +22,7 @@ require (
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/yaml.v2 v2.2.7
 )
+
+replace github.com/jonhadfield/gosn => ../gosn
 
 go 1.12
