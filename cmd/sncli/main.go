@@ -1000,7 +1000,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			Flags: []cli.Flag{
 				cli.BoolTFlag{
 					Name:  "encrypted (default: true)",
-					Usage: "number of tags",
+					Usage: "encrypt the exported data",
 				},
 				cli.StringFlag{
 					Name:   "format",
