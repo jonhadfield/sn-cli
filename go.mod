@@ -3,7 +3,7 @@ module github.com/jonhadfield/sn-cli
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
-	github.com/fatih/color v1.7.0
+	github.com/fatih/color v1.9.0
 	github.com/jonhadfield/gosn v0.0.2
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
