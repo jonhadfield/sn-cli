@@ -15,7 +15,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0
-	github.com/urfave/cli v1.22.2
+	github.com/urfave/cli v1.22.4
 	github.com/zalando/go-keyring v0.0.0-20191216155332-f41212d4b175 // indirect
 	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
 	golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8 // indirect
