@@ -1,7 +1,7 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 func (input *AddNoteInput) Run() error {
@@ -47,9 +47,9 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 	newNoteContent := gosn.NewNoteContent()
 	newNoteContent.Title = input.noteTitle
 	newNoteContent.Text = input.noteText
-	newNote.Content = newNoteContent
+	newNote.Content = *newNoteContent
 	newNote.UUID = gosn.GenUUID()
-	newNoteItems := gosn.Items{*newNote}
+	newNoteItems := gosn.Notes{newNote}
 
 	var eNewNoteItems gosn.EncryptedItems
 
@@ -58,20 +58,20 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 		return
 	}
 
-	pii := gosn.PutItemsInput{
+	pii := gosn.SyncInput{
 		Session:   input.session,
 		SyncToken: input.syncToken,
 		Items:     eNewNoteItems,
 	}
 
-	var putItemsOutput gosn.PutItemsOutput
+	var putItemsOutput gosn.SyncOutput
 
-	putItemsOutput, err = gosn.PutItems(pii)
+	putItemsOutput, err = gosn.Sync(pii)
 	if err != nil {
 		return
 	}
 
-	newSyncToken = putItemsOutput.ResponseBody.SyncToken
+	newSyncToken = putItemsOutput.SyncToken
 
 	if len(input.tagTitles) > 0 {
 		tni := tagNotesInput{
@@ -97,16 +97,16 @@ func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
 }
 
 func (input *GetNoteConfig) Run() (output gosn.Items, err error) {
-	getItemsInput := gosn.GetItemsInput{
+	getItemsInput := gosn.SyncInput{
 		PageSize:  input.PageSize,
 		BatchSize: input.BatchSize,
 		Session:   input.Session,
 		Debug:     input.Debug,
 	}
 
-	var gio gosn.GetItemsOutput
+	var gio gosn.SyncOutput
 
-	gio, err = gosn.GetItems(getItemsInput)
+	gio, err = gosn.Sync(getItemsInput)
 	if err != nil {
 		return
 	}
@@ -169,12 +169,12 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 		MatchAny: true,
 	}
 
-	getItemsInput := gosn.GetItemsInput{
+	getItemsInput := gosn.SyncInput{
 		Session:   session,
 		SyncToken: syncToken,
 	}
 
-	gio, err := gosn.GetItems(getItemsInput)
+	gio, err := gosn.Sync(getItemsInput)
 	if err != nil {
 		return
 	}
@@ -191,13 +191,16 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 
 	notes.Filter(itemFilter)
 
-	var notesToDelete gosn.Items
+	var notesToDelete gosn.Notes
 
 	for _, item := range notes {
-		if item.Content != nil && item.ContentType == "Note" {
-			item.Content.SetText("")
-			item.Deleted = true
-			notesToDelete = append(notesToDelete, item)
+		note := item.(*gosn.Note)
+
+		if note.GetContent() != nil {
+
+			note.Content.SetText("")
+			note.SetDeleted(true)
+			notesToDelete = append(notesToDelete, *note)
 		}
 	}
 
@@ -212,22 +215,22 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 		return
 	}
 
-	pii := gosn.PutItemsInput{
+	pii := gosn.SyncInput{
 		Session:   session,
 		Items:     eNotesToDelete,
 		SyncToken: syncToken,
 	}
 
-	var putItemsOutput gosn.PutItemsOutput
+	var putItemsOutput gosn.SyncOutput
 
-	putItemsOutput, err = gosn.PutItems(pii)
+	putItemsOutput, err = gosn.Sync(pii)
 	if err != nil {
 		return
 	}
 
 	noDeleted = len(notesToDelete)
 
-	newSyncToken = putItemsOutput.ResponseBody.SyncToken
+	newSyncToken = putItemsOutput.SyncToken
 
 	return noDeleted, newSyncToken, err
 }

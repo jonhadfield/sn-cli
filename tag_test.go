@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 func TestAddDeleteTagByTitle(t *testing.T) {

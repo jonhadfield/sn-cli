@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 var testParas = []string{
@@ -79,9 +79,9 @@ func genNotes(num, textParas int) (notes gosn.Items) {
 		noteContent.Title = fmt.Sprintf("%d.%s", i, genRandomText(1))
 		noteContent.Text = genRandomText(textParas)
 		note := gosn.NewNote()
-		note.Content = noteContent
+		note.Content = *noteContent
 		note.ContentType = "Note"
-		notes = append(notes, *note)
+		notes = append(notes, &note)
 	}
 
 	return notes
@@ -93,15 +93,15 @@ func genTags(num int64) (tags gosn.Items) {
 		tagContent := gosn.NewTagContent()
 		tagContent.Title = genRandomText(1)
 		tag.ContentType = "Tag"
-		tag.Content = tagContent
-		tags = append(tags, *tag)
+		tag.Content = *tagContent
+		tags = append(tags, &tag)
 	}
 
 	return tags
 }
 
 func createNotes(session gosn.Session, num int, paras int) error {
-	var pii gosn.PutItemsInput
+	var pii gosn.SyncInput
 	pii.Session = session
 	gendNotes := genNotes(num, paras)
 
@@ -109,13 +109,13 @@ func createNotes(session gosn.Session, num int, paras int) error {
 
 	eGendNotes, _ = gendNotes.Encrypt(session.Mk, session.Ak, true)
 	pii.Items = eGendNotes
-	_, err := gosn.PutItems(pii)
+	_, err := gosn.Sync(pii)
 
 	return err
 }
 
 func createTags(session gosn.Session, num int64) error {
-	var pii gosn.PutItemsInput
+	var pii gosn.SyncInput
 	pii.Session = session
 	gendTags := genTags(num)
 
@@ -123,7 +123,7 @@ func createTags(session gosn.Session, num int64) error {
 
 	eGendTags, _ = gendTags.Encrypt(session.Mk, session.Ak, true)
 	pii.Items = eGendTags
-	_, err := gosn.PutItems(pii)
+	_, err := gosn.Sync(pii)
 
 	return err
 }

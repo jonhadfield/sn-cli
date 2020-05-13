@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,12 +38,12 @@ func TestWipeWith50(t *testing.T) {
 	filters := gosn.ItemFilters{
 		Filters: []gosn.Filter{noteFilter},
 	}
-	gni := gosn.GetItemsInput{
+	gni := gosn.SyncInput{
 		Session: testSession,
 	}
 
-	var gno gosn.GetItemsOutput
-	gno, err = gosn.GetItems(gni)
+	var gno gosn.SyncOutput
+	gno, err = gosn.Sync(gni)
 	assert.NoError(t, err)
 	gno.Items.DeDupe()
 	ei := gno.Items
@@ -99,7 +99,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 
 	assert.NoError(t, err, err)
 
-	newItemUUID := preRes[0].UUID
+	newItemUUID := preRes[0].GetUUID()
 	deleteNoteConfig := DeleteNoteConfig{
 		Session:   testSession,
 		NoteUUIDs: []string{newItemUUID},

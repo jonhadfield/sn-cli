@@ -3,7 +3,7 @@ package sncli
 import (
 	"os"
 
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 var (

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 type FixupConfig struct {
@@ -13,16 +13,16 @@ type FixupConfig struct {
 }
 
 func (input *FixupConfig) Run() error {
-	getItemsInput := gosn.GetItemsInput{
+	getItemsInput := gosn.SyncInput{
 		Session: input.Session,
 		Debug:   input.Debug,
 	}
 
 	var err error
 
-	var output gosn.GetItemsOutput
+	var output gosn.SyncOutput
 
-	output, err = gosn.GetItems(getItemsInput)
+	output, err = gosn.Sync(getItemsInput)
 	if err != nil {
 		return err
 	}
@@ -43,25 +43,26 @@ func (input *FixupConfig) Run() error {
 	var allItems gosn.Items
 
 	for _, item := range pi {
-		allIDs = append(allIDs, item.UUID)
+		allIDs = append(allIDs, item.GetUUID())
 
-		if !item.Deleted {
+		if !item.IsDeleted() {
 			allItems = append(allItems, item)
 
 			switch {
-			case item.ContentType == "":
-				item.Deleted = true
-				item.ContentType = "Note"
+			case item.GetContentType() == "":
+				item.SetDeleted(true)
+				item.SetContentType("Note")
 				missingContentType = append(missingContentType, item)
-			case item.Content == nil && StringInSlice(item.ContentType, []string{"Note", "Tag"}, true):
-				item.Deleted = true
-				fmt.Println(item.ContentType)
+			case item.GetContent() == nil && StringInSlice(item.GetContentType(), []string{"Note", "Tag"}, true):
+				item.SetDeleted(true)
+				fmt.Println(item.GetContentType())
 				missingContent = append(missingContent, item)
 			default:
-				if item.ContentType == "Note" && item.Content.GetTitle() == "" {
-					item.Content.SetUpdateTime(time.Now())
-					item.Content.SetTitle("untitled")
-					notesToTitleFix = append(notesToTitleFix, item)
+				if item.GetContentType() == "Note" {
+					note := item.(*gosn.Note)
+					note.Content.SetUpdateTime(time.Now())
+					note.Content.SetTitle("untitled")
+					notesToTitleFix = append(notesToTitleFix, note)
 				}
 			}
 		}
@@ -74,12 +75,21 @@ func (input *FixupConfig) Run() error {
 
 		var needsFix bool
 
-		if item.Content != nil && item.Content.References() != nil && len(item.Content.References()) > 0 {
-			for _, ref := range item.Content.References() {
+		if item.GetContent() != nil && item.GetContent().References() != nil && len(item.GetContent().References()) > 0 {
+			for _, ref := range item.GetContent().References() {
 				if !StringInSlice(ref.UUID, allIDs, false) {
 					needsFix = true
 
-					o := fmt.Sprintf("item: %s references missing item: %s\n", item.Content.GetTitle(), ref.UUID)
+					var title string
+					switch item.(type) {
+					case *gosn.Note:
+						n := item.(*gosn.Note)
+						title = n.Content.Title
+					case *gosn.Tag:
+						t := item.(*gosn.Tag)
+						title = t.Content.Title
+					}
+					o := fmt.Sprintf("item: %s references missing item: %s\n", title, ref.UUID)
 					fmt.Print(Yellow(o))
 				} else {
 					newRefs = append(newRefs, ref)
@@ -87,8 +97,20 @@ func (input *FixupConfig) Run() error {
 			}
 
 			if needsFix {
-				item.Content.SetReferences(newRefs)
-				itemsWithRefsToUpdate = append(itemsWithRefsToUpdate, item)
+				var updatedItem gosn.Item
+				switch item.(type) {
+				case *gosn.Note:
+					updatedItem = item.(*gosn.Note)
+					noteContent := updatedItem.GetContent().(gosn.NoteContent)
+					noteContent.SetReferences(newRefs)
+					updatedItem.SetContent(noteContent)
+				case *gosn.Tag:
+					updatedItem = item.(*gosn.Tag)
+					tagContent := updatedItem.GetContent().(gosn.TagContent)
+					tagContent.SetReferences(newRefs)
+					updatedItem.SetContent(tagContent)
+				}
+				itemsWithRefsToUpdate = append(itemsWithRefsToUpdate, updatedItem)
 			}
 		}
 	}
@@ -108,12 +130,12 @@ func (input *FixupConfig) Run() error {
 				return err
 			}
 
-			putItemsInput := gosn.PutItemsInput{
+			putItemsInput := gosn.SyncInput{
 				Session: input.Session,
 				Items:   eItemsWithRefsToUpdate,
 			}
 
-			_, err = gosn.PutItems(putItemsInput)
+			_, err = gosn.Sync(putItemsInput)
 			if err != nil {
 				return err
 			}
@@ -141,12 +163,12 @@ func (input *FixupConfig) Run() error {
 				return err
 			}
 
-			putItemsInput := gosn.PutItemsInput{
+			putItemsInput := gosn.SyncInput{
 				Session: input.Session,
 				Items:   eMissingContentType,
 			}
 
-			_, err = gosn.PutItems(putItemsInput)
+			_, err = gosn.Sync(putItemsInput)
 			if err != nil {
 				return err
 			}
@@ -178,12 +200,12 @@ func (input *FixupConfig) Run() error {
 				return err
 			}
 
-			putItemsInput := gosn.PutItemsInput{
+			putItemsInput := gosn.SyncInput{
 				Session: input.Session,
 				Items:   eMissingContent,
 			}
 
-			_, err = gosn.PutItems(putItemsInput)
+			_, err = gosn.Sync(putItemsInput)
 			if err != nil {
 				return err
 			}
@@ -214,12 +236,12 @@ func (input *FixupConfig) Run() error {
 				return err
 			}
 
-			putItemsInput := gosn.PutItemsInput{
+			putItemsInput := gosn.SyncInput{
 				Session: input.Session,
 				Items:   eNotesToTitleFix,
 			}
 
-			_, err = gosn.PutItems(putItemsInput)
+			_, err = gosn.Sync(putItemsInput)
 			if err != nil {
 				return err
 			}

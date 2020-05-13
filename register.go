@@ -1,7 +1,7 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 type RegisterConfig struct {

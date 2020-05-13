@@ -1,18 +1,18 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
-	getItemsInput := gosn.GetItemsInput{
+	getItemsInput := gosn.SyncInput{
 		Session: input.Session,
 		Debug: input.Debug,
 	}
 
-	var output gosn.GetItemsOutput
+	var output gosn.SyncOutput
 
-	output, err = gosn.GetItems(getItemsInput)
+	output, err = gosn.Sync(getItemsInput)
 	if err != nil {
 		return nil, err
 	}

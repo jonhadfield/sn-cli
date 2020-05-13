@@ -1,7 +1,8 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn"
+	"fmt"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 const (
@@ -199,8 +200,8 @@ type StatsConfig struct {
 	Debug   bool
 }
 
-func referenceExists(item gosn.Item, refID string) bool {
-	for _, ref := range item.Content.References() {
+func referenceExists(tag gosn.Tag, refID string) bool {
+	for _, ref := range tag.Content.References() {
 		if ref.UUID == refID {
 			return true
 		}
@@ -210,18 +211,22 @@ func referenceExists(item gosn.Item, refID string) bool {
 }
 
 func (input *WipeConfig) Run() (int, error) {
-	getItemsInput := gosn.GetItemsInput{
+	getItemsInput := gosn.SyncInput{
 		Session: input.Session,
 		Debug: input.Debug,
 	}
 
 	var err error
 	// get all existing Tags and Notes and mark for deletion
-	var output gosn.GetItemsOutput
+	var output gosn.SyncOutput
 
-	output, err = gosn.GetItems(getItemsInput)
+	output, err = gosn.Sync(getItemsInput)
 	if err != nil {
 		return 0, err
+	}
+
+	for _, x := range output.Items {
+		fmt.Printf("X: %+v\n", x)
 	}
 
 	output.Items.DeDupe()
@@ -236,22 +241,26 @@ func (input *WipeConfig) Run() (int, error) {
 	var itemsToDel gosn.Items
 
 	for _, item := range pi {
-		if item.Deleted {
+		fmt.Printf("%+v\n", item)
+		if item == nil || item.IsDeleted() {
 			continue
 		}
 
 		switch {
-		case item.ContentType == "Tag":
-			item.Deleted = true
-			item.Content = gosn.NewTagContent()
-			itemsToDel = append(itemsToDel, item)
-		case item.ContentType == "Note":
-			item.Deleted = true
-			item.Content = gosn.NewNoteContent()
-			itemsToDel = append(itemsToDel, item)
+		case item.GetContentType() == "Tag":
+			tag := item.(*gosn.Tag)
+			tag.SetDeleted(true)
+			tag.Content = *gosn.NewTagContent()
+			itemsToDel = append(itemsToDel, tag)
+		case item.GetContentType() == "Note":
+			note := item.(*gosn.Note)
+			note.Deleted = true
+			note.Content = *gosn.NewNoteContent()
+			itemsToDel = append(itemsToDel, note)
 		case input.Settings:
-			item.Deleted = true
-			itemsToDel = append(itemsToDel, item)
+			setting := item.(*gosn.Component)
+			setting.Deleted = true
+			itemsToDel = append(itemsToDel, setting)
 		}
 	}
 	// delete items
@@ -262,13 +271,13 @@ func (input *WipeConfig) Run() (int, error) {
 		return 0, err
 	}
 
-	putItemsInput := gosn.PutItemsInput{
+	putItemsInput := gosn.SyncInput{
 		Session:   input.Session,
 		Items:     eItemsToDel,
 		SyncToken: output.SyncToken,
 	}
 
-	_, err = gosn.PutItems(putItemsInput)
+	_, err = gosn.Sync(putItemsInput)
 	if err != nil {
 		return 0, err
 	}

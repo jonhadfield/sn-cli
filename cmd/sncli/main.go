@@ -15,7 +15,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/divan/num2words"
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh/terminal"
@@ -556,46 +556,46 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Component).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								tagContentAppDataContent := sncli.AppDataContentYAML{
 									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailYAML,
 								}
 
 								settingContentYAML := sncli.SettingContentYAML{
-									Title:          rt.Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToYaml(rt.Content.References()),
+									Title:          rt.(*gosn.Component).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Component).Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
 								settingsYAML = append(settingsYAML, sncli.SettingYAML{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Component).UUID,
+									ContentType: rt.(*gosn.Component).ContentType,
 									Content:     settingContentYAML,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Component).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Component).CreatedAt,
 								})
 							}
 							if !count && strings.ToLower(output) == "json" {
 								settingContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Component).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								settingContentAppDataContent := sncli.AppDataContentJSON{
 									OrgStandardNotesSN: settingContentOrgStandardNotesSNDetailJSON,
 								}
 
 								settingContentJSON := sncli.SettingContentJSON{
-									Title:          rt.Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToJSON(rt.Content.References()),
+									Title:          rt.(*gosn.Component).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Component).Content.References()),
 									AppData:        settingContentAppDataContent,
 								}
 
 								settingsJSON = append(settingsJSON, sncli.SettingJSON{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Component).UUID,
+									ContentType: rt.(*gosn.Component).ContentType,
 									Content:     settingContentJSON,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Component).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Component).CreatedAt,
 								})
 							}
 						}
@@ -741,46 +741,46 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								tagContentAppDataContent := sncli.AppDataContentYAML{
 									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailYAML,
 								}
 
 								tagContentYAML := sncli.TagContentYAML{
-									Title:          rt.Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToYaml(rt.Content.References()),
+									Title:          rt.(*gosn.Tag).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Tag).Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
 								tagsYAML = append(tagsYAML, sncli.TagYAML{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Tag).UUID,
+									ContentType: rt.(*gosn.Tag).ContentType,
 									Content:     tagContentYAML,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Tag).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Tag).CreatedAt,
 								})
 							}
 							if !count && strings.ToLower(output) == "json" {
 								tagContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								tagContentAppDataContent := sncli.AppDataContentJSON{
 									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailJSON,
 								}
 
 								tagContentJSON := sncli.TagContentJSON{
-									Title:          rt.Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToJSON(rt.Content.References()),
+									Title:          rt.(*gosn.Tag).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Tag).Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
 								tagsJSON = append(tagsJSON, sncli.TagJSON{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Tag).UUID,
+									ContentType: rt.(*gosn.Tag).ContentType,
 									Content:     tagContentJSON,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Tag).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Tag).CreatedAt,
 								})
 							}
 						}
@@ -924,46 +924,46 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								noteContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								noteContentAppDataContent := sncli.AppDataContentYAML{
 									OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailYAML,
 								}
 								noteContentYAML := sncli.NoteContentYAML{
-									Title:          rt.Content.GetTitle(),
-									Text:           rt.Content.GetText(),
-									ItemReferences: sncli.ItemRefsToYaml(rt.Content.References()),
+									Title:          rt.(*gosn.Note).Content.GetTitle(),
+									Text:           rt.(*gosn.Note).Content.GetText(),
+									ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Note).Content.References()),
 									AppData:        noteContentAppDataContent,
 								}
 
 								notesYAML = append(notesYAML, sncli.NoteYAML{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Note).UUID,
+									ContentType: rt.(*gosn.Note).ContentType,
 									Content:     noteContentYAML,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Note).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Note).CreatedAt,
 								})
 							}
 							if !count && strings.ToLower(output) == "json" {
 								noteContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								noteContentAppDataContent := sncli.AppDataContentJSON{
 									OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailJSON,
 								}
 								noteContentJSON := sncli.NoteContentJSON{
-									Title:          rt.Content.GetTitle(),
-									Text:           rt.Content.GetText(),
-									ItemReferences: sncli.ItemRefsToJSON(rt.Content.References()),
+									Title:          rt.(*gosn.Note).Content.GetTitle(),
+									Text:           rt.(*gosn.Note).Content.GetText(),
+									ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Note).Content.References()),
 									AppData:        noteContentAppDataContent,
 								}
 
 								notesJSON = append(notesJSON, sncli.NoteJSON{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Note).UUID,
+									ContentType: rt.(*gosn.Note).ContentType,
 									Content:     noteContentJSON,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Note).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Note).CreatedAt,
 								})
 							}
 						}

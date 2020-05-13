@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,20 +17,20 @@ func TestExportOneNote(t *testing.T) {
 
 	note := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
-	note.Content = noteContent
+	note.Content = *noteContent
 	note.Content.SetTitle("Example Title")
 	note.Content.SetText("Some example text")
 	itemsToPut := gosn.Items{
-		*note,
+		&note,
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
+	pii := gosn.SyncInput{
 		Session: testSession,
 		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	_, err = gosn.Sync(pii)
 	assert.NoError(t, err)
 
 	dir, err := ioutil.TempDir("", "test")
@@ -62,7 +62,7 @@ func TestExportOneNote(t *testing.T) {
 	var found bool
 
 	for _, item := range writtenItems {
-		if item.UUID == note.UUID {
+		if item != nil && item.GetUUID() == note.UUID {
 			found = true
 			break
 		}
@@ -76,20 +76,20 @@ func TestExportWipeImportOneNote(t *testing.T) {
 
 	note := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
-	note.Content = noteContent
+	note.Content = *noteContent
 	note.Content.SetTitle("Example Title")
 	note.Content.SetText("Some example text")
 	itemsToPut := gosn.Items{
-		*note,
+		&note,
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
+	pii := gosn.SyncInput{
 		Session: testSession,
 		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	_, err = gosn.Sync(pii)
 	assert.NoError(t, err)
 
 	dir, err := ioutil.TempDir("", "test")
@@ -120,12 +120,12 @@ func TestExportWipeImportOneNote(t *testing.T) {
 		panic(icErr)
 	}
 
-	gii := gosn.GetItemsInput{
+	gii := gosn.SyncInput{
 		Session: testSession,
 	}
 
-	var gio gosn.GetItemsOutput
-	gio, err = gosn.GetItems(gii)
+	var gio gosn.SyncOutput
+	gio, err = gosn.Sync(gii)
 	assert.NoError(t, err)
 
 	var items gosn.Items
@@ -135,7 +135,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	var found bool
 
 	for _, i := range items {
-		if i.Equals(*note) {
+		if i.(*gosn.Note).Equals(note) {
 			found = true
 		}
 	}
@@ -149,20 +149,20 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	// create and put initial originalNote
 	originalNote := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
-	originalNote.Content = noteContent
+	originalNote.Content = *noteContent
 	originalNote.Content.SetTitle("Example Title")
 	originalNote.Content.SetText("Some example text")
 	itemsToPut := gosn.Items{
-		*originalNote,
+		&originalNote,
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
+	pii := gosn.SyncInput{
 		Session: testSession,
 		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	_, err = gosn.Sync(pii)
 	assert.NoError(t, err)
 
 	dir, err := ioutil.TempDir("", "test")
@@ -184,16 +184,16 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	updatedNote.Content.SetTitle("Example Title UPDATED")
 	updatedNote.Content.SetText("Some example text UPDATED")
 	itemsToPut = gosn.Items{
-		*updatedNote,
+		&updatedNote,
 	}
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii = gosn.PutItemsInput{
+	pii = gosn.SyncInput{
 		Session: testSession,
 		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	_, err = gosn.Sync(pii)
 	assert.NoError(t, err)
 
 	// import original export
@@ -207,12 +207,12 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	}
 
 	// get items again
-	gii := gosn.GetItemsInput{
+	gii := gosn.SyncInput{
 		Session: testSession,
 	}
 
-	var gio gosn.GetItemsOutput
-	gio, err = gosn.GetItems(gii)
+	var gio gosn.SyncOutput
+	gio, err = gosn.Sync(gii)
 	assert.NoError(t, err)
 
 	var items gosn.Items
@@ -222,7 +222,7 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	var found bool
 
 	for _, i := range items {
-		if i.Equals(*originalNote) {
+		if i.(*gosn.Note).Equals(originalNote) {
 			found = true
 		}
 	}
@@ -236,19 +236,19 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	// create and put initial originalTag
 	originalTag := gosn.NewTag()
 	tagContent := gosn.NewTagContent()
-	originalTag.Content = tagContent
+	originalTag.Content = *tagContent
 	originalTag.Content.SetTitle("Example Title")
 	itemsToPut := gosn.Items{
-		*originalTag,
+		&originalTag,
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
+	pii := gosn.SyncInput{
 		Session: testSession,
 		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	_, err = gosn.Sync(pii)
 	assert.NoError(t, err)
 
 	dir, err := ioutil.TempDir("", "test")
@@ -273,16 +273,16 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	updatedTag := originalTag.Copy()
 	updatedTag.Content.SetTitle("Example Title UPDATED")
 	itemsToPut = gosn.Items{
-		*updatedTag,
+		&updatedTag,
 	}
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii = gosn.PutItemsInput{
+	pii = gosn.SyncInput{
 		Session: testSession,
 		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	_, err = gosn.Sync(pii)
 	assert.NoError(t, err)
 
 	// import original export
@@ -295,12 +295,12 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	assert.NoError(t, err)
 
 	// get items again
-	gii := gosn.GetItemsInput{
+	gii := gosn.SyncInput{
 		Session: testSession,
 	}
 
-	var gio gosn.GetItemsOutput
-	gio, err = gosn.GetItems(gii)
+	var gio gosn.SyncOutput
+	gio, err = gosn.Sync(gii)
 	assert.NoError(t, err)
 
 	var items gosn.Items
@@ -311,7 +311,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	var found bool
 
 	for _, i := range items {
-		if i.Equals(*originalTag) {
+		if i.(*gosn.Tag).Equals(originalTag) {
 			found = true
 		}
 	}
@@ -324,19 +324,19 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	// create and put originalTag
 	originalTag := gosn.NewTag()
 	tagContent := gosn.NewTagContent()
-	originalTag.Content = tagContent
+	originalTag.Content = *tagContent
 	originalTag.Content.SetTitle("Example Title")
 	itemsToPut := gosn.Items{
-		*originalTag,
+		&originalTag,
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
+	pii := gosn.SyncInput{
 		Session: testSession,
 		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	_, err = gosn.Sync(pii)
 	assert.NoError(t, err)
 
 	dir, err := ioutil.TempDir("", "test")
@@ -362,16 +362,16 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	// delete originalTag
 	originalTag.Deleted = true
 	itemsToPut = gosn.Items{
-		*originalTag,
+		&originalTag,
 	}
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii = gosn.PutItemsInput{
+	pii = gosn.SyncInput{
 		Session: testSession,
 		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	_, err = gosn.Sync(pii)
 	assert.NoError(t, err)
 	// import original export
 	ic := ImportConfig{
@@ -382,12 +382,12 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	assert.NoError(t, err)
 
 	// get items again
-	gii := gosn.GetItemsInput{
+	gii := gosn.SyncInput{
 		Session: testSession,
 	}
 
-	var gio gosn.GetItemsOutput
-	gio, err = gosn.GetItems(gii)
+	var gio gosn.SyncOutput
+	gio, err = gosn.Sync(gii)
 	assert.NoError(t, err)
 
 	var items gosn.Items
@@ -397,7 +397,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	var found bool
 
 	for _, i := range items {
-		if i.Equals(*copyOfOriginalTag) {
+		if i.(*gosn.Tag).Equals(copyOfOriginalTag) {
 			found = true
 		}
 	}

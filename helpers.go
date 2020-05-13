@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 func StringInSlice(inStr string, inSlice []string, matchCase bool) bool {
@@ -106,7 +106,7 @@ func CommaSplit(input string) []string {
 
 func RemoveDeleted(in gosn.Items) (out gosn.Items) {
 	for _, i := range in {
-		if !i.Deleted {
+		if !i.IsDeleted() {
 			out = append(out, i)
 		}
 	}

@@ -1,7 +1,7 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 )
 
 type ExportConfig struct {
@@ -17,12 +17,12 @@ type ImportConfig struct {
 }
 
 func (i *ExportConfig) Run() error {
-	gii := gosn.GetItemsInput{
+	gii := gosn.SyncInput{
 		Session: i.Session,
 		Debug:   i.Debug,
 	}
 
-	gio, err := gosn.GetItems(gii)
+	gio, err := gosn.Sync(gii)
 	if err != nil {
 		return err
 	}
@@ -56,13 +56,13 @@ func (i *ImportConfig) Run() error {
 	// get existing encItemsToImport
 	var existingItems gosn.Items
 
-	gii := gosn.GetItemsInput{
+	gii := gosn.SyncInput{
 		Session: i.Session,
 	}
 
-	var gio gosn.GetItemsOutput
+	var gio gosn.SyncOutput
 
-	gio, err = gosn.GetItems(gii)
+	gio, err = gosn.Sync(gii)
 
 	if err != nil {
 		return err
@@ -81,12 +81,12 @@ func (i *ImportConfig) Run() error {
 
 		for _, existingItem := range existingItems {
 			// if uuid exists
-			if itemToImport.UUID == existingItem.UUID {
+			if existingItem != nil && itemToImport != nil && itemToImport.GetUUID() == existingItem.GetUUID() {
 				// if item deleted, push with new uuid
 				found = true
 
-				if existingItem.Deleted {
-					itemToImport.UUID = gosn.GenUUID()
+				if existingItem.IsDeleted() {
+					itemToImport.SetUUID(gosn.GenUUID())
 					finalList = append(finalList, itemToImport)
 					done = true
 				} else {
@@ -113,12 +113,12 @@ func (i *ImportConfig) Run() error {
 		return err
 	}
 	// push item
-	pii := gosn.PutItemsInput{
+	pii := gosn.SyncInput{
 		Session: i.Session,
 		Items:   encFinalList,
 	}
 
-	_, err = gosn.PutItems(pii)
+	_, err = gosn.Sync(pii)
 
 	return err
 }

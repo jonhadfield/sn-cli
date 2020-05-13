@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/ryanuber/columnize"
 )
 
@@ -18,7 +18,7 @@ var (
 )
 
 func (input *StatsConfig) Run() error {
-	getItemsInput := gosn.GetItemsInput{
+	getItemsInput := gosn.SyncInput{
 		Session:  input.Session,
 		PageSize: SNPageSize,
 		Debug:    input.Debug,
@@ -26,9 +26,9 @@ func (input *StatsConfig) Run() error {
 
 	var err error
 	// get all existing Tags and Notes
-	var output gosn.GetItemsOutput
+	var output gosn.SyncOutput
 
-	output, err = gosn.GetItems(getItemsInput)
+	output, err = gosn.Sync(getItemsInput)
 	if err != nil {
 		return err
 	}
@@ -59,29 +59,29 @@ func (input *StatsConfig) Run() error {
 	tCounter.counts = make(map[string]int64)
 
 	for _, item := range items {
-		tCounter.update(item.ContentType)
+		tCounter.update(item.GetContentType())
 
-		if StringInSlice(item.UUID, allUUIDs, false) {
-			duplicateUUIDs = append(duplicateUUIDs, item.UUID)
+		if StringInSlice(item.GetUUID(), allUUIDs, false) {
+			duplicateUUIDs = append(duplicateUUIDs, item.GetUUID())
 		}
 
-		allUUIDs = append(allUUIDs, item.UUID)
+		allUUIDs = append(allUUIDs, item.GetUUID())
 
-		if item.Deleted {
+		if item.IsDeleted() {
 			tCounter.update("Deleted")
 		}
 
-		if !item.Deleted && item.ContentType == "" {
-			missingContentTypeUUIDs = append(missingContentTypeUUIDs, item.UUID)
+		if !item.IsDeleted() && item.GetContentType() == "" {
+			missingContentTypeUUIDs = append(missingContentTypeUUIDs, item.GetUUID())
 		}
 
-		if item.ContentType == "Note" {
-			if !item.Deleted && item.Content == nil {
-				missingContentUUIDs = append(missingContentUUIDs, item.UUID)
+		if item.GetContentType() == "Note" {
+			if !item.IsDeleted() && item.GetContent() == nil {
+				missingContentUUIDs = append(missingContentUUIDs, item.GetUUID())
 			}
 
 			var cTime time.Time
-			cTime, err = time.Parse(timeLayout, item.CreatedAt)
+			cTime, err = time.Parse(timeLayout, item.GetCreatedAt())
 
 			if err != nil {
 				return err
@@ -89,40 +89,40 @@ func (input *StatsConfig) Run() error {
 
 			var uTime time.Time
 
-			uTime, err = time.Parse(timeLayout, item.UpdatedAt)
+			uTime, err = time.Parse(timeLayout, item.GetUpdatedAt())
 			if err != nil {
 				return err
 			}
 
-			if !item.Deleted && oldestNote.IsZero() || cTime.Before(oldestNote) {
-				oldestNote, err = time.Parse(timeLayout, item.CreatedAt)
+			if !item.IsDeleted() && oldestNote.IsZero() || cTime.Before(oldestNote) {
+				oldestNote, err = time.Parse(timeLayout, item.GetCreatedAt())
 				if err != nil {
 					return err
 				}
 			}
 
-			if !item.Deleted && newestNote.IsZero() || cTime.After(newestNote) {
-				newestNote, err = time.Parse(timeLayout, item.CreatedAt)
+			if !item.IsDeleted() && newestNote.IsZero() || cTime.After(newestNote) {
+				newestNote, err = time.Parse(timeLayout, item.GetCreatedAt())
 				if err != nil {
 					return err
 				}
 			}
 
-			if !item.Deleted && lastUpdatedNote.IsZero() || uTime.After(lastUpdatedNote) {
-				lastUpdatedNote, err = time.Parse(timeLayout, item.UpdatedAt)
+			if !item.IsDeleted() && lastUpdatedNote.IsZero() || uTime.After(lastUpdatedNote) {
+				lastUpdatedNote, err = time.Parse(timeLayout, item.GetUpdatedAt())
 				if err != nil {
 					return err
 				}
 			}
 
-			if !item.Deleted && item.ContentSize > 0 {
+			if !item.IsDeleted() && item.GetContentSize() > 0 {
 				notes = append(notes, item)
 			}
 		}
 	}
 
 	sort.Slice(notes, func(i, j int) bool {
-		return notes[i].ContentSize > notes[j].ContentSize
+		return notes[i].GetContentSize() > notes[j].GetContentSize()
 	})
 
 	fmt.Println(Green("COUNTS"))
@@ -148,7 +148,8 @@ func (input *StatsConfig) Run() error {
 		}
 
 		for x := 0; x < finalItem; x++ {
-			fmt.Printf(" - %d bytes: \"%s\"\n", notes[x].ContentSize, notes[x].Content.GetTitle())
+			note := notes[x].(*gosn.Note)
+			fmt.Printf(" - %d bytes: \"%s\"\n", note.GetContentSize(), note.Content.Title)
 		}
 	} else {
 		fmt.Println("no notes returned")
