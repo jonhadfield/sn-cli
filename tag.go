@@ -204,13 +204,14 @@ func (input *DeleteTagConfig) Run() (noDeleted int, err error) {
 }
 
 func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syncToken string) (noDeleted int, newSyncToken string, err error) {
-	deleteNotesFilter := gosn.Filter{
-		Type: "Note",
-	}
+	//deleteNotesFilter := gosn.Filter{
+	//	Type: "Note",
+	//}
 	deleteTagsFilter := gosn.Filter{
 		Type: "Tag",
 	}
-	filters := []gosn.Filter{deleteNotesFilter, deleteTagsFilter}
+	filters := []gosn.Filter{deleteTagsFilter}
+	//filters := []gosn.Filter{deleteNotesFilter, deleteTagsFilter}
 	deleteFilter := gosn.ItemFilters{
 		MatchAny: true,
 		Filters:  filters,
@@ -254,7 +255,7 @@ func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syn
 		}
 
 		if StringInSlice(tag.GetUUID(), tagUUIDs, true) ||
-					StringInSlice(tag.Content.Title, tagTitles, true) {
+			StringInSlice(tag.Content.Title, tagTitles, true) {
 			tag.Deleted = true
 			tagsToDelete = append(tagsToDelete, tag)
 		}
@@ -298,13 +299,10 @@ type addTagsOutput struct {
 }
 
 func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
-	addNotesFilter := gosn.Filter{
-		Type: "Note",
-	}
 	addTagsFilter := gosn.Filter{
 		Type: "Tag",
 	}
-	filters := []gosn.Filter{addNotesFilter, addTagsFilter}
+	filters := []gosn.Filter{addTagsFilter}
 	addFilter := gosn.ItemFilters{
 		MatchAny: true,
 		Filters:  filters,
@@ -357,13 +355,13 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		newTagContent.Title = tag
 		newTag.Content = *newTagContent
 		newTag.UUID = gosn.GenUUID()
+
 		tagsToAdd = append(tagsToAdd, newTag)
 		ato.added = append(ato.added, tag)
 	}
 
 	if len(tagsToAdd) > 0 {
 		var eTagsToAdd gosn.EncryptedItems
-
 		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Mk, ati.session.Ak, false)
 		if err != nil {
 			return

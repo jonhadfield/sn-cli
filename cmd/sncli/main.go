@@ -379,7 +379,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							return err
 						}
 						processedNotes := sncli.CommaSplit(title)
-
 						DeleteNoteConfig := sncli.DeleteNoteConfig{
 							Session:    session,
 							NoteTitles: processedNotes,
@@ -391,15 +390,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 
 						if noDeleted > 0 {
-							msg = sncli.Green(fmt.Sprintf("%s tag", msgDeleted))
+							msg = sncli.Green(fmt.Sprintf("%s note", msgDeleted))
 						} else {
-							msg = sncli.Yellow("Tag not found")
+							msg = sncli.Yellow("Note not found")
 						}
 
-						if noDeleted == 0 {
-							msg = sncli.Yellow(fmt.Sprintf("Note not found"))
-							return nil
-						}
+
 						strNote := "notes"
 						if noDeleted == 1 {
 							strNote = "note"

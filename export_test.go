@@ -128,6 +128,9 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	gio, err = gosn.Sync(gii)
 	assert.NoError(t, err)
 
+	gio.Items = filterByTypes(gio.Items, supportedContentTypes)
+
+
 	var items gosn.Items
 	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
@@ -135,8 +138,11 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	var found bool
 
 	for _, i := range items {
-		if i.(*gosn.Note).Equals(note) {
-			found = true
+		switch i.(type) {
+		case *gosn.Note:
+			if i.(*gosn.Note).Equals(note) {
+				found = true
+			}
 		}
 	}
 
@@ -222,8 +228,11 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	var found bool
 
 	for _, i := range items {
-		if i.(*gosn.Note).Equals(originalNote) {
-			found = true
+		switch i.(type) {
+		case *gosn.Note:
+			if i.(*gosn.Note).Equals(originalNote) {
+				found = true
+			}
 		}
 	}
 
@@ -311,8 +320,11 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	var found bool
 
 	for _, i := range items {
-		if i.(*gosn.Tag).Equals(originalTag) {
-			found = true
+		switch i.(type) {
+		case *gosn.Tag:
+			if i.(*gosn.Tag).Equals(originalTag) {
+				found = true
+			}
 		}
 	}
 
@@ -397,8 +409,11 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	var found bool
 
 	for _, i := range items {
-		if i.(*gosn.Tag).Equals(copyOfOriginalTag) {
-			found = true
+		switch i.(type) {
+		case *gosn.Tag:
+			if i.(*gosn.Tag).Equals(copyOfOriginalTag) {
+				found = true
+			}
 		}
 	}
 

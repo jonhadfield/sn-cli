@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/fatih/color v1.9.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
@@ -19,14 +20,9 @@ require (
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.5.1
 	github.com/urfave/cli v1.22.4
-	github.com/zalando/go-keyring v0.0.0-20191216155332-f41212d4b175 // indirect
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
-	golang.org/x/sys v0.0.0-20200509044756-6aff5f38e54f // indirect
 	gopkg.in/ini.v1 v1.56.0 // indirect
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 )
 
-
-replace (
-	github.com/jonhadfield/gosn-v2  => ../gosn-v2
-)
+replace github.com/jonhadfield/gosn-v2 => ../gosn-v2

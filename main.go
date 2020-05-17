@@ -1,14 +1,13 @@
 package sncli
 
 import (
-	"fmt"
 	"github.com/jonhadfield/gosn-v2"
 )
 
 const (
 	timeLayout  = "2006-01-02T15:04:05.000Z"
 	SNServerURL = "https://sync.standardnotes.org"
-	SNPageSize  = 500
+	SNPageSize  = 600
 )
 
 type ItemReferenceYAML struct {
@@ -200,6 +199,8 @@ type StatsConfig struct {
 	Debug   bool
 }
 
+
+
 func referenceExists(tag gosn.Tag, refID string) bool {
 	for _, ref := range tag.Content.References() {
 		if ref.UUID == refID {
@@ -209,6 +210,18 @@ func referenceExists(tag gosn.Tag, refID string) bool {
 
 	return false
 }
+
+func filterByTypes(ei gosn.EncryptedItems, types []string) (o gosn.EncryptedItems) {
+	for _, i := range ei {
+		if StringInSlice(i.ContentType, types, true) {
+			o = append(o, i)
+		}
+	}
+
+	return o
+}
+
+var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
 
 func (input *WipeConfig) Run() (int, error) {
 	getItemsInput := gosn.SyncInput{
@@ -225,9 +238,7 @@ func (input *WipeConfig) Run() (int, error) {
 		return 0, err
 	}
 
-	for _, x := range output.Items {
-		fmt.Printf("X: %+v\n", x)
-	}
+	output.Items = filterByTypes(output.Items, supportedContentTypes)
 
 	output.Items.DeDupe()
 
@@ -241,7 +252,6 @@ func (input *WipeConfig) Run() (int, error) {
 	var itemsToDel gosn.Items
 
 	for _, item := range pi {
-		fmt.Printf("%+v\n", item)
 		if item == nil || item.IsDeleted() {
 			continue
 		}

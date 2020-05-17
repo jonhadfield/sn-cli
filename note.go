@@ -195,7 +195,6 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 
 	for _, item := range notes {
 		note := item.(*gosn.Note)
-
 		if note.GetContent() != nil {
 
 			note.Content.SetText("")
@@ -211,6 +210,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 	var eNotesToDelete gosn.EncryptedItems
 
 	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak, false)
+
 	if err != nil {
 		return
 	}
@@ -224,6 +224,7 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 	var putItemsOutput gosn.SyncOutput
 
 	putItemsOutput, err = gosn.Sync(pii)
+
 	if err != nil {
 		return
 	}
