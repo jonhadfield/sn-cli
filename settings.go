@@ -7,7 +7,7 @@ import (
 func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 	getItemsInput := gosn.SyncInput{
 		Session: input.Session,
-		Debug: input.Debug,
+		Debug:   input.Debug,
 	}
 
 	var output gosn.SyncOutput

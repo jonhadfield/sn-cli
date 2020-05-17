@@ -68,6 +68,7 @@ func (i *ImportConfig) Run() error {
 	if err != nil {
 		return err
 	}
+
 	gio.Items = filterByTypes(gio.Items, supportedContentTypes)
 
 	existingItems, err = gio.Items.DecryptAndParse(i.Session.Mk, i.Session.Ak, i.Debug)
@@ -109,7 +110,7 @@ func (i *ImportConfig) Run() error {
 	}
 
 	var encFinalList gosn.EncryptedItems
-	
+
 	encFinalList, err = finalList.Encrypt(i.Session.Mk, i.Session.Ak, i.Debug)
 	if err != nil {
 		return err

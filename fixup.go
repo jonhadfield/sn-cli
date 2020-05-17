@@ -60,9 +60,11 @@ func (input *FixupConfig) Run() error {
 			default:
 				if item.GetContentType() == "Note" {
 					note := item.(*gosn.Note)
-					note.Content.SetUpdateTime(time.Now())
-					note.Content.SetTitle("untitled")
-					notesToTitleFix = append(notesToTitleFix, note)
+					if note.Content.Title == "" {
+						note.Content.SetUpdateTime(time.Now())
+						note.Content.SetTitle("untitled")
+						notesToTitleFix = append(notesToTitleFix, note)
+					}
 				}
 			}
 		}
@@ -81,6 +83,7 @@ func (input *FixupConfig) Run() error {
 					needsFix = true
 
 					var title string
+
 					switch item.(type) {
 					case *gosn.Note:
 						n := item.(*gosn.Note)
@@ -89,6 +92,7 @@ func (input *FixupConfig) Run() error {
 						t := item.(*gosn.Tag)
 						title = t.Content.Title
 					}
+
 					o := fmt.Sprintf("item: %s references missing item: %s\n", title, ref.UUID)
 					fmt.Print(Yellow(o))
 				} else {
@@ -101,15 +105,16 @@ func (input *FixupConfig) Run() error {
 				switch item.(type) {
 				case *gosn.Note:
 					updatedItem = item.(*gosn.Note)
-					noteContent := updatedItem.GetContent().(gosn.NoteContent)
+					noteContent := updatedItem.GetContent().(*gosn.NoteContent)
 					noteContent.SetReferences(newRefs)
-					updatedItem.SetContent(noteContent)
+					updatedItem.SetContent(*noteContent)
 				case *gosn.Tag:
 					updatedItem = item.(*gosn.Tag)
-					tagContent := updatedItem.GetContent().(gosn.TagContent)
+					tagContent := updatedItem.GetContent().(*gosn.TagContent)
 					tagContent.SetReferences(newRefs)
-					updatedItem.SetContent(tagContent)
+					updatedItem.SetContent(*tagContent)
 				}
+
 				itemsWithRefsToUpdate = append(itemsWithRefsToUpdate, updatedItem)
 			}
 		}
@@ -227,7 +232,6 @@ func (input *FixupConfig) Run() error {
 		if err != nil {
 			return err
 		}
-
 		if StringInSlice(response, []string{"y", "yes"}, false) {
 			var eNotesToTitleFix gosn.EncryptedItems
 

@@ -130,7 +130,6 @@ func TestExportWipeImportOneNote(t *testing.T) {
 
 	gio.Items = filterByTypes(gio.Items, supportedContentTypes)
 
-
 	var items gosn.Items
 	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)

@@ -67,6 +67,7 @@ func TestDeleteNoteErrorMissingTitle(t *testing.T) {
 
 func TestTagNotesByTextWithNewTags(t *testing.T) {
 	var msg string
+
 	var err error
 
 	msg, _, err = startCLI([]string{"sncli", "--no-stdout", "add", "note", "--title", "TestNoteOne", "--text", "test note one"})
