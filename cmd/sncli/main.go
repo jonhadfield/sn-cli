@@ -34,7 +34,7 @@ const (
 
 var yamlAbbrevs = []string{"yml", "yaml"}
 
-// overwritten at build time
+// overwritten at build time.
 var version, versionOutput, tag, sha, buildDate string
 
 func main() {

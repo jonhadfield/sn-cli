@@ -110,7 +110,7 @@ func (i *ImportConfig) Run() error {
 	}
 
 	var encFinalList gosn.EncryptedItems
-	
+
 	encFinalList, err = finalList.Encrypt(i.Session.Mk, i.Session.Ak, i.Debug)
 	if err != nil {
 		return err

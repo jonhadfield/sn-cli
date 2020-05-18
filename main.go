@@ -199,8 +199,6 @@ type StatsConfig struct {
 	Debug   bool
 }
 
-
-
 func referenceExists(tag gosn.Tag, refID string) bool {
 	for _, ref := range tag.Content.References() {
 		if ref.UUID == refID {
@@ -226,7 +224,7 @@ var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
 func (input *WipeConfig) Run() (int, error) {
 	getItemsInput := gosn.SyncInput{
 		Session: input.Session,
-		Debug: input.Debug,
+		Debug:   input.Debug,
 	}
 
 	var err error
