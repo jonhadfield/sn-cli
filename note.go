@@ -196,8 +196,8 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 
 	for _, item := range notes {
 		note := item.(*gosn.Note)
-		if note.GetContent() != nil {
 
+		if note.GetContent() != nil {
 			note.Content.SetText("")
 			note.SetDeleted(true)
 			notesToDelete = append(notesToDelete, *note)

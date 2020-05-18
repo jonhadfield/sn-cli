@@ -81,6 +81,7 @@ func (input *FixupConfig) Run() error {
 					needsFix = true
 
 					var title string
+
 					switch item.(type) {
 					case *gosn.Note:
 						n := item.(*gosn.Note)
@@ -89,6 +90,7 @@ func (input *FixupConfig) Run() error {
 						t := item.(*gosn.Tag)
 						title = t.Content.Title
 					}
+
 					o := fmt.Sprintf("item: %s references missing item: %s\n", title, ref.UUID)
 					fmt.Print(Yellow(o))
 				} else {
@@ -110,6 +112,7 @@ func (input *FixupConfig) Run() error {
 					tagContent.SetReferences(newRefs)
 					updatedItem.SetContent(tagContent)
 				}
+
 				itemsWithRefsToUpdate = append(itemsWithRefsToUpdate, updatedItem)
 			}
 		}

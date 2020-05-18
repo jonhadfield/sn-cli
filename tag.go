@@ -188,6 +188,7 @@ func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
 	output.Items.DeDupe()
 
 	tags, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
+
 	if err != nil {
 		return nil, err
 	}
@@ -363,6 +364,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	if len(tagsToAdd) > 0 {
 		var eTagsToAdd gosn.EncryptedItems
 		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Mk, ati.session.Ak, false)
+
 		if err != nil {
 			return
 		}
