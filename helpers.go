@@ -57,7 +57,7 @@ func readGob(filePath string, object interface{}) error {
 }
 
 func ItemRefsToYaml(irs []gosn.ItemReference) []ItemReferenceYAML {
-	iRefs := make([]ItemReferenceYAML, len(irs))
+	var iRefs []ItemReferenceYAML
 
 	for _, ref := range irs {
 		iRef := ItemReferenceYAML{
@@ -71,7 +71,7 @@ func ItemRefsToYaml(irs []gosn.ItemReference) []ItemReferenceYAML {
 }
 
 func ItemRefsToJSON(irs []gosn.ItemReference) []ItemReferenceJSON {
-	iRefs := make([]ItemReferenceJSON, len(irs))
+	var iRefs []ItemReferenceJSON
 
 	for _, ref := range irs {
 		iRef := ItemReferenceJSON{
