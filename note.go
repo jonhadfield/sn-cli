@@ -49,6 +49,7 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 	newNoteContent.Text = input.noteText
 	newNote.Content = *newNoteContent
 	newNote.UUID = gosn.GenUUID()
+	noteUUID = newNote.UUID
 	newNoteItems := gosn.Notes{newNote}
 
 	var eNewNoteItems gosn.EncryptedItems
