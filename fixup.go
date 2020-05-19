@@ -70,7 +70,7 @@ func (input *FixupConfig) Run() error {
 		}
 	}
 
-	var itemsWithRefsToUpdate gosn.Items
+	//var itemsWithRefsToUpdate gosn.Items
 
 	// TODO: Being investigated here: https://github.com/standardnotes/syncing-server/issues/49 as leaving a tag with null for references causes an error in SN when trying to sync.
 	//for _, item := range allItems {
