@@ -70,87 +70,88 @@ func (input *FixupConfig) Run() error {
 		}
 	}
 
-	var itemsWithRefsToUpdate gosn.Items
+	//var itemsWithRefsToUpdate gosn.Items
 
-	for _, item := range allItems {
-		var newRefs []gosn.ItemReference
-
-		var needsFix bool
-
-		if item.GetContent() != nil && item.GetContent().References() != nil && len(item.GetContent().References()) > 0 {
-			for _, ref := range item.GetContent().References() {
-				if !StringInSlice(ref.UUID, allIDs, false) {
-					needsFix = true
-
-					var title string
-
-					switch item.(type) {
-					case *gosn.Note:
-						n := item.(*gosn.Note)
-						title = n.Content.Title
-					case *gosn.Tag:
-						t := item.(*gosn.Tag)
-						title = t.Content.Title
-					}
-
-					o := fmt.Sprintf("item: %s references missing item: %s\n", title, ref.UUID)
-					fmt.Print(Yellow(o))
-				} else {
-					newRefs = append(newRefs, ref)
-				}
-			}
-
-			if needsFix {
-				var updatedItem gosn.Item
-				switch item.(type) {
-				case *gosn.Note:
-					updatedItem = item.(*gosn.Note)
-					noteContent := updatedItem.GetContent().(*gosn.NoteContent)
-					noteContent.SetReferences(newRefs)
-					updatedItem.SetContent(*noteContent)
-				case *gosn.Tag:
-					updatedItem = item.(*gosn.Tag)
-					tagContent := updatedItem.GetContent().(*gosn.TagContent)
-					tagContent.SetReferences(newRefs)
-					updatedItem.SetContent(*tagContent)
-				}
-
-				itemsWithRefsToUpdate = append(itemsWithRefsToUpdate, updatedItem)
-			}
-		}
-	}
+	// TODO: Being investigated here: https://github.com/standardnotes/syncing-server/issues/49 as leaving a tag with null for references causes an error in SN when trying to sync.
+	//for _, item := range allItems {
+	//	var newRefs []gosn.ItemReference
+	//
+	//	var needsFix bool
+	//
+	//	if item.GetContent() != nil && item.GetContent().References() != nil && len(item.GetContent().References()) > 0 {
+	//		for _, ref := range item.GetContent().References() {
+	//			if !StringInSlice(ref.UUID, allIDs, false) {
+	//				needsFix = true
+	//
+	//				var title string
+	//
+	//				switch item.(type) {
+	//				case *gosn.Note:
+	//					n := item.(*gosn.Note)
+	//					title = n.Content.Title
+	//				case *gosn.Tag:
+	//					t := item.(*gosn.Tag)
+	//					title = t.Content.Title
+	//				}
+	//
+	//				o := fmt.Sprintf("item: %s references missing item: %s\n", title, ref.UUID)
+	//				fmt.Print(Yellow(o))
+	//			} else {
+	//				newRefs = append(newRefs, ref)
+	//			}
+	//		}
+	//
+	//		if needsFix {
+	//			var updatedItem gosn.Item
+	//			switch item.(type) {
+	//			case *gosn.Note:
+	//				updatedItem = item.(*gosn.Note)
+	//				noteContent := updatedItem.GetContent().(*gosn.NoteContent)
+	//				noteContent.SetReferences(newRefs)
+	//				updatedItem.SetContent(*noteContent)
+	//			case *gosn.Tag:
+	//				updatedItem = item.(*gosn.Tag)
+	//				tagContent := updatedItem.GetContent().(*gosn.TagContent)
+	//				tagContent.SetReferences(newRefs)
+	//				updatedItem.SetContent(*tagContent)
+	//			}
+	//
+	//			itemsWithRefsToUpdate = append(itemsWithRefsToUpdate, updatedItem)
+	//		}
+	//	}
+	//}
 
 	// fix items with references to missing or deleted items
-	if len(itemsWithRefsToUpdate) > 0 {
-		fmt.Printf("found %d items with invalid references. fix? ", len(itemsWithRefsToUpdate))
-
-		var response string
-
-		_, err = fmt.Scanln(&response)
-		if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
-			var eItemsWithRefsToUpdate gosn.EncryptedItems
-
-			eItemsWithRefsToUpdate, err = itemsWithRefsToUpdate.Encrypt(input.Session.Mk, input.Session.Ak, input.Debug)
-			if err != nil {
-				return err
-			}
-
-			putItemsInput := gosn.SyncInput{
-				Session: input.Session,
-				Items:   eItemsWithRefsToUpdate,
-			}
-
-			_, err = gosn.Sync(putItemsInput)
-			if err != nil {
-				return err
-			}
-
-			o := fmt.Sprintf("fixed references in %d items\n", len(itemsWithRefsToUpdate))
-			fmt.Print(Green(o))
-		}
-	} else {
-		fmt.Println(Green("no items with invalid references"))
-	}
+	//if len(itemsWithRefsToUpdate) > 0 {
+	//	fmt.Printf("found %d items with invalid references. fix? ", len(itemsWithRefsToUpdate))
+	//
+	//	var response string
+	//
+	//	_, err = fmt.Scanln(&response)
+	//	if err == nil && StringInSlice(response, []string{"y", "yes"}, false) {
+	//		var eItemsWithRefsToUpdate gosn.EncryptedItems
+	//
+	//		eItemsWithRefsToUpdate, err = itemsWithRefsToUpdate.Encrypt(input.Session.Mk, input.Session.Ak, input.Debug)
+	//		if err != nil {
+	//			return err
+	//		}
+	//
+	//		putItemsInput := gosn.SyncInput{
+	//			Session: input.Session,
+	//			Items:   eItemsWithRefsToUpdate,
+	//		}
+	//
+	//		_, err = gosn.Sync(putItemsInput)
+	//		if err != nil {
+	//			return err
+	//		}
+	//
+	//		o := fmt.Sprintf("fixed references in %d items\n", len(itemsWithRefsToUpdate))
+	//		fmt.Print(Green(o))
+	//	}
+	//} else {
+	//	fmt.Println(Green("no items with invalid references"))
+	//}
 
 	// check for items without content type
 	if len(missingContentType) > 0 {
