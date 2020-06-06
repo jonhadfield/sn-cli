@@ -1,9 +1,10 @@
 package sncli
 
 import (
-	"testing"
-
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"testing"
+	"time"
 
 	"github.com/jonhadfield/gosn-v2"
 )
@@ -140,9 +141,11 @@ func TestTaggingOfNotes(t *testing.T) {
 		"noteFourTitle":  "noteFourText example",
 	}
 
+	fmt.Println("Adding notes")
 	err := _addNotes(sOutput.Session, notes)
 	assert.NoError(t, err, err)
-
+	fmt.Println("Added notes")
+	time.Sleep(5 * time.Second)
 	// tag new notes with 'testTag'
 	tags := []string{"testTag"}
 	tni := TagItemsConfig{
@@ -150,9 +153,10 @@ func TestTaggingOfNotes(t *testing.T) {
 		FindText: "example",
 		NewTags:  tags,
 	}
+	fmt.Println("Tagging notes")
 	err = tni.Run()
 	assert.NoError(t, err, err)
-
+	time.Sleep(5 * time.Second)
 	// get newly tagged notes
 
 	filterNotesByTagName := gosn.Filter{

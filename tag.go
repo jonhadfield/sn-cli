@@ -1,9 +1,8 @@
 package sncli
 
 import (
-	"strings"
-
 	"github.com/jonhadfield/gosn-v2"
+	"strings"
 )
 
 type tagNotesInput struct {
@@ -24,9 +23,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 		syncToken: input.syncToken,
 	}
 
-	var ato addTagsOutput
-
-	ato, err = addTags(ati)
+	_, err = addTags(ati)
 	if err != nil {
 		return
 	}
@@ -44,8 +41,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 	}
 
 	getItemsInput := gosn.SyncInput{
-		Session:   input.session,
-		SyncToken: ato.newSyncToken,
+		Session: input.session,
 	}
 
 	var output gosn.SyncOutput
@@ -70,6 +66,7 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 
 	var allNotes []*gosn.Note
 	// create slices of notes and tags
+
 	for _, item := range items {
 		if item.IsDeleted() {
 			continue
@@ -149,7 +146,6 @@ func (input *TagItemsConfig) Run() error {
 		newTags:    input.NewTags,
 		session:    input.Session,
 	}
-
 	_, err := tagNotes(tni)
 
 	return err

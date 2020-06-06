@@ -1,10 +1,13 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -30,7 +33,43 @@ const (
 	msgTagSuccess      = "Tagged"
 	msgItemsDeleted    = "Items deleted"
 	msgNoMatches       = "No matches"
+	snAppName          = "sn-cli"
 )
+
+// GenCacheDBPath generates a path to a database file to be used as a cache of encrypted items
+// The filename is a SHA2 hash of a concatenation of the following in order to be both unique
+// and avoid concurrent usage:
+// - part of the session authentication key (so that caches are unique to a user)
+// - the server URL (so that caches are server specific)
+// - the requesting application name (so that caches are application specific)
+func GenCacheDBPath(session gosn.Session, dir, appName string) (string, error) {
+	var err error
+	if !session.Valid() {
+		return "", fmt.Errorf("invalid session")
+	}
+
+	if appName == "" {
+		return "", fmt.Errorf("appName is a required")
+	}
+
+	if dir == "" {
+		dir = os.TempDir()
+	} else if _, err := os.Stat("/path/to/whatever"); os.IsNotExist(err) {
+		return "", fmt.Errorf("directory does not exist: '%s'", dir)
+	}
+
+	h := sha256.New()
+
+	h.Write([]byte(session.Ak[:2] + session.Ak[len(session.Ak)-2:] + session.Server + appName))
+	bs := h.Sum(nil)
+	hexedDigest := hex.EncodeToString(bs)[:8]
+
+	if dir == "" {
+		dir = os.TempDir()
+	}
+
+	return filepath.Join(dir, snAppName+"-"+hexedDigest+".db"), err
+}
 
 var yamlAbbrevs = []string{"yml", "yaml"}
 
@@ -69,6 +108,11 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		return "", false, err
 	}
 
+	err = viper.BindEnv("cachedbdir")
+	if err != nil {
+		return "", false, err
+	}
+
 	if tag != "" && buildDate != "" {
 		versionOutput = fmt.Sprintf("[%s-%s] %s UTC", tag, sha, buildDate)
 	} else {
@@ -97,6 +141,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		cli.BoolFlag{Name: "use-session"},
 		cli.StringFlag{Name: "session-key"},
 		cli.BoolFlag{Name: "no-stdout"},
+		cli.StringFlag{Name: "cachedbdir"},
 	}
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		_, _ = fmt.Fprintf(c.App.Writer, "\ninvalid command: \"%s\" \n\n", command)
@@ -394,7 +439,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						} else {
 							msg = sncli.Yellow("Note not found")
 						}
-
 
 						strNote := "notes"
 						if noDeleted == 1 {
@@ -1147,9 +1191,17 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				if err != nil {
 					return err
 				}
+
+				var cacheDBPath string
+				cacheDBPath, err =  GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				if err != nil {
+					return err
+				}
+
 				statsConfig := sncli.StatsConfig{
-					Session: session,
-					Debug:   c.GlobalBool("debug"),
+					Session:     session,
+					Debug:       c.GlobalBool("debug"),
+					CacheDBPath: cacheDBPath,
 				}
 				err = statsConfig.Run()
 				return err

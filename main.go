@@ -8,6 +8,7 @@ const (
 	timeLayout  = "2006-01-02T15:04:05.000Z"
 	SNServerURL = "https://sync.standardnotes.org"
 	SNPageSize  = 600
+	SNAppName   = "sn-cli"
 )
 
 type ItemReferenceYAML struct {
@@ -196,7 +197,9 @@ type WipeConfig struct {
 
 type StatsConfig struct {
 	Session gosn.Session
-	Debug   bool
+	//CacheDir string
+	CacheDBPath string
+	Debug       bool
 }
 
 func referenceExists(tag gosn.Tag, refID string) bool {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/sn-persist"
 	"github.com/ryanuber/columnize"
 )
 
@@ -18,29 +19,22 @@ var (
 )
 
 func (input *StatsConfig) Run() error {
-	getItemsInput := gosn.SyncInput{
-		Session:  input.Session,
-		PageSize: SNPageSize,
-		Debug:    input.Debug,
-	}
-
 	var err error
-	// get all existing Tags and Notes
-	var output gosn.SyncOutput
+	var so snpersist.SyncOutput
 
-	output, err = gosn.Sync(getItemsInput)
+	so, err = snpersist.Sync(snpersist.SyncInput{
+		Session: input.Session,
+		DBPath:  input.CacheDBPath,
+	})
 	if err != nil {
 		return err
 	}
 
-	output.Items.DeDupe()
+	var allPersistedItems snpersist.Items
+	err = so.DB.All(&allPersistedItems)
 
 	var items gosn.Items
-
-	items, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
-	if err != nil {
-		return err
-	}
+	items, err = allPersistedItems.ToItems(input.Session)
 
 	var notes gosn.Items
 
@@ -50,7 +44,7 @@ func (input *StatsConfig) Run() error {
 
 	var missingContentTypeUUIDs []string
 
-	allUUIDs := make([]string, len(items))
+	allUUIDs := make([]string, len(so.Items))
 
 	var duplicateUUIDs []string
 
@@ -59,7 +53,9 @@ func (input *StatsConfig) Run() error {
 	tCounter.counts = make(map[string]int64)
 
 	for _, item := range items {
-		tCounter.update(item.GetContentType())
+		if !item.IsDeleted() {
+			tCounter.update(item.GetContentType())
+		}
 
 		if StringInSlice(item.GetUUID(), allUUIDs, false) {
 			duplicateUUIDs = append(duplicateUUIDs, item.GetUUID())
