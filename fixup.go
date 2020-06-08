@@ -9,6 +9,7 @@ import (
 
 type FixupConfig struct {
 	Session gosn.Session
+	CacheDBPath string
 	Debug   bool
 }
 
@@ -55,7 +56,6 @@ func (input *FixupConfig) Run() error {
 				missingContentType = append(missingContentType, item)
 			case item.GetContent() == nil && StringInSlice(item.GetContentType(), []string{"Note", "Tag"}, true):
 				item.SetDeleted(true)
-				fmt.Println(item.GetContentType())
 				missingContent = append(missingContent, item)
 			default:
 				if item.GetContentType() == "Note" {

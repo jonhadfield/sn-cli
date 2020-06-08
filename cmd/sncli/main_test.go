@@ -1,10 +1,22 @@
 package main
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+//const tempDBPath = "test.db"
+
+func removeDB(dbPath string) {
+	if err := os.Remove(dbPath); err != nil {
+		if !strings.Contains(err.Error(), "no such file or directory") {
+			panic(err)
+		}
+	}
+}
 
 func TestWipe(t *testing.T) {
 	msg, _, err := startCLI([]string{"sncli", "wipe", "--yes"})
@@ -13,11 +25,13 @@ func TestWipe(t *testing.T) {
 }
 
 func TestAddDeleteTag(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "add", "tag", "--title", "testTag"})
+	msg, _, err := startCLI([]string{"sncli", "wipe", "--yes"})
+	assert.NoError(t, err)
+	msg, _, err = startCLI([]string{"sncli", "add", "tag", "--title", "testTag"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
 	msg, _, err = startCLI([]string{"sncli", "get", "tag", "--title", "testTag", "--count"})
-	assert.Equal(t, msg, "1")
+	assert.Equal(t, "1", msg)
 	assert.NoError(t, err)
 	msg, _, err = startCLI([]string{"sncli", "delete", "tag", "--title", "testTag"})
 	assert.NoError(t, err)
@@ -41,6 +55,9 @@ func TestDeleteTagErrorMissingTitle(t *testing.T) {
 }
 
 func TestAddDeleteNote(t *testing.T) {
+	_, _, err := startCLI([]string{"sncli", "wipe", "--yes"})
+	assert.NoError(t, err)
+
 	msg, _, err := startCLI([]string{"sncli", "add", "note", "--title", "testNote", "--text", "some example text"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)

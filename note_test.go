@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/jonhadfield/gosn-v2/cache"
 	"os"
 	"testing"
 
@@ -9,25 +10,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var testSession gosn.Session
+var testSession cache.Session
 
 func TestMain(m *testing.M) {
-	var err error
-
-	testSession, err = gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
+	gs, err := gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
 	if err != nil {
 		panic(err)
 	}
+	testSession.Server = gs.Server
+	testSession.Mk = gs.Mk
+	testSession.Ak = gs.Ak
+	testSession.Token = gs.Token
+	var path string
+	path, err = cache.GenCacheDBPath(testSession, "", SNAppName)
+	if err != nil {
+		panic(err)
+	}
+
+	testSession.CacheDBPath = path
 
 	os.Exit(m.Run())
 }
 
 func TestWipeWith50(t *testing.T) {
-	cleanUp(&testSession)
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
 
 	numNotes := 50
 	textParas := 3
+
 	err := createNotes(testSession, numNotes, textParas)
 	assert.NoError(t, err)
 
@@ -38,22 +48,30 @@ func TestWipeWith50(t *testing.T) {
 	filters := gosn.ItemFilters{
 		Filters: []gosn.Filter{noteFilter},
 	}
-	gni := gosn.SyncInput{
+	gni := cache.SyncInput{
 		Session: testSession,
 	}
 
-	var gno gosn.SyncOutput
-	gno, err = gosn.Sync(gni)
+	var gno cache.SyncOutput
+	gno, err = cache.Sync(gni)
 	assert.NoError(t, err)
-	gno.Items.DeDupe()
-	ei := gno.Items
+	assert.NotNil(t, gno.DB)
 
-	var pi gosn.Items
-	pi, err = ei.DecryptAndParse(testSession.Mk, testSession.Ak, true)
+	// get items from db
+	var items cache.Items
+	assert.NoError(t, gno.DB.All(&items))
+	assert.NoError(t, gno.DB.Close())
+
+	var gItems gosn.Items
+	gItems, err = items.ToItems(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
-	pi.Filter(filters)
 
-	assert.Equal(t, 50, len(pi))
+	gItems.DeDupe()
+	ei := gItems
+
+	ei.Filter(filters)
+
+	assert.Equal(t, 50, len(ei))
 
 	wipeConfig := WipeConfig{
 		Session: testSession,
@@ -66,7 +84,7 @@ func TestWipeWith50(t *testing.T) {
 }
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
 
 	// create note
 	addNoteConfig := AddNoteInput{
@@ -89,8 +107,8 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 		Filters: []gosn.Filter{filter},
 	}
 	gnc := GetNoteConfig{
-		Session: testSession,
-		Filters: iFilter,
+		Session:     testSession,
+		Filters:     iFilter,
 	}
 
 	var preRes, postRes gosn.Items
@@ -101,8 +119,8 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 
 	newItemUUID := preRes[0].GetUUID()
 	deleteNoteConfig := DeleteNoteConfig{
-		Session:   testSession,
-		NoteUUIDs: []string{newItemUUID},
+		Session:     testSession,
+		NoteUUIDs:   []string{newItemUUID},
 	}
 
 	var noDeleted int
@@ -116,7 +134,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 }
 
 func TestAddDeleteNoteByTitle(t *testing.T) {
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
 
 	addNoteConfig := AddNoteInput{
 		Session: testSession,
@@ -157,7 +175,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 }
 
 func TestAddDeleteNoteByTitleRegex(t *testing.T) {
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
 	// add note
 	addNoteConfig := AddNoteInput{
 		Session: testSession,
@@ -201,7 +219,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 }
 
 func TestGetNote(t *testing.T) {
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
 
 	// create one note
 	addNoteConfig := AddNoteInput{
@@ -234,15 +252,13 @@ func TestGetNote(t *testing.T) {
 }
 
 func TestCreateOneHundredNotes(t *testing.T) {
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
 
 	numNotes := 100
 	textParas := 10
-	session, err := gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
-	assert.NoError(t, err)
-	cleanUp(&session)
+	cleanUp(testSession)
 
-	err = createNotes(session, numNotes, textParas)
+	err := createNotes(testSession, numNotes, textParas)
 	assert.NoError(t, err)
 
 	noteFilter := gosn.Filter{
@@ -253,7 +269,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	}
 
 	gnc := GetNoteConfig{
-		Session: session,
+		Session: testSession,
 		Filters: filter,
 	}
 
@@ -264,7 +280,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	assert.True(t, len(res) >= numNotes)
 
 	wipeConfig := WipeConfig{
-		Session: session,
+		Session: testSession,
 	}
 
 	var deleted int
@@ -273,13 +289,12 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	assert.True(t, deleted >= numNotes)
 }
 
-func cleanUp(session *gosn.Session) {
-	wipeConfig := WipeConfig{
-		Session: *session,
-	}
-
-	_, err := wipeConfig.Run()
-	if err != nil {
-		panic(err)
-	}
+func cleanUp(session cache.Session) {
+	removeDB(session.CacheDBPath)
+	_ = gosn.DeleteContent(&gosn.Session{
+		Token:  testSession.Token,
+		Mk:     testSession.Mk,
+		Ak:     testSession.Ak,
+		Server: testSession.Server,
+	})
 }

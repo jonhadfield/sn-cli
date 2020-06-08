@@ -2,6 +2,8 @@ package sncli
 
 import (
 	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
+	"time"
 )
 
 const (
@@ -116,63 +118,62 @@ type NoteYAML struct {
 }
 
 type TagItemsConfig struct {
-	Session    gosn.Session
-	FindTitle  string
-	FindText   string
-	FindTag    string
-	NewTags    []string
-	Replace    bool
-	IgnoreCase bool
-	Debug      bool
+	Session     cache.Session
+	FindTitle   string
+	FindText    string
+	FindTag     string
+	NewTags     []string
+	Replace     bool
+	IgnoreCase  bool
+	Debug       bool
 }
 
 type AddTagsInput struct {
-	Session gosn.Session
-	Tags    []string
-	Debug   bool
+	Session     cache.Session
+	Tags        []string
+	Debug       bool
 }
 
 type AddTagsOutput struct {
 	Added, Existing []string
-	SyncToken       string
 }
 
 type GetTagConfig struct {
-	Session gosn.Session
-	Filters gosn.ItemFilters
-	Output  string
-	Debug   bool
+	Session     cache.Session
+	Filters     gosn.ItemFilters
+	Output      string
+	Debug       bool
 }
 
 type GetSettingsConfig struct {
-	Session gosn.Session
-	Filters gosn.ItemFilters
-	Output  string
-	Debug   bool
+	Session     cache.Session
+	Filters     gosn.ItemFilters
+	Output      string
+	Debug       bool
 }
 
 type GetNoteConfig struct {
-	Session    gosn.Session
-	Filters    gosn.ItemFilters
-	NoteTitles []string
-	TagTitles  []string
-	TagUUIDs   []string
-	PageSize   int
-	BatchSize  int
-	Debug      bool
+	Session     cache.Session
+	Filters     gosn.ItemFilters
+	NoteTitles  []string
+	TagTitles   []string
+	TagUUIDs    []string
+	PageSize    int
+	BatchSize   int
+	Debug       bool
 }
 
 type DeleteTagConfig struct {
-	Session   gosn.Session
-	Email     string
-	TagTitles []string
-	TagUUIDs  []string
-	Regex     bool
-	Debug     bool
+	Session     cache.Session
+	Email       string
+	TagTitles   []string
+	TagUUIDs    []string
+	Regex       bool
+	Debug       bool
 }
 
 type AddNoteInput struct {
-	Session gosn.Session
+	Session cache.Session
 	Title   string
 	Text    string
 	Tags    []string
@@ -181,24 +182,22 @@ type AddNoteInput struct {
 }
 
 type DeleteNoteConfig struct {
-	Session    gosn.Session
-	NoteTitles []string
-	NoteText   string
-	NoteUUIDs  []string
-	Regex      bool
-	Debug      bool
+	Session     cache.Session
+	NoteTitles  []string
+	NoteText    string
+	NoteUUIDs   []string
+	Regex       bool
+	Debug       bool
 }
 
 type WipeConfig struct {
-	Session  gosn.Session
-	Debug    bool
-	Settings bool
+	Session     cache.Session
+	Debug       bool
+	Settings    bool
 }
 
 type StatsConfig struct {
-	Session gosn.Session
-	//CacheDir string
-	CacheDBPath string
+	Session     cache.Session
 	Debug       bool
 }
 
@@ -212,7 +211,27 @@ func referenceExists(tag gosn.Tag, refID string) bool {
 	return false
 }
 
-func filterByTypes(ei gosn.EncryptedItems, types []string) (o gosn.EncryptedItems) {
+func filterEncryptedItemsByTypes(ei gosn.EncryptedItems, types []string) (o gosn.EncryptedItems) {
+	for _, i := range ei {
+		if StringInSlice(i.ContentType, types, true) {
+			o = append(o, i)
+		}
+	}
+
+	return o
+}
+
+func filterItemsByTypes(ei gosn.Items, types []string) (o gosn.Items) {
+	for _, i := range ei {
+		if StringInSlice(i.GetContentType(), types, true) {
+			o = append(o, i)
+		}
+	}
+
+	return o
+}
+
+func filterCacheItemsByTypes(ei cache.Items, types []string) (o cache.Items) {
 	for _, i := range ei {
 		if StringInSlice(i.ContentType, types, true) {
 			o = append(o, i)
@@ -225,73 +244,57 @@ func filterByTypes(ei gosn.EncryptedItems, types []string) (o gosn.EncryptedItem
 var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
 
 func (input *WipeConfig) Run() (int, error) {
-	getItemsInput := gosn.SyncInput{
+	syncInput := cache.SyncInput{
 		Session: input.Session,
 		Debug:   input.Debug,
 	}
 
 	var err error
 	// get all existing Tags and Notes and mark for deletion
-	var output gosn.SyncOutput
+	var so cache.SyncOutput
 
-	output, err = gosn.Sync(getItemsInput)
+
+	so, err = cache.Sync(syncInput)
 	if err != nil {
 		return 0, err
 	}
 
-	output.Items = filterByTypes(output.Items, supportedContentTypes)
-
-	output.Items.DeDupe()
-
-	var pi gosn.Items
-
-	pi, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
+	// get all items
+	var allPersistedItems cache.Items
+	err = so.DB.All(&allPersistedItems)
 	if err != nil {
 		return 0, err
 	}
 
-	var itemsToDel gosn.Items
+	filteredItems := filterCacheItemsByTypes(allPersistedItems, supportedContentTypes)
+	var itemsToDel int
+	for _, fi := range filteredItems {
+		itemsToDel++
+		fi.Deleted = true
+		fi.Dirty = true
+		fi.DirtiedDate = time.Now()
+		err = so.DB.Save(&fi)
+		if err != nil {
 
-	for _, item := range pi {
-		if item == nil || item.IsDeleted() {
-			continue
-		}
-
-		switch {
-		case item.GetContentType() == "Tag":
-			tag := item.(*gosn.Tag)
-			tag.SetDeleted(true)
-			tag.Content = *gosn.NewTagContent()
-			itemsToDel = append(itemsToDel, tag)
-		case item.GetContentType() == "Note":
-			note := item.(*gosn.Note)
-			note.Deleted = true
-			note.Content = *gosn.NewNoteContent()
-			itemsToDel = append(itemsToDel, note)
-		case input.Settings:
-			setting := item.(*gosn.Component)
-			setting.Deleted = true
-			itemsToDel = append(itemsToDel, setting)
+			return 0, err
 		}
 	}
-	// delete items
-	var eItemsToDel gosn.EncryptedItems
 
-	eItemsToDel, err = itemsToDel.Encrypt(input.Session.Mk, input.Session.Ak, input.Debug)
+	//syncInput.Session.CacheDB = so.DB
+	//syncInput.Session.CacheDBPath = ""
+	// Close DB after each Sync?
+	err = so.DB.Close()
 	if err != nil {
 		return 0, err
 	}
+	//syncInput.Session.CacheDB = so.DB
 
-	putItemsInput := gosn.SyncInput{
-		Session:   input.Session,
-		Items:     eItemsToDel,
-		SyncToken: output.SyncToken,
-	}
-
-	_, err = gosn.Sync(putItemsInput)
+	so, err = cache.Sync(syncInput)
 	if err != nil {
 		return 0, err
 	}
+	err = so.DB.Close()
 
-	return len(itemsToDel), err
+
+	return itemsToDel, err
 }

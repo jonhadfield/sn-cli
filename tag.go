@@ -2,11 +2,12 @@ package sncli
 
 import (
 	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
 	"strings"
 )
 
 type tagNotesInput struct {
-	session        gosn.Session
+	session        cache.Session
 	matchTitle     string
 	matchText      string
 	matchTags      []string
@@ -15,18 +16,21 @@ type tagNotesInput struct {
 	syncToken      string
 }
 
-func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
+// create tags if they don't exist
+// get all notes and tags
+func tagNotes(input tagNotesInput) (err error) {
 	// create tags if they don't exist
 	ati := addTagsInput{
 		session:   input.session,
 		tagTitles: input.newTags,
-		syncToken: input.syncToken,
 	}
 
 	_, err = addTags(ati)
+
 	if err != nil {
 		return
 	}
+
 	// get notes and tags
 	getNotesFilter := gosn.Filter{
 		Type: "Note",
@@ -40,22 +44,22 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 		Filters:  filters,
 	}
 
-	getItemsInput := gosn.SyncInput{
+	syncInput := cache.SyncInput{
 		Session: input.session,
 	}
 
-	var output gosn.SyncOutput
+	// get all notes and tags from db
+	var so cache.SyncOutput
 
-	output, err = gosn.Sync(getItemsInput)
+	so, err = cache.Sync(syncInput)
 	if err != nil {
 		return
 	}
-
-	output.Items.DeDupe()
+	var allPersistedItems cache.Items
+	err = so.DB.All(&allPersistedItems)
 
 	var items gosn.Items
-
-	items, err = output.Items.DecryptAndParse(input.session.Mk, input.session.Ak, false)
+	items, err = allPersistedItems.ToItems(input.session.Mk, input.session.Ak)
 	if err != nil {
 		return
 	}
@@ -116,26 +120,34 @@ func tagNotes(input tagNotesInput) (newSyncToken string, err error) {
 		return
 	}
 
-	if len(tagsToPush) > 0 {
-		pii := gosn.SyncInput{
-			Items:     eTagsToPush,
-			SyncToken: input.syncToken,
-			Session:   input.session,
-		}
-
-		var putItemsOutput gosn.SyncOutput
-
-		putItemsOutput, err = gosn.Sync(pii)
+	f := cache.ToCacheItems(eTagsToPush, false)
+	for _, et := range f {
+		err = so.DB.Save(&et)
 		if err != nil {
 			return
 		}
-
-		newSyncToken = putItemsOutput.SyncToken
-
-		return newSyncToken, err
 	}
 
-	return newSyncToken, nil
+	err = so.DB.Close()
+	if err != nil {
+		return err
+	}
+	if len(tagsToPush) > 0 {
+		pii := cache.SyncInput{
+			Session: input.session,
+		}
+
+		so, err = cache.Sync(pii)
+		if err != nil {
+			return
+		}
+		if err = so.DB.Close(); err != nil {
+			return
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (input *TagItemsConfig) Run() error {
@@ -146,156 +158,207 @@ func (input *TagItemsConfig) Run() error {
 		newTags:    input.NewTags,
 		session:    input.Session,
 	}
-	_, err := tagNotes(tni)
 
-	return err
+	return tagNotes(tni)
 }
 
 func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
+	// Sync DB
+	si := cache.SyncInput{
+		Session: input.Session,
+		Debug:   input.Debug,
+	}
+	var so cache.SyncOutput
+	so, err = cache.Sync(si)
+	if err != nil {
+		return
+	}
+	err = so.DB.Close()
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		_ = so.DB.Close()
+	}()
+
 	ati := addTagsInput{
 		tagTitles: input.Tags,
 		session:   input.Session,
 	}
 
-	ato, err := addTags(ati)
+	var ato addTagsOutput
+	ato, err = addTags(ati)
 	if err != nil {
 		return
 	}
 
 	output.Added = ato.added
 	output.Existing = ato.existing
-	output.SyncToken = ato.newSyncToken
+
+	// Sync DB with SN
+	err = so.DB.Close()
+	if err != nil {
+		return
+	}
+	so, err = cache.Sync(cache.SyncInput{
+		Session: input.Session,
+		Debug:   input.Debug,
+	})
+	if err != nil {
+		return
+	}
 
 	return
 }
 
-func (input *GetTagConfig) Run() (tags gosn.Items, err error) {
-	getItemsInput := gosn.SyncInput{
+func (input *GetTagConfig) Run() (items gosn.Items, err error) {
+	var so cache.SyncOutput
+
+	si := cache.SyncInput{
 		Session: input.Session,
+		Debug:   input.Debug,
 	}
-
-	var output gosn.SyncOutput
-
-	output, err = gosn.Sync(getItemsInput)
+	so, err = cache.Sync(si)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	output.Items.DeDupe()
-
-	tags, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
-
+	var allPersistedItems cache.Items
+	err = so.DB.All(&allPersistedItems)
 	if err != nil {
-		return nil, err
+		return
+	}
+	err = so.DB.Close()
+	if err != nil {
+		return
+	}
+	//var items gosn.Items
+	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
+	if err != nil {
+		return
 	}
 
-	tags.Filter(input.Filters)
+	items.Filter(input.Filters)
 
 	return
 }
 
 func (input *DeleteTagConfig) Run() (noDeleted int, err error) {
-	noDeleted, _, err = deleteTags(input.Session, input.TagTitles, input.TagUUIDs, "")
-
+	noDeleted, err = deleteTags(input.Session, input.TagTitles, input.TagUUIDs)
 	return noDeleted, err
 }
 
-func deleteTags(session gosn.Session, tagTitles []string, tagUUIDs []string, syncToken string) (noDeleted int, newSyncToken string, err error) {
-	//deleteNotesFilter := gosn.Filter{
-	//	Type: "Note",
-	//}
+func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (noDeleted int, err error) {
 	deleteTagsFilter := gosn.Filter{
 		Type: "Tag",
 	}
 	filters := []gosn.Filter{deleteTagsFilter}
-	//filters := []gosn.Filter{deleteNotesFilter, deleteTagsFilter}
 	deleteFilter := gosn.ItemFilters{
 		MatchAny: true,
 		Filters:  filters,
 	}
 
-	getItemsInput := gosn.SyncInput{
-		Session:   session,
-		SyncToken: syncToken,
+	syncInput := cache.SyncInput{
+		Session: session,
 	}
 
-	var output gosn.SyncOutput
-
-	output, err = gosn.Sync(getItemsInput)
+	// load db
+	var so cache.SyncOutput
+	so, err = cache.Sync(syncInput)
 	if err != nil {
-		return 0, "", err
+		return 0, err
 	}
-
-	output.Items.DeDupe()
-
+	defer func() {
+		_ = so.DB.Close()
+	}()
+	//syncInput.Session.CacheDB = so.DB
+	//syncInput.Session.CacheDBPath = ""
+	//fmt.Println("syncInput DB:", syncInput.Session.CacheDB)
+	//fmt.Println("syncInput DB Path:", syncInput.Session.CacheDBPath)
 	var tags gosn.Items
 
-	tags, err = output.Items.DecryptAndParse(session.Mk, session.Ak, false)
+	// get items from db
+	var allPersistedItems cache.Items
+	err = so.DB.All(&allPersistedItems)
 	if err != nil {
-		return 0, output.SyncToken, err
+		return
 	}
 
+	var items gosn.Items
+	items, err = allPersistedItems.ToItems(session.Mk, session.Ak)
+	if err != nil {
+		return
+	}
+
+	tags = items
 	tags.Filter(deleteFilter)
 
 	var tagsToDelete gosn.Items
 
-	for _, item := range tags {
-		if item.IsDeleted() {
+	for _, tag := range tags {
+		if tag.IsDeleted() {
 			continue
 		}
 
-		var tag *gosn.Tag
-		if item.GetContentType() == "Tag" {
-			tag = item.(*gosn.Tag)
+		var gTag *gosn.Tag
+		if tag.GetContentType() == "Tag" {
+			gTag = tag.(*gosn.Tag)
 		} else {
 			continue
 		}
 
-		if StringInSlice(tag.GetUUID(), tagUUIDs, true) ||
-			StringInSlice(tag.Content.Title, tagTitles, true) {
-			tag.Deleted = true
-			tagsToDelete = append(tagsToDelete, tag)
+		if StringInSlice(gTag.GetUUID(), tagUUIDs, true) ||
+			StringInSlice(gTag.Content.Title, tagTitles, true) {
+			gTag.Deleted = true
+			tagsToDelete = append(tagsToDelete, gTag)
 		}
 	}
 
 	var eTagsToDelete gosn.EncryptedItems
 	eTagsToDelete, err = tagsToDelete.Encrypt(session.Mk, session.Ak, false)
 
+	// UPDATE DB HERE
+	cItems := cache.ToCacheItems(eTagsToDelete, false)
+	for _, cItem := range cItems {
+		err = so.DB.Save(&cItem)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if err = so.DB.Close(); err != nil {
+		return
+	}
+
 	if len(tagsToDelete) > 0 {
-		pii := gosn.SyncInput{
-			Items:     eTagsToDelete,
-			SyncToken: syncToken,
-			Session:   session,
+		pii := cache.SyncInput{
+			Session: session,
+			Close:   true,
 		}
 
-		var putItemsOutput gosn.SyncOutput
-
-		putItemsOutput, err = gosn.Sync(pii)
+		_, err = cache.Sync(pii)
 		if err != nil {
 			return
 		}
-
-		newSyncToken = putItemsOutput.SyncToken
 	}
-
 	noDeleted = len(tagsToDelete)
 
-	return noDeleted, newSyncToken, err
+	return noDeleted, err
 }
 
 type addTagsInput struct {
-	session   gosn.Session
+	session   cache.Session
 	tagTitles []string
-	syncToken string
 }
 
 type addTagsOutput struct {
-	newSyncToken string
-	added        []string
-	existing     []string
+	added    []string
+	existing []string
 }
 
 func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
+	// get all tags
 	addTagsFilter := gosn.Filter{
 		Type: "Tag",
 	}
@@ -305,27 +368,32 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		Filters:  filters,
 	}
 
-	getItemsInput := gosn.SyncInput{
-		SyncToken: ati.syncToken,
-		Session:   ati.session,
+	putItemsInput := cache.SyncInput{
+		Session: ati.session,
 	}
 
-	output, err := gosn.Sync(getItemsInput)
+	var so cache.SyncOutput
+	so, err = cache.Sync(putItemsInput)
 	if err != nil {
 		return
 	}
+	var allPersistedItems cache.Items
+	err = so.DB.All(&allPersistedItems)
+	if err != nil {
 
-	output.Items.DeDupe()
+		return
+	}
 
 	var items gosn.Items
-
-	items, err = output.Items.DecryptAndParse(ati.session.Mk, ati.session.Ak, false)
+	items, err = allPersistedItems.ToItems(ati.session.Mk, ati.session.Ak)
 	if err != nil {
+		return
+	}
+	if err = so.DB.Close(); err != nil {
 		return
 	}
 
 	items.Filter(addFilter)
-
 	var allTags gosn.Tags
 
 	for _, item := range items {
@@ -346,7 +414,6 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 			ato.existing = append(ato.existing, tag)
 			continue
 		}
-
 		newTagContent := gosn.NewTagContent()
 		newTag := gosn.NewTag()
 		newTagContent.Title = tag
@@ -358,26 +425,45 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	}
 
 	if len(tagsToAdd) > 0 {
+
+		so, err = cache.Sync(putItemsInput)
+		if err != nil {
+			return
+		}
+		//if err = so.DB.All(&allPersistedItems) ; err != nil {
+		//	return
+		//}
+
 		var eTagsToAdd gosn.EncryptedItems
 		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Mk, ati.session.Ak, false)
-
 		if err != nil {
 			return
 		}
 
-		putItemsInput := gosn.SyncInput{
+		cItems := cache.ToCacheItems(eTagsToAdd, false)
+		for _, c := range cItems {
+			err = so.DB.Save(&c)
+			if err != nil {
+				return
+			}
+		}
+
+		putItemsInput := cache.SyncInput{
 			Session: ati.session,
-			Items:   eTagsToAdd,
 		}
-
-		var putItemsOutput gosn.SyncOutput
-
-		putItemsOutput, err = gosn.Sync(putItemsInput)
+		err = so.DB.Close()
+		if err != nil {
+			return
+		}
+		so, err = cache.Sync(putItemsInput)
+		if err != nil {
+			return
+		}
+		err = so.DB.Close()
 		if err != nil {
 			return
 		}
 
-		ato.newSyncToken = putItemsOutput.SyncToken
 	}
 
 	return ato, err

@@ -1,127 +1,115 @@
 package sncli
 
 import (
+	"fmt"
 	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
 )
 
 type ExportConfig struct {
-	Session gosn.Session
+	Session cache.Session
 	File    string
 	Debug   bool
 }
 
 type ImportConfig struct {
-	Session gosn.Session
+	Session cache.Session
 	File    string
 	Debug   bool
 }
 
 func (i *ExportConfig) Run() error {
-	gii := gosn.SyncInput{
+	// populate DB
+	gii := cache.SyncInput{
 		Session: i.Session,
 		Debug:   i.Debug,
 	}
 
-	gio, err := gosn.Sync(gii)
+	gio, err := cache.Sync(gii)
 	if err != nil {
 		return err
 	}
-	// strip deleted items
-	var out gosn.EncryptedItems
+	defer gio.DB.Close()
 
-	for _, i := range gio.Items {
-		if !i.Deleted {
-			out = append(out, i)
-		}
+	// DB now populated and open with pointer in session
+	// strip deleted items
+	var out gosn.Items
+
+	// load all items
+	var allPersistedItems cache.Items
+
+	err = gio.DB.Find("Deleted", false, &allPersistedItems)
+
+	out, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
+	if err != nil {
+		return err
 	}
 
-	return writeGob(i.File, out)
+	var e gosn.EncryptedItems
+	e, err = out.Encrypt(i.Session.Mk, i.Session.Ak, i.Debug)
+
+	return writeGob(i.File, e)
 }
 
 func (i *ImportConfig) Run() error {
+	// populate DB
+	gii := cache.SyncInput{
+		Session: i.Session,
+		Debug:   i.Debug,
+	}
+
+	gio, err := cache.Sync(gii)
+	if err != nil {
+		return err
+	}
+
+	// DB now populated and open with pointer in session
+	var existingItems cache.Items
+	err = gio.DB.Find("Deleted", false, &existingItems)
+
 	var encItemsToImport gosn.EncryptedItems
 
-	err := readGob(i.File, &encItemsToImport)
+	err = readGob(i.File, &encItemsToImport)
 
 	if err != nil {
 		return err
-	}
-
-	var itemsToImport gosn.Items
-
-	itemsToImport, err = encItemsToImport.DecryptAndParse(i.Session.Mk, i.Session.Ak, i.Debug)
-	if err != nil {
-		return err
-	}
-
-	// get existing encItemsToImport
-	var existingItems gosn.Items
-
-	gii := gosn.SyncInput{
-		Session: i.Session,
-	}
-
-	var gio gosn.SyncOutput
-
-	gio, err = gosn.Sync(gii)
-
-	if err != nil {
-		return err
-	}
-
-	gio.Items = filterByTypes(gio.Items, supportedContentTypes)
-
-	existingItems, err = gio.Items.DecryptAndParse(i.Session.Mk, i.Session.Ak, i.Debug)
-
-	if err != nil {
-		return err
-	}
-
-	var finalList gosn.Items
-	// for each (tag and note) item to import, check if uuid exists
-	for _, itemToImport := range itemsToImport {
-		var done, found bool
-
-		for _, existingItem := range existingItems {
-			// if uuid exists
-			if existingItem != nil && itemToImport != nil && itemToImport.GetUUID() == existingItem.GetUUID() {
-				// if item deleted, push with new uuid
-				found = true
-
-				if existingItem.IsDeleted() {
-					itemToImport.SetUUID(gosn.GenUUID())
-					finalList = append(finalList, itemToImport)
-					done = true
-				} else {
-					// just push so it replaces existing
-					finalList = append(finalList, itemToImport)
-					done = true
-				}
-			}
-
-			if done {
-				break
-			}
-		}
-		// if uuid does not match then just add
-		if !found {
-			finalList = append(finalList, itemToImport)
-		}
 	}
 
 	var encFinalList gosn.EncryptedItems
 
-	encFinalList, err = finalList.Encrypt(i.Session.Mk, i.Session.Ak, i.Debug)
+	// get existing encItemsToImport
+	var rawItems gosn.Items
+
+	rawItems, err = existingItems.ToItems(i.Session.Mk, i.Session.Ak)
 	if err != nil {
+
 		return err
 	}
-	// push item
-	pii := gosn.SyncInput{
-		Session: i.Session,
-		Items:   encFinalList,
+
+	rawItems = filterItemsByTypes(rawItems, supportedContentTypes)
+
+	// TODO: Handle import of an item with same UUID
+	// TODO: Decrypt conflicting item (if note or tag), create a copy with new uuid, encrypt and import
+	// for each (tag and note) item to import, check if uuid exists
+	for _, itemToImport := range encItemsToImport {
+		encFinalList = append(encFinalList, itemToImport)
 	}
 
-	_, err = gosn.Sync(pii)
+	if len(encFinalList) == 0 {
+		return fmt.Errorf("no items to import were loaded")
+	}
+
+	if err =  cache.SaveEncryptedItems(gio.DB, encFinalList, true) ; err != nil {
+		return err
+	}
+
+	// push item and close db
+	pii := cache.SyncInput{
+		Session: i.Session,
+		Close:   true,
+	}
+	_, err = cache.Sync(pii)
 
 	return err
 }
+

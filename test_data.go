@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/jonhadfield/gosn-v2/cache"
 	"math/rand"
 	"strings"
 	"time"
@@ -100,16 +101,47 @@ func genTags(num int64) (tags gosn.Items) {
 	return tags
 }
 
-func createNotes(session gosn.Session, num int, paras int) error {
-	var pii gosn.SyncInput
+func createNotes(session cache.Session, num int, paras int) error {
+	var pii cache.SyncInput
 	pii.Session = session
 	gendNotes := genNotes(num, paras)
 
 	var eGendNotes gosn.EncryptedItems
 
-	eGendNotes, _ = gendNotes.Encrypt(session.Mk, session.Ak, true)
-	pii.Items = eGendNotes
-	_, err := gosn.Sync(pii)
+	var err error
+	eGendNotes, err = gendNotes.Encrypt(session.Mk, session.Ak, true)
+	if err != nil {
+		return err
+	}
+
+	cItems := cache.ToCacheItems(eGendNotes, false)
+
+	// get db
+	var so cache.SyncOutput
+	so, err = cache.Sync(cache.SyncInput{
+		Session: pii.Session,
+		Debug:   pii.Debug,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, x := range cItems {
+		err = so.DB.Save(&x)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = so.DB.Close()
+	if err != nil {
+		return err
+	}
+	so, err = cache.Sync(pii)
+	if err != nil {
+		return err
+	}
+	err = so.DB.Close()
 
 	return err
 }
@@ -129,7 +161,7 @@ func createTags(session gosn.Session, num int64) error {
 }
 
 type TestDataCreateNotesConfig struct {
-	Session  gosn.Session
+	Session  cache.Session
 	NumNotes int
 	NumParas int
 	Debug    bool

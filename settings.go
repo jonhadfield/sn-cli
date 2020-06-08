@@ -2,29 +2,32 @@ package sncli
 
 import (
 	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
 )
 
 func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
-	getItemsInput := gosn.SyncInput{
+	getItemsInput := cache.SyncInput{
 		Session: input.Session,
 		Debug:   input.Debug,
 	}
 
-	var output gosn.SyncOutput
+	var so cache.SyncOutput
 
-	output, err = gosn.Sync(getItemsInput)
+	so, err = cache.Sync(getItemsInput)
 	if err != nil {
 		return nil, err
 	}
 
-	output.Items.DeDupe()
+	var allPersistedItems cache.Items
+	err = so.DB.All(&allPersistedItems)
 
-	settings, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
+	var items gosn.Items
+	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	settings.Filter(input.Filters)
+	items.Filter(input.Filters)
 
 	return
 }

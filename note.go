@@ -2,22 +2,23 @@ package sncli
 
 import (
 	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
 )
 
-func (input *AddNoteInput) Run() error {
+func (input *AddNoteInput) Run() (err error) {
+	// get DB
 	var syncToken, newNoteUUID string
 
 	ani := addNoteInput{
 		noteTitle: input.Title,
 		noteText:  input.Text,
 		tagTitles: input.Tags,
-		syncToken: syncToken,
 		session:   input.Session,
 	}
 
-	syncToken, newNoteUUID, err := addNote(ani)
+	newNoteUUID, err = addNote(ani)
 	if err != nil {
-		return err
+		return
 	}
 
 	if len(ani.tagTitles) > 0 {
@@ -27,21 +28,20 @@ func (input *AddNoteInput) Run() error {
 			session:        input.Session,
 			newTags:        input.Tags,
 		}
-		_, err = tagNotes(tni)
+		err = tagNotes(tni)
 	}
 
-	return err
+	return
 }
 
 type addNoteInput struct {
-	session   gosn.Session
+	session   cache.Session
 	noteTitle string
 	noteText  string
 	tagTitles []string
-	syncToken string
 }
 
-func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
+func addNote(input addNoteInput) (noteUUID string, err error) {
 	// check if note exists
 	newNote := gosn.NewNote()
 	newNoteContent := gosn.NewNoteContent()
@@ -59,72 +59,91 @@ func addNote(input addNoteInput) (newSyncToken, noteUUID string, err error) {
 		return
 	}
 
-	pii := gosn.SyncInput{
-		Session:   input.session,
-		SyncToken: input.syncToken,
-		Items:     eNewNoteItems,
+	si := cache.SyncInput{
+		Session: input.session,
 	}
 
-	var putItemsOutput gosn.SyncOutput
+	var so cache.SyncOutput
+	so, err = cache.Sync(si)
 
-	putItemsOutput, err = gosn.Sync(pii)
 	if err != nil {
 		return
 	}
 
-	newSyncToken = putItemsOutput.SyncToken
+
+	if err = cache.SaveEncryptedItems(so.DB, eNewNoteItems, true) ; err != nil {
+		return
+	}
+
+	//
+	//cis := cache.ToCacheItems(eNewNoteItems, false)
+	//err = so.DB.Save(&cis[0])
+	//if err != nil {
+	//	return
+	//}
+	//_ = so.DB.Close()
+
+	pii := cache.SyncInput{
+		Session: input.session,
+	}
+
+	so, err = cache.Sync(pii)
+	if err != nil {
+		return
+	}
+	defer func(){
+		_ = so.DB.Close()
+	}()
 
 	if len(input.tagTitles) > 0 {
 		tni := tagNotesInput{
 			session:        input.session,
 			matchNoteUUIDs: []string{newNote.UUID},
 			newTags:        input.tagTitles,
-			syncToken:      newSyncToken,
 		}
 
-		_, err = tagNotes(tni)
+		err = tagNotes(tni)
 		if err != nil {
 			return
 		}
 	}
 
-	return newSyncToken, noteUUID, err
+	return noteUUID, err
 }
 
 func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
-	noDeleted, _, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "")
+	noDeleted, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "")
 
 	return noDeleted, err
 }
 
-func (input *GetNoteConfig) Run() (output gosn.Items, err error) {
-	getItemsInput := gosn.SyncInput{
-		PageSize:  input.PageSize,
-		BatchSize: input.BatchSize,
-		Session:   input.Session,
-		Debug:     input.Debug,
-	}
-
-	var gio gosn.SyncOutput
-
-	gio, err = gosn.Sync(getItemsInput)
+func (input *GetNoteConfig) Run() (items gosn.Items, err error) {
+	var so cache.SyncOutput
+	so, err = cache.Sync(cache.SyncInput{
+		Session: input.Session,
+		Debug:   input.Debug,
+	})
 	if err != nil {
 		return
 	}
 
-	gio.Items.DeDupe()
-
-	output, err = gio.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
+	var allPersistedItems cache.Items
+	err = so.DB.All(&allPersistedItems)
+	if err != nil {
+		return
+	}
+	defer so.DB.Close()
+	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return
 	}
 
-	output.Filter(input.Filters)
+	items.Filter(input.Filters)
 
 	return
 }
 
-func deleteNotes(session gosn.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string) (noDeleted int, newSyncToken string, err error) {
+func deleteNotes(session cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string) (noDeleted int, err error) {
 	var getNotesFilters []gosn.Filter
 
 	switch {
@@ -170,22 +189,25 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 		MatchAny: true,
 	}
 
-	getItemsInput := gosn.SyncInput{
-		Session:   session,
-		SyncToken: syncToken,
+	getItemsInput := cache.SyncInput{
+		Session: session,
 	}
 
-	gio, err := gosn.Sync(getItemsInput)
+	var gio cache.SyncOutput
+	gio, err = cache.Sync(getItemsInput)
 	if err != nil {
 		return
 	}
 
-	gio.Items.DeDupe()
-	ei := gio.Items
+	var allPersistedItems cache.Items
+	err = gio.DB.All(&allPersistedItems)
+	if err != nil {
+		return
+	}
 
 	var notes gosn.Items
 
-	notes, err = ei.DecryptAndParse(session.Mk, session.Ak, false)
+	notes, err = allPersistedItems.ToItems(session.Mk, session.Ak)
 	if err != nil {
 		return
 	}
@@ -209,30 +231,31 @@ func deleteNotes(session gosn.Session, noteTitles []string, noteText string, not
 	}
 
 	var eNotesToDelete gosn.EncryptedItems
-
 	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak, false)
 
 	if err != nil {
 		return
 	}
 
-	pii := gosn.SyncInput{
-		Session:   session,
-		Items:     eNotesToDelete,
-		SyncToken: syncToken,
+	cItemsToDelete := cache.ToCacheItems(eNotesToDelete, false)
+	for _, ci := range cItemsToDelete {
+		ci.Deleted = true
+		err = gio.DB.Save(&ci)
+		if err != nil {
+			return
+		}
 	}
 
-	var putItemsOutput gosn.SyncOutput
-
-	putItemsOutput, err = gosn.Sync(pii)
-
+	_ = gio.DB.Close()
+	//session.CacheDB = nil
+	pii := cache.SyncInput{
+		Session: session,
+	}
+	gio, err = cache.Sync(pii)
 	if err != nil {
 		return
 	}
+	_ = gio.DB.Close()
 
-	noDeleted = len(notesToDelete)
-
-	newSyncToken = putItemsOutput.SyncToken
-
-	return noDeleted, newSyncToken, err
+	return len(notesToDelete), err
 }

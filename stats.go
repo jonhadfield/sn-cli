@@ -8,7 +8,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
-	"github.com/jonhadfield/sn-persist"
 	"github.com/ryanuber/columnize"
 )
 
@@ -25,18 +24,17 @@ func (input *StatsConfig) Run() error {
 
 	so, err = cache.Sync(cache.SyncInput{
 		Session: input.Session,
-		DBPath:  input.CacheDBPath,
 		Debug:   input.Debug,
 	})
 	if err != nil {
 		return err
 	}
 
-	var allPersistedItems snpersist.Items
+	var allPersistedItems cache.Items
 	err = so.DB.All(&allPersistedItems)
 
 	var items gosn.Items
-	items, err = allPersistedItems.ToItems(input.Session)
+	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
 
 	var notes gosn.Items
 
@@ -46,7 +44,7 @@ func (input *StatsConfig) Run() error {
 
 	var missingContentTypeUUIDs []string
 
-	allUUIDs := make([]string, len(so.Items))
+	allUUIDs := make([]string, len(allPersistedItems))
 
 	var duplicateUUIDs []string
 
