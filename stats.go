@@ -7,6 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/sn-persist"
 	"github.com/ryanuber/columnize"
 )
@@ -20,11 +21,12 @@ var (
 
 func (input *StatsConfig) Run() error {
 	var err error
-	var so snpersist.SyncOutput
+	var so cache.SyncOutput
 
-	so, err = snpersist.Sync(snpersist.SyncInput{
+	so, err = cache.Sync(cache.SyncInput{
 		Session: input.Session,
 		DBPath:  input.CacheDBPath,
+		Debug:   input.Debug,
 	})
 	if err != nil {
 		return err

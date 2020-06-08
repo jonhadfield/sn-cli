@@ -1,13 +1,11 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jonhadfield/gosn-v2/cache"
 	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,7 +13,7 @@ import (
 	"time"
 
 	sncli "github.com/jonhadfield/sn-cli"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/divan/num2words"
 	"github.com/jonhadfield/gosn-v2"
@@ -35,41 +33,6 @@ const (
 	msgNoMatches       = "No matches"
 	snAppName          = "sn-cli"
 )
-
-// GenCacheDBPath generates a path to a database file to be used as a cache of encrypted items
-// The filename is a SHA2 hash of a concatenation of the following in order to be both unique
-// and avoid concurrent usage:
-// - part of the session authentication key (so that caches are unique to a user)
-// - the server URL (so that caches are server specific)
-// - the requesting application name (so that caches are application specific)
-func GenCacheDBPath(session gosn.Session, dir, appName string) (string, error) {
-	var err error
-	if !session.Valid() {
-		return "", fmt.Errorf("invalid session")
-	}
-
-	if appName == "" {
-		return "", fmt.Errorf("appName is a required")
-	}
-
-	if dir == "" {
-		dir = os.TempDir()
-	} else if _, err := os.Stat("/path/to/whatever"); os.IsNotExist(err) {
-		return "", fmt.Errorf("directory does not exist: '%s'", dir)
-	}
-
-	h := sha256.New()
-
-	h.Write([]byte(session.Ak[:2] + session.Ak[len(session.Ak)-2:] + session.Server + appName))
-	bs := h.Sum(nil)
-	hexedDigest := hex.EncodeToString(bs)[:8]
-
-	if dir == "" {
-		dir = os.TempDir()
-	}
-
-	return filepath.Join(dir, snAppName+"-"+hexedDigest+".db"), err
-}
 
 var yamlAbbrevs = []string{"yml", "yaml"}
 
@@ -1193,7 +1156,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 
 				var cacheDBPath string
-				cacheDBPath, err =  GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
 				if err != nil {
 					return err
 				}
