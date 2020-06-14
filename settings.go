@@ -13,7 +13,7 @@ func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 
 	var so cache.SyncOutput
 
-	so, err = cache.Sync(getItemsInput)
+	so, err = Sync(getItemsInput, true)
 	if err != nil {
 		return nil, err
 	}

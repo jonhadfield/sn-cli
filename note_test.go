@@ -53,7 +53,7 @@ func TestWipeWith50(t *testing.T) {
 	}
 
 	var gno cache.SyncOutput
-	gno, err = cache.Sync(gni)
+	gno, err = Sync(gni, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, gno.DB)
 

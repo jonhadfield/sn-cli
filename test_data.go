@@ -118,10 +118,10 @@ func createNotes(session cache.Session, num int, paras int) error {
 
 	// get db
 	var so cache.SyncOutput
-	so, err = cache.Sync(cache.SyncInput{
+	so, err = Sync(cache.SyncInput{
 		Session: pii.Session,
 		Debug:   pii.Debug,
-	})
+	}, true)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func createNotes(session cache.Session, num int, paras int) error {
 	if err != nil {
 		return err
 	}
-	so, err = cache.Sync(pii)
+	so, err = Sync(pii, true)
 	if err != nil {
 		return err
 	}

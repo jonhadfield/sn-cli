@@ -25,7 +25,7 @@ func (i *ExportConfig) Run() error {
 		Debug:   i.Debug,
 	}
 
-	gio, err := cache.Sync(gii)
+	gio, err := Sync(gii, true)
 	if err != nil {
 		return err
 	}
@@ -38,6 +38,7 @@ func (i *ExportConfig) Run() error {
 	// load all items
 	var allPersistedItems cache.Items
 
+	// only export undeleted tags and notes
 	err = gio.DB.Find("Deleted", false, &allPersistedItems)
 
 	out, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
@@ -58,7 +59,7 @@ func (i *ImportConfig) Run() error {
 		Debug:   i.Debug,
 	}
 
-	gio, err := cache.Sync(gii)
+	gio, err := Sync(gii, true)
 	if err != nil {
 		return err
 	}
@@ -108,7 +109,7 @@ func (i *ImportConfig) Run() error {
 		Session: i.Session,
 		Close:   true,
 	}
-	_, err = cache.Sync(pii)
+	_, err = Sync(pii, true)
 
 	return err
 }

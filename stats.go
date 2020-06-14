@@ -22,10 +22,10 @@ func (input *StatsConfig) Run() error {
 	var err error
 	var so cache.SyncOutput
 
-	so, err = cache.Sync(cache.SyncInput{
+	so, err = Sync(cache.SyncInput{
 		Session: input.Session,
 		Debug:   input.Debug,
-	})
+	}, true)
 	if err != nil {
 		return err
 	}

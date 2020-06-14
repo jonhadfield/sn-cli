@@ -254,7 +254,7 @@ func (input *WipeConfig) Run() (int, error) {
 	var so cache.SyncOutput
 
 
-	so, err = cache.Sync(syncInput)
+	so, err = Sync(syncInput, true)
 	if err != nil {
 		return 0, err
 	}
@@ -289,7 +289,7 @@ func (input *WipeConfig) Run() (int, error) {
 	}
 	//syncInput.Session.CacheDB = so.DB
 
-	so, err = cache.Sync(syncInput)
+	so, err = Sync(syncInput, true)
 	if err != nil {
 		return 0, err
 	}

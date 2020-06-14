@@ -321,7 +321,6 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Action: func(c *cli.Context) error {
 						if !c.GlobalBool("no-stdout") {
 							display = true
-							display = true
 						}
 						titleIn := strings.TrimSpace(c.String("title"))
 						uuidIn := strings.Replace(c.String("uuid"), " ", "", -1)

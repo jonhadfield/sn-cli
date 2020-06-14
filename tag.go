@@ -51,7 +51,7 @@ func tagNotes(input tagNotesInput) (err error) {
 	// get all notes and tags from db
 	var so cache.SyncOutput
 
-	so, err = cache.Sync(syncInput)
+	so, err = Sync(syncInput, true)
 	if err != nil {
 		return
 	}
@@ -137,7 +137,7 @@ func tagNotes(input tagNotesInput) (err error) {
 			Session: input.session,
 		}
 
-		so, err = cache.Sync(pii)
+		so, err = Sync(pii, true)
 		if err != nil {
 			return
 		}
@@ -169,7 +169,7 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 		Debug:   input.Debug,
 	}
 	var so cache.SyncOutput
-	so, err = cache.Sync(si)
+	so, err = Sync(si, true)
 	if err != nil {
 		return
 	}
@@ -201,10 +201,10 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	if err != nil {
 		return
 	}
-	so, err = cache.Sync(cache.SyncInput{
+	so, err = Sync(cache.SyncInput{
 		Session: input.Session,
 		Debug:   input.Debug,
-	})
+	}, true)
 	if err != nil {
 		return
 	}
@@ -219,7 +219,7 @@ func (input *GetTagConfig) Run() (items gosn.Items, err error) {
 		Session: input.Session,
 		Debug:   input.Debug,
 	}
-	so, err = cache.Sync(si)
+	so, err = Sync(si, true)
 	if err != nil {
 		return
 	}
@@ -265,7 +265,7 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 
 	// load db
 	var so cache.SyncOutput
-	so, err = cache.Sync(syncInput)
+	so, err = Sync(syncInput, true)
 	if err != nil {
 		return 0, err
 	}
@@ -337,7 +337,7 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 			Close:   true,
 		}
 
-		_, err = cache.Sync(pii)
+		_, err = Sync(pii, true)
 		if err != nil {
 			return
 		}
@@ -373,7 +373,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	}
 
 	var so cache.SyncOutput
-	so, err = cache.Sync(putItemsInput)
+	so, err = Sync(putItemsInput, true)
 	if err != nil {
 		return
 	}
@@ -426,7 +426,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 
 	if len(tagsToAdd) > 0 {
 
-		so, err = cache.Sync(putItemsInput)
+		so, err = Sync(putItemsInput, true)
 		if err != nil {
 			return
 		}
@@ -455,7 +455,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		if err != nil {
 			return
 		}
-		so, err = cache.Sync(putItemsInput)
+		so, err = Sync(putItemsInput, true)
 		if err != nil {
 			return
 		}

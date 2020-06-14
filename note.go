@@ -64,30 +64,21 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 	}
 
 	var so cache.SyncOutput
-	so, err = cache.Sync(si)
 
+	so, err = Sync(si, true)
 	if err != nil {
 		return
 	}
-
 
 	if err = cache.SaveEncryptedItems(so.DB, eNewNoteItems, true) ; err != nil {
 		return
 	}
 
-	//
-	//cis := cache.ToCacheItems(eNewNoteItems, false)
-	//err = so.DB.Save(&cis[0])
-	//if err != nil {
-	//	return
-	//}
-	//_ = so.DB.Close()
-
 	pii := cache.SyncInput{
 		Session: input.session,
 	}
 
-	so, err = cache.Sync(pii)
+	so, err = Sync(pii, true)
 	if err != nil {
 		return
 	}
@@ -112,17 +103,17 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 }
 
 func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
-	noDeleted, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "")
+	noDeleted, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "", input.Debug)
 
 	return noDeleted, err
 }
 
 func (input *GetNoteConfig) Run() (items gosn.Items, err error) {
 	var so cache.SyncOutput
-	so, err = cache.Sync(cache.SyncInput{
+	so, err = Sync(cache.SyncInput{
 		Session: input.Session,
 		Debug:   input.Debug,
-	})
+	}, true)
 	if err != nil {
 		return
 	}
@@ -143,7 +134,7 @@ func (input *GetNoteConfig) Run() (items gosn.Items, err error) {
 	return
 }
 
-func deleteNotes(session cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string) (noDeleted int, err error) {
+func deleteNotes(session cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string, debug bool) (noDeleted int, err error) {
 	var getNotesFilters []gosn.Filter
 
 	switch {
@@ -191,10 +182,11 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 
 	getItemsInput := cache.SyncInput{
 		Session: session,
+		Debug: debug,
 	}
 
 	var gio cache.SyncOutput
-	gio, err = cache.Sync(getItemsInput)
+	gio, err = Sync(getItemsInput, true)
 	if err != nil {
 		return
 	}
@@ -251,7 +243,7 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 	pii := cache.SyncInput{
 		Session: session,
 	}
-	gio, err = cache.Sync(pii)
+	gio, err = Sync(pii, true)
 	if err != nil {
 		return
 	}
