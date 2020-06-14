@@ -1,7 +1,6 @@
 package sncli
 
 import (
-	"fmt"
 	"github.com/briandowns/spinner"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"os"
@@ -9,7 +8,7 @@ import (
 )
 
 func Sync(si cache.SyncInput, showProgress bool) (so cache.SyncOutput, err error) {
-	if showProgress && ! si.Debug {
+	if showProgress && !si.Debug {
 		prefix := "syncing "
 		if _, err := os.Stat(si.Session.CacheDBPath); os.IsNotExist(err) {
 			prefix = "initialising "
