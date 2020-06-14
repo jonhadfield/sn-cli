@@ -104,7 +104,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		cli.BoolFlag{Name: "use-session"},
 		cli.StringFlag{Name: "session-key"},
 		cli.BoolFlag{Name: "no-stdout"},
-		cli.StringFlag{Name: "cachedbdir"},
+		cli.StringFlag{Name: "cachedbdir", Value: viper.GetString("cachedbdir")},
 	}
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		_, _ = fmt.Fprintf(c.App.Writer, "\ninvalid command: \"%s\" \n\n", command)
