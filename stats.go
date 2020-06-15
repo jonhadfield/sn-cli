@@ -16,6 +16,7 @@ var (
 	Red    = color.New(color.FgRed).SprintFunc()
 	Green  = color.New(color.FgGreen).SprintFunc()
 	Yellow = color.New(color.FgYellow).SprintFunc()
+	HiWhite  = color.New(color.FgHiWhite).SprintFunc()
 )
 
 func (input *StatsConfig) Run() error {
