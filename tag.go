@@ -272,10 +272,7 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 	defer func() {
 		_ = so.DB.Close()
 	}()
-	//syncInput.Session.CacheDB = so.DB
-	//syncInput.Session.CacheDBPath = ""
-	//fmt.Println("syncInput DB:", syncInput.Session.CacheDB)
-	//fmt.Println("syncInput DB Path:", syncInput.Session.CacheDBPath)
+
 	var tags gosn.Items
 
 	// get items from db
@@ -430,9 +427,6 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		if err != nil {
 			return
 		}
-		//if err = so.DB.All(&allPersistedItems) ; err != nil {
-		//	return
-		//}
 
 		var eTagsToAdd gosn.EncryptedItems
 		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Mk, ati.session.Ak, false)
@@ -440,25 +434,16 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 			return
 		}
 
-		cItems := cache.ToCacheItems(eTagsToAdd, false)
-		for _, c := range cItems {
-			err = so.DB.Save(&c)
-			if err != nil {
-				return
-			}
-		}
-
-		putItemsInput := cache.SyncInput{
-			Session: ati.session,
-		}
-		err = so.DB.Close()
+		err = cache.SaveEncryptedItems(so.DB, eTagsToAdd, true)
 		if err != nil {
 			return
 		}
+
 		so, err = Sync(putItemsInput, true)
 		if err != nil {
 			return
 		}
+
 		err = so.DB.Close()
 		if err != nil {
 			return

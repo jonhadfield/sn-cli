@@ -427,6 +427,8 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							msg = sncli.Green(fmt.Sprintf("%s note", msgDeleted))
 						} else {
 							msg = sncli.Yellow("Note not found")
+
+							return nil
 						}
 
 						strNote := "notes"

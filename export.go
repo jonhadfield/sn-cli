@@ -13,9 +13,10 @@ type ExportConfig struct {
 }
 
 type ImportConfig struct {
-	Session cache.Session
-	File    string
-	Debug   bool
+	Session   cache.Session
+	Overwrite bool
+	File      string
+	Debug     bool
 }
 
 func (i *ExportConfig) Run() error {
@@ -100,7 +101,7 @@ func (i *ImportConfig) Run() error {
 		return fmt.Errorf("no items to import were loaded")
 	}
 
-	if err =  cache.SaveEncryptedItems(gio.DB, encFinalList, true) ; err != nil {
+	if err = cache.SaveEncryptedItems(gio.DB, encFinalList, true); err != nil {
 		return err
 	}
 
@@ -113,4 +114,3 @@ func (i *ImportConfig) Run() error {
 
 	return err
 }
-

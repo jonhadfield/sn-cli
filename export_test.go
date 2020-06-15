@@ -1,7 +1,6 @@
 package sncli
 
 import (
-	"fmt"
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +77,6 @@ func TestExportOneNote(t *testing.T) {
 	var writtenItems gosn.Items
 	writtenItems, err = writtenEncryptedItems.DecryptAndParse(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
-	fmt.Println("Written items:", len(writtenItems))
 
 	var found bool
 
@@ -92,7 +90,7 @@ func TestExportOneNote(t *testing.T) {
 	assert.True(t, found)
 }
 
-
+// export one note, delete that note, import the backup and check note has returned
 func TestExportWipeImportOneNote(t *testing.T) {
 	defer cleanUp(testSession)
 
@@ -149,7 +147,6 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	}
 
 	assert.NoError(t, ec.Run())
-
 	// delete the db and wipe SN
 	cleanUp(testSession)
 	// import the export made above so that SN is now populated
@@ -186,7 +183,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 }
 
 // Create a note, export it, change original, import
-func TestExportChangeImportOneNote(t *testing.T) {
+func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
 	defer cleanUp(testSession)
 
 	// create and put initial originalNote
@@ -267,9 +264,10 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	ic := ImportConfig{
 		Session: testSession,
 		File:    tmpfn,
+		Overwrite: true,
 	}
 
-		assert.NoError(t,ic.Run())
+	assert.NoError(t,ic.Run())
 
 	// get items again
 	gii := cache.SyncInput{
@@ -478,12 +476,6 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	if ecErr := ec.Run(); ecErr != nil {
 		panic(ecErr)
 	}
-
-	// make exact copy of original tag
-	//copyOfOriginalTag := originalTag.Copy()
-	//var copyOfOriginalTag gosn.Tag
-	//copier.Copy(copyOfOriginalTag, originalTag)
-	//fmt.Println("Copy of original tag is:", copyOfOriginalTag.UUID, copyOfOriginalTag.ContentType)
 
 	// delete originalTag
 	originalTag.Deleted = true

@@ -223,23 +223,17 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 	}
 
 	var eNotesToDelete gosn.EncryptedItems
-	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak, false)
 
+	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak, false)
 	if err != nil {
 		return
 	}
 
-	cItemsToDelete := cache.ToCacheItems(eNotesToDelete, false)
-	for _, ci := range cItemsToDelete {
-		ci.Deleted = true
-		err = gio.DB.Save(&ci)
-		if err != nil {
-			return
-		}
+	err = cache.SaveEncryptedItems(gio.DB, eNotesToDelete, true)
+	if err != nil {
+		return 0, err
 	}
 
-	_ = gio.DB.Close()
-	//session.CacheDB = nil
 	pii := cache.SyncInput{
 		Session: session,
 	}
