@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jonhadfield/gosn-v2/cache"
 	"os"
 	"sort"
 	"strconv"
@@ -12,10 +13,10 @@ import (
 	"time"
 
 	sncli "github.com/jonhadfield/sn-cli"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/divan/num2words"
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh/terminal"
@@ -30,11 +31,12 @@ const (
 	msgTagSuccess      = "Tagged"
 	msgItemsDeleted    = "Items deleted"
 	msgNoMatches       = "No matches"
+	snAppName          = "sn-cli"
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
 
-// overwritten at build time
+// overwritten at build time.
 var version, versionOutput, tag, sha, buildDate string
 
 func main() {
@@ -69,6 +71,11 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		return "", false, err
 	}
 
+	err = viper.BindEnv("cachedbdir")
+	if err != nil {
+		return "", false, err
+	}
+
 	if tag != "" && buildDate != "" {
 		versionOutput = fmt.Sprintf("[%s-%s] %s UTC", tag, sha, buildDate)
 	} else {
@@ -97,6 +104,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		cli.BoolFlag{Name: "use-session"},
 		cli.StringFlag{Name: "session-key"},
 		cli.BoolFlag{Name: "no-stdout"},
+		cli.StringFlag{Name: "cachedbdir", Value: viper.GetString("cachedbdir")},
 	}
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		_, _ = fmt.Fprintf(c.App.Writer, "\ninvalid command: \"%s\" \n\n", command)
@@ -146,11 +154,17 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 
 						// get session
-						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
+						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
 						}
+
+						session.CacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						if err != nil {
+							return err
+						}
+
 
 						// prepare input
 						tags := sncli.CommaSplit(tagInput)
@@ -236,7 +250,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 
 						// get session
-						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
+						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -244,13 +258,19 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 						processedTags := sncli.CommaSplit(c.String("tag"))
 
+						var cacheDBPath string
+						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						if err != nil {
+							return err
+						}
+						session.CacheDBPath = cacheDBPath
 						AddNoteInput := sncli.AddNoteInput{
-							Session: session,
-							Title:   title,
-							Text:    text,
-							Tags:    processedTags,
-							Replace: false,
-							Debug:   c.GlobalBool("debug"),
+							Session:     session,
+							Title:       title,
+							Text:        text,
+							Tags:        processedTags,
+							Replace:     false,
+							Debug:       c.GlobalBool("debug"),
 						}
 						if err = AddNoteInput.Run(); err != nil {
 							return fmt.Errorf("failed to add note. %+v", err)
@@ -310,7 +330,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							return errors.New("title or uuid required")
 						}
-						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
+						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -318,11 +338,18 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						tags := sncli.CommaSplit(titleIn)
 						uuids := sncli.CommaSplit(uuidIn)
 
+						var cacheDBPath string
+						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						if err != nil {
+							return err
+						}
+						session.CacheDBPath = cacheDBPath
+
 						DeleteTagConfig := sncli.DeleteTagConfig{
-							Session:   session,
-							TagTitles: tags,
-							TagUUIDs:  uuids,
-							Debug:     c.GlobalBool("debug"),
+							Session:     session,
+							TagTitles:   tags,
+							TagUUIDs:    uuids,
+							Debug:       c.GlobalBool("debug"),
 						}
 						var noDeleted int
 						noDeleted, err = DeleteTagConfig.Run()
@@ -373,17 +400,23 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 							return errors.New("")
 						}
-						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
+						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
 						}
 						processedNotes := sncli.CommaSplit(title)
 
+						var cacheDBPath string
+						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						if err != nil {
+							return err
+						}
+						session.CacheDBPath = cacheDBPath
 						DeleteNoteConfig := sncli.DeleteNoteConfig{
-							Session:    session,
-							NoteTitles: processedNotes,
-							Debug:      c.GlobalBool("debug"),
+							Session:     session,
+							NoteTitles:  processedNotes,
+							Debug:       c.GlobalBool("debug"),
 						}
 						var noDeleted int
 						if noDeleted, err = DeleteNoteConfig.Run(); err != nil {
@@ -391,15 +424,13 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 
 						if noDeleted > 0 {
-							msg = sncli.Green(fmt.Sprintf("%s tag", msgDeleted))
+							msg = sncli.Green(fmt.Sprintf("%s note", msgDeleted))
 						} else {
-							msg = sncli.Yellow("Tag not found")
-						}
+							msg = sncli.Yellow("Note not found")
 
-						if noDeleted == 0 {
-							msg = sncli.Yellow(fmt.Sprintf("Note not found"))
 							return nil
 						}
+
 						strNote := "notes"
 						if noDeleted == 1 {
 							strNote = "note"
@@ -450,7 +481,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				findText := c.String("find-text")
 				findTag := c.String("find-tag")
 				newTags := c.String("title")
-				session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
+				session, _, err := cache.GetSession(c.GlobalBool("use-session"),
 					c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
@@ -461,15 +492,20 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				processedTags := sncli.CommaSplit(newTags)
 
+				session.CacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				if err != nil {
+					return err
+				}
+
 				appConfig := sncli.TagItemsConfig{
-					Session:    session,
-					FindText:   findText,
-					FindTitle:  findTitle,
-					FindTag:    findTag,
-					NewTags:    processedTags,
-					Replace:    c.Bool("replace"),
-					IgnoreCase: c.Bool("ignore-case"),
-					Debug:      c.GlobalBool("debug"),
+					Session:     session,
+					FindText:    findText,
+					FindTitle:   findTitle,
+					FindTag:     findTag,
+					NewTags:     processedTags,
+					Replace:     c.Bool("replace"),
+					IgnoreCase:  c.Bool("ignore-case"),
+					Debug:       c.GlobalBool("debug"),
 				}
 				err = appConfig.Run()
 				if err != nil {
@@ -530,19 +566,27 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							},
 						}
 
-						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
+						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
 						}
 
+						var cacheDBPath string
+						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						if err != nil {
+							return err
+						}
+
+						session.CacheDBPath = cacheDBPath
+
 						// TODO: validate output
 						output := c.String("output")
 						appGetSettingsConfig := sncli.GetSettingsConfig{
-							Session: session,
-							Filters: getSettingssIF,
-							Output:  output,
-							Debug:   c.GlobalBool("debug"),
+							Session:     session,
+							Filters:     getSettingssIF,
+							Output:      output,
+							Debug:       c.GlobalBool("debug"),
 						}
 						var rawSettings gosn.Items
 						rawSettings, err = appGetSettingsConfig.Run()
@@ -556,46 +600,46 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Component).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								tagContentAppDataContent := sncli.AppDataContentYAML{
 									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailYAML,
 								}
 
 								settingContentYAML := sncli.SettingContentYAML{
-									Title:          rt.Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToYaml(rt.Content.References()),
+									Title:          rt.(*gosn.Component).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Component).Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
 								settingsYAML = append(settingsYAML, sncli.SettingYAML{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Component).UUID,
+									ContentType: rt.(*gosn.Component).ContentType,
 									Content:     settingContentYAML,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Component).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Component).CreatedAt,
 								})
 							}
 							if !count && strings.ToLower(output) == "json" {
 								settingContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Component).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								settingContentAppDataContent := sncli.AppDataContentJSON{
 									OrgStandardNotesSN: settingContentOrgStandardNotesSNDetailJSON,
 								}
 
 								settingContentJSON := sncli.SettingContentJSON{
-									Title:          rt.Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToJSON(rt.Content.References()),
+									Title:          rt.(*gosn.Component).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Component).Content.References()),
 									AppData:        settingContentAppDataContent,
 								}
 
 								settingsJSON = append(settingsJSON, sncli.SettingJSON{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Component).UUID,
+									ContentType: rt.(*gosn.Component).ContentType,
 									Content:     settingContentJSON,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Component).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Component).CreatedAt,
 								})
 							}
 						}
@@ -711,7 +755,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							})
 						}
 
-						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
+						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
@@ -719,11 +763,19 @@ func startCLI(args []string) (msg string, display bool, err error) {
 
 						// TODO: validate output
 						output := c.String("output")
+
+						var cacheDBPath string
+						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						if err != nil {
+							return err
+						}
+						session.CacheDBPath = cacheDBPath
+
 						appGetTagConfig := sncli.GetTagConfig{
-							Session: session,
-							Filters: getTagsIF,
-							Output:  output,
-							Debug:   c.GlobalBool("debug"),
+							Session:     session,
+							Filters:     getTagsIF,
+							Output:      output,
+							Debug:       c.GlobalBool("debug"),
 						}
 						var rawTags gosn.Items
 						rawTags, err = appGetTagConfig.Run()
@@ -741,46 +793,46 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								tagContentAppDataContent := sncli.AppDataContentYAML{
 									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailYAML,
 								}
 
 								tagContentYAML := sncli.TagContentYAML{
-									Title:          rt.Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToYaml(rt.Content.References()),
+									Title:          rt.(*gosn.Tag).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Tag).Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
 								tagsYAML = append(tagsYAML, sncli.TagYAML{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Tag).UUID,
+									ContentType: rt.(*gosn.Tag).ContentType,
 									Content:     tagContentYAML,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Tag).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Tag).CreatedAt,
 								})
 							}
 							if !count && strings.ToLower(output) == "json" {
 								tagContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								tagContentAppDataContent := sncli.AppDataContentJSON{
 									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailJSON,
 								}
 
 								tagContentJSON := sncli.TagContentJSON{
-									Title:          rt.Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToJSON(rt.Content.References()),
+									Title:          rt.(*gosn.Tag).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Tag).Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
 								tagsJSON = append(tagsJSON, sncli.TagJSON{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Tag).UUID,
+									ContentType: rt.(*gosn.Tag).ContentType,
 									Content:     tagContentJSON,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Tag).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Tag).CreatedAt,
 								})
 							}
 						}
@@ -843,6 +895,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						if !c.GlobalBool("no-stdout") {
 							display = true
 						}
+
 						uuid := c.String("uuid")
 						title := c.String("title")
 						text := c.String("text")
@@ -897,23 +950,31 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 						}
 
-						session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
+						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
 							c.GlobalString("session-key"), c.GlobalString("server"))
 						if err != nil {
 							return err
 						}
 
-						getNoteConfig := sncli.GetNoteConfig{
-							Session: session,
-							Filters: getNotesIF,
-							Debug:   c.GlobalBool("debug"),
+						var cacheDBPath string
+						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						if err != nil {
+							return err
 						}
+
+						session.CacheDBPath = cacheDBPath
+
+						getNoteConfig := sncli.GetNoteConfig{
+							Session:     session,
+							Filters:     getNotesIF,
+							Debug:       c.GlobalBool("debug"),
+						}
+
 						var rawNotes gosn.Items
 						rawNotes, err = getNoteConfig.Run()
 						if err != nil {
 							return err
 						}
-
 						// strip deleted items
 						rawNotes = sncli.RemoveDeleted(rawNotes)
 
@@ -924,46 +985,46 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								noteContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								noteContentAppDataContent := sncli.AppDataContentYAML{
 									OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailYAML,
 								}
 								noteContentYAML := sncli.NoteContentYAML{
-									Title:          rt.Content.GetTitle(),
-									Text:           rt.Content.GetText(),
-									ItemReferences: sncli.ItemRefsToYaml(rt.Content.References()),
+									Title:          rt.(*gosn.Note).Content.GetTitle(),
+									Text:           rt.(*gosn.Note).Content.GetText(),
+									ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Note).Content.References()),
 									AppData:        noteContentAppDataContent,
 								}
 
 								notesYAML = append(notesYAML, sncli.NoteYAML{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Note).UUID,
+									ContentType: rt.(*gosn.Note).ContentType,
 									Content:     noteContentYAML,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Note).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Note).CreatedAt,
 								})
 							}
 							if !count && strings.ToLower(output) == "json" {
 								noteContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-									ClientUpdatedAt: rt.Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								noteContentAppDataContent := sncli.AppDataContentJSON{
 									OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailJSON,
 								}
 								noteContentJSON := sncli.NoteContentJSON{
-									Title:          rt.Content.GetTitle(),
-									Text:           rt.Content.GetText(),
-									ItemReferences: sncli.ItemRefsToJSON(rt.Content.References()),
+									Title:          rt.(*gosn.Note).Content.GetTitle(),
+									Text:           rt.(*gosn.Note).Content.GetText(),
+									ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Note).Content.References()),
 									AppData:        noteContentAppDataContent,
 								}
 
 								notesJSON = append(notesJSON, sncli.NoteJSON{
-									UUID:        rt.UUID,
-									ContentType: rt.ContentType,
+									UUID:        rt.(*gosn.Note).UUID,
+									ContentType: rt.(*gosn.Note).ContentType,
 									Content:     noteContentJSON,
-									UpdatedAt:   rt.UpdatedAt,
-									CreatedAt:   rt.CreatedAt,
+									UpdatedAt:   rt.(*gosn.Note).UpdatedAt,
+									CreatedAt:   rt.(*gosn.Note).CreatedAt,
 								})
 							}
 						}
@@ -1027,15 +1088,23 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					filePath := fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
 					outputPath = currDir + string(os.PathSeparator) + filePath
 				}
-				session, _, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, _, err := cache.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
 				}
 
+				var cacheDBPath string
+				cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				if err != nil {
+					return err
+				}
+
+				session.CacheDBPath = cacheDBPath
 				appExportConfig := sncli.ExportConfig{
-					Session: session,
-					File:    outputPath,
-					Debug:   c.GlobalBool("debug"),
+					Session:     session,
+					//CacheDBPath: cacheDBPath,
+					File:        outputPath,
+					Debug:       c.GlobalBool("debug"),
 				}
 				err = appExportConfig.Run()
 				if err == nil {
@@ -1068,7 +1137,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					return errors.New("please specify path using --file")
 				}
 
-				session, _, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, _, err := cache.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				if err != nil {
+					return err
+				}
+
+				session.CacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
 				if err != nil {
 					return err
 				}
@@ -1146,11 +1220,17 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				if err != nil {
 					return err
 				}
-				session, _, err := gosn.GetSession(c.GlobalBool("use-session"),
+				session, _, err := cache.GetSession(c.GlobalBool("use-session"),
 					c.GlobalString("session-key"), c.GlobalString("server"))
 				if err != nil {
 					return err
 				}
+
+				session.CacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				if err != nil {
+					return err
+				}
+
 				statsConfig := sncli.StatsConfig{
 					Session: session,
 					Debug:   c.GlobalBool("debug"),
@@ -1176,14 +1256,23 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				if !c.GlobalBool("no-stdout") {
 					display = true
 				}
-				session, email, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, email, err := cache.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				if err != nil {
+
+					return err
+				}
+
+				var cacheDBPath string
+				cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
 				if err != nil {
 					return err
 				}
+
+				session.CacheDBPath = cacheDBPath
 				wipeConfig := sncli.WipeConfig{
-					Session:  session,
-					Settings: c.Bool("settings"),
-					Debug:    c.GlobalBool("debug"),
+					Session:     session,
+					Settings:    c.Bool("settings"),
+					Debug:       c.GlobalBool("debug"),
 				}
 				var numWiped int
 
@@ -1200,111 +1289,14 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				if proceed {
 					numWiped, err = wipeConfig.Run()
+					if err != nil {
+						return err
+					}
 					msg = fmt.Sprintf("%d %s", numWiped, msgItemsDeleted)
 				} else {
 					return nil
 				}
 				return err
-			},
-		},
-		{
-			Name:  "fixup",
-			Usage: "find and fix item issues",
-			Action: func(c *cli.Context) error {
-				session, _, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
-				if err != nil {
-					return err
-				}
-
-				fixupConfig := sncli.FixupConfig{
-					Session: session,
-					Debug:   c.GlobalBool("debug"),
-				}
-				err = fixupConfig.Run()
-				if err != nil {
-					return fmt.Errorf("fixup failed. %+v", err)
-				}
-				return nil
-			},
-		},
-		{
-			Name:   "test-data",
-			Usage:  "create test data",
-			Hidden: true,
-			Subcommands: []cli.Command{
-				{
-					Name:  "tags",
-					Usage: "new tags to create",
-					Flags: []cli.Flag{
-						cli.Int64Flag{
-							Name:  "number",
-							Usage: "number of tags",
-							Value: 0,
-						},
-					},
-					Action: func(c *cli.Context) error {
-						numTags := c.Int64("number")
-						if numTags <= 0 {
-							return cli.ShowSubcommandHelp(c)
-						}
-						session, _, err := gosn.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"),
-							c.GlobalString("server"))
-						if err != nil {
-							return err
-						}
-
-						appTestDataCreateTagsConfig := sncli.TestDataCreateTagsConfig{
-							Session: session,
-							NumTags: numTags,
-							Debug:   c.GlobalBool("debug"),
-						}
-						if appTestDataCreateTagsConfig.Run() != nil {
-							return err
-						}
-						fmt.Println(msgCreateSuccess)
-						return nil
-					},
-				},
-				{
-					Name:  "notes",
-					Usage: "new notes to create",
-					Flags: []cli.Flag{
-						cli.IntFlag{
-							Name:  "number",
-							Usage: "number of tags",
-							Value: 0,
-						},
-						cli.IntFlag{
-							Name:  "paras",
-							Usage: "number of paragraphs per note (min: 1)",
-							Value: 5,
-						},
-					},
-					Action: func(c *cli.Context) error {
-						numNotes := c.Int("number")
-						if numNotes <= 0 {
-							return cli.ShowSubcommandHelp(c)
-						}
-						numParas := c.Int("paras")
-						if numParas <= 1 {
-							return cli.ShowSubcommandHelp(c)
-						}
-						var session gosn.Session
-						session, _, err = gosn.GetSessionFromUser(c.GlobalString("server"))
-						if err != nil {
-							return err
-						}
-
-						appTestDataCreateNotesConfig := sncli.TestDataCreateNotesConfig{
-							Session:  session,
-							NumNotes: numNotes,
-							NumParas: numParas,
-							Debug:    c.GlobalBool("debug"),
-						}
-						err = appTestDataCreateNotesConfig.Run()
-						return err
-					},
-				},
 			},
 		},
 		{

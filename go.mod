@@ -1,27 +1,23 @@
 module github.com/jonhadfield/sn-cli
 
+go 1.14
+
 require (
+	github.com/briandowns/spinner v1.11.1
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/fatih/color v1.9.0
-	github.com/jonhadfield/gosn v0.0.2
-	github.com/mattn/go-colorable v0.1.4 // indirect
-	github.com/mattn/go-isatty v0.0.10 // indirect
-	github.com/pelletier/go-toml v1.6.0 // indirect
+	github.com/jonhadfield/gosn-v2 v0.0.0-20200619183506-7f684a298722
+	github.com/mitchellh/mapstructure v1.3.2 // indirect
+	github.com/pelletier/go-toml v1.8.0 // indirect
 	github.com/ryanuber/columnize v2.1.0+incompatible
-	github.com/spf13/afero v1.2.2 // indirect
-	github.com/spf13/cast v1.3.1 // indirect
-	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.6.3
-	github.com/stretchr/testify v1.4.0
+	github.com/spf13/afero v1.3.0 // indirect
+	github.com/spf13/viper v1.7.0
+	github.com/stretchr/testify v1.6.1
 	github.com/urfave/cli v1.22.4
-	github.com/zalando/go-keyring v0.0.0-20191216155332-f41212d4b175 // indirect
-	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
-	golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8 // indirect
-	golang.org/x/text v0.3.2 // indirect
-	gopkg.in/ini.v1 v1.51.1 // indirect
-	gopkg.in/yaml.v2 v2.2.8
+	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
+	golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1 // indirect
+	golang.org/x/text v0.3.3 // indirect
+	gopkg.in/ini.v1 v1.57.0 // indirect
+	gopkg.in/yaml.v2 v2.3.0
 )
-
-go 1.12

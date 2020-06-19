@@ -1,13 +1,16 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn"
+	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
+	"time"
 )
 
 const (
 	timeLayout  = "2006-01-02T15:04:05.000Z"
 	SNServerURL = "https://sync.standardnotes.org"
-	SNPageSize  = 500
+	SNPageSize  = 600
+	SNAppName   = "sn-cli"
 )
 
 type ItemReferenceYAML struct {
@@ -115,63 +118,62 @@ type NoteYAML struct {
 }
 
 type TagItemsConfig struct {
-	Session    gosn.Session
-	FindTitle  string
-	FindText   string
-	FindTag    string
-	NewTags    []string
-	Replace    bool
-	IgnoreCase bool
-	Debug      bool
+	Session     cache.Session
+	FindTitle   string
+	FindText    string
+	FindTag     string
+	NewTags     []string
+	Replace     bool
+	IgnoreCase  bool
+	Debug       bool
 }
 
 type AddTagsInput struct {
-	Session gosn.Session
-	Tags    []string
-	Debug   bool
+	Session     cache.Session
+	Tags        []string
+	Debug       bool
 }
 
 type AddTagsOutput struct {
 	Added, Existing []string
-	SyncToken       string
 }
 
 type GetTagConfig struct {
-	Session gosn.Session
-	Filters gosn.ItemFilters
-	Output  string
-	Debug   bool
+	Session     cache.Session
+	Filters     gosn.ItemFilters
+	Output      string
+	Debug       bool
 }
 
 type GetSettingsConfig struct {
-	Session gosn.Session
-	Filters gosn.ItemFilters
-	Output  string
-	Debug   bool
+	Session     cache.Session
+	Filters     gosn.ItemFilters
+	Output      string
+	Debug       bool
 }
 
 type GetNoteConfig struct {
-	Session    gosn.Session
-	Filters    gosn.ItemFilters
-	NoteTitles []string
-	TagTitles  []string
-	TagUUIDs   []string
-	PageSize   int
-	BatchSize  int
-	Debug      bool
+	Session     cache.Session
+	Filters     gosn.ItemFilters
+	NoteTitles  []string
+	TagTitles   []string
+	TagUUIDs    []string
+	PageSize    int
+	BatchSize   int
+	Debug       bool
 }
 
 type DeleteTagConfig struct {
-	Session   gosn.Session
-	Email     string
-	TagTitles []string
-	TagUUIDs  []string
-	Regex     bool
-	Debug     bool
+	Session     cache.Session
+	Email       string
+	TagTitles   []string
+	TagUUIDs    []string
+	Regex       bool
+	Debug       bool
 }
 
 type AddNoteInput struct {
-	Session gosn.Session
+	Session cache.Session
 	Title   string
 	Text    string
 	Tags    []string
@@ -180,27 +182,27 @@ type AddNoteInput struct {
 }
 
 type DeleteNoteConfig struct {
-	Session    gosn.Session
-	NoteTitles []string
-	NoteText   string
-	NoteUUIDs  []string
-	Regex      bool
-	Debug      bool
+	Session     cache.Session
+	NoteTitles  []string
+	NoteText    string
+	NoteUUIDs   []string
+	Regex       bool
+	Debug       bool
 }
 
 type WipeConfig struct {
-	Session  gosn.Session
-	Debug    bool
-	Settings bool
+	Session     cache.Session
+	Debug       bool
+	Settings    bool
 }
 
 type StatsConfig struct {
-	Session gosn.Session
-	Debug   bool
+	Session     cache.Session
+	Debug       bool
 }
 
-func referenceExists(item gosn.Item, refID string) bool {
-	for _, ref := range item.Content.References() {
+func referenceExists(tag gosn.Tag, refID string) bool {
+	for _, ref := range tag.Content.References() {
 		if ref.UUID == refID {
 			return true
 		}
@@ -209,69 +211,90 @@ func referenceExists(item gosn.Item, refID string) bool {
 	return false
 }
 
+func filterEncryptedItemsByTypes(ei gosn.EncryptedItems, types []string) (o gosn.EncryptedItems) {
+	for _, i := range ei {
+		if StringInSlice(i.ContentType, types, true) {
+			o = append(o, i)
+		}
+	}
+
+	return o
+}
+
+func filterItemsByTypes(ei gosn.Items, types []string) (o gosn.Items) {
+	for _, i := range ei {
+		if StringInSlice(i.GetContentType(), types, true) {
+			o = append(o, i)
+		}
+	}
+
+	return o
+}
+
+func filterCacheItemsByTypes(ei cache.Items, types []string) (o cache.Items) {
+	for _, i := range ei {
+		if StringInSlice(i.ContentType, types, true) {
+			o = append(o, i)
+		}
+	}
+
+	return o
+}
+
+var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
+
 func (input *WipeConfig) Run() (int, error) {
-	getItemsInput := gosn.GetItemsInput{
+	syncInput := cache.SyncInput{
 		Session: input.Session,
-		Debug: input.Debug,
+		Debug:   input.Debug,
 	}
 
 	var err error
 	// get all existing Tags and Notes and mark for deletion
-	var output gosn.GetItemsOutput
+	var so cache.SyncOutput
 
-	output, err = gosn.GetItems(getItemsInput)
+
+	so, err = Sync(syncInput, true)
 	if err != nil {
 		return 0, err
 	}
 
-	output.Items.DeDupe()
-
-	var pi gosn.Items
-
-	pi, err = output.Items.DecryptAndParse(input.Session.Mk, input.Session.Ak, input.Debug)
+	// get all items
+	var allPersistedItems cache.Items
+	err = so.DB.All(&allPersistedItems)
 	if err != nil {
 		return 0, err
 	}
 
-	var itemsToDel gosn.Items
+	filteredItems := filterCacheItemsByTypes(allPersistedItems, supportedContentTypes)
+	var itemsToDel int
+	for _, fi := range filteredItems {
+		itemsToDel++
+		fi.Deleted = true
+		fi.Dirty = true
+		fi.DirtiedDate = time.Now()
+		err = so.DB.Save(&fi)
+		if err != nil {
 
-	for _, item := range pi {
-		if item.Deleted {
-			continue
-		}
-
-		switch {
-		case item.ContentType == "Tag":
-			item.Deleted = true
-			item.Content = gosn.NewTagContent()
-			itemsToDel = append(itemsToDel, item)
-		case item.ContentType == "Note":
-			item.Deleted = true
-			item.Content = gosn.NewNoteContent()
-			itemsToDel = append(itemsToDel, item)
-		case input.Settings:
-			item.Deleted = true
-			itemsToDel = append(itemsToDel, item)
+			return 0, err
 		}
 	}
-	// delete items
-	var eItemsToDel gosn.EncryptedItems
 
-	eItemsToDel, err = itemsToDel.Encrypt(input.Session.Mk, input.Session.Ak, input.Debug)
+	//syncInput.Session.CacheDB = so.DB
+	//syncInput.Session.CacheDBPath = ""
+	// Close DB after each Sync?
+	err = so.DB.Close()
 	if err != nil {
 		return 0, err
 	}
+	//syncInput.Session.CacheDB = so.DB
 
-	putItemsInput := gosn.PutItemsInput{
-		Session:   input.Session,
-		Items:     eItemsToDel,
-		SyncToken: output.SyncToken,
-	}
-
-	_, err = gosn.PutItems(putItemsInput)
+	so, err = Sync(syncInput, true)
 	if err != nil {
 		return 0, err
 	}
+	err = so.DB.Close()
 
-	return len(itemsToDel), err
+
+	return itemsToDel, err
 }

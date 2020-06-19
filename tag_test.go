@@ -1,32 +1,26 @@
 package sncli
 
 import (
-	"testing"
-
+	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/jonhadfield/gosn"
+	"testing"
 )
 
 func TestAddDeleteTagByTitle(t *testing.T) {
-	sOutput, err := gosn.SignIn(sInput)
-	assert.NoError(t, err, err)
-
 	addTagConfig := AddTagsInput{
-		Session: sOutput.Session,
+		Session: testSession,
 		Tags:    []string{"TestTagOne", "TestTagTwo"},
 	}
 
-	var ato AddTagsOutput
-	ato, err = addTagConfig.Run()
+	ato, err := addTagConfig.Run()
 	assert.NoError(t, err)
 	assert.Contains(t, ato.Added, "TestTagOne")
 	assert.Contains(t, ato.Added, "TestTagTwo")
 	assert.Empty(t, ato.Existing)
-	assert.NotEmpty(t, ato.SyncToken)
 
 	deleteTagConfig := DeleteTagConfig{
-		Session:   sOutput.Session,
+		Session:   testSession,
 		TagTitles: []string{"TestTagOne", "TestTagTwo"},
 	}
 
@@ -37,25 +31,20 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 }
 
 func TestGetTag(t *testing.T) {
-	defer cleanUp(&testSession)
-
-	sOutput, err := gosn.SignIn(sInput)
-	assert.NoError(t, err, err)
+	defer cleanUp(testSession)
 
 	testTagTitles := []string{"TestTagOne", "TestTagTwo"}
 	addTagInput := AddTagsInput{
-		Session: sOutput.Session,
+		Session: testSession,
 		Tags:    testTagTitles,
 	}
 
-	var ato AddTagsOutput
-	ato, err = addTagInput.Run()
+	ato, err := addTagInput.Run()
 	assert.NoError(t, err, err)
 	assert.NoError(t, err)
 	assert.Contains(t, ato.Added, "TestTagOne")
 	assert.Contains(t, ato.Added, "TestTagTwo")
 	assert.Empty(t, ato.Existing)
-	assert.NotEmpty(t, ato.SyncToken)
 
 	// create filters
 	getTagFilters := gosn.ItemFilters{
@@ -72,7 +61,7 @@ func TestGetTag(t *testing.T) {
 	}
 
 	getTagConfig := GetTagConfig{
-		Session: sOutput.Session,
+		Session: testSession,
 		Filters: getTagFilters,
 	}
 
@@ -82,7 +71,8 @@ func TestGetTag(t *testing.T) {
 	assert.EqualValues(t, len(output), 2, "expected two items but got: %+v", output)
 }
 
-func _addNotes(session gosn.Session, input map[string]string) error {
+
+func _addNotes(session cache.Session, input map[string]string) error {
 	for k, v := range input {
 		addNoteConfig := AddNoteInput{
 			Session: session,
@@ -99,7 +89,7 @@ func _addNotes(session gosn.Session, input map[string]string) error {
 	return nil
 }
 
-func _deleteNotesByTitle(session gosn.Session, input map[string]string) (noDeleted int, err error) {
+func _deleteNotesByTitle(session cache.Session, input map[string]string) (noDeleted int, err error) {
 	for k := range input {
 		deleteNoteConfig := DeleteNoteConfig{
 			Session:    session,
@@ -116,7 +106,7 @@ func _deleteNotesByTitle(session gosn.Session, input map[string]string) (noDelet
 	return noDeleted, err
 }
 
-func _deleteTagsByTitle(session gosn.Session, input []string) (noDeleted int, err error) {
+func _deleteTagsByTitle(session cache.Session, input []string) (noDeleted int, err error) {
 	deleteTagConfig := DeleteTagConfig{
 		Session:   session,
 		TagTitles: input,
@@ -126,12 +116,8 @@ func _deleteTagsByTitle(session gosn.Session, input []string) (noDeleted int, er
 }
 
 func TestTaggingOfNotes(t *testing.T) {
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
 
-	sOutput, signInErr := gosn.SignIn(sInput)
-	if signInErr != nil {
-		t.Errorf("CliSignIn error:: %+v", signInErr)
-	}
 	// create four notes
 	notes := map[string]string{
 		"noteOneTitle":   "noteOneText example",
@@ -140,19 +126,17 @@ func TestTaggingOfNotes(t *testing.T) {
 		"noteFourTitle":  "noteFourText example",
 	}
 
-	err := _addNotes(sOutput.Session, notes)
+	err := _addNotes(testSession, notes)
 	assert.NoError(t, err, err)
-
 	// tag new notes with 'testTag'
 	tags := []string{"testTag"}
 	tni := TagItemsConfig{
-		Session:  sOutput.Session,
+		Session:  testSession,
 		FindText: "example",
 		NewTags:  tags,
 	}
 	err = tni.Run()
 	assert.NoError(t, err, err)
-
 	// get newly tagged notes
 
 	filterNotesByTagName := gosn.Filter{
@@ -166,7 +150,7 @@ func TestTaggingOfNotes(t *testing.T) {
 		MatchAny: true,
 	}
 	gnc := GetNoteConfig{
-		Session: sOutput.Session,
+		Session: testSession,
 		Filters: itemFilters,
 	}
 
@@ -178,11 +162,11 @@ func TestTaggingOfNotes(t *testing.T) {
 		t.Errorf("expected two notes but got: %d", len(retNotes))
 	}
 
-	_, err = _deleteNotesByTitle(sOutput.Session, notes)
+	_, err = _deleteNotesByTitle(testSession, notes)
 	assert.NoError(t, err, err)
 
 	var deletedTags int
-	deletedTags, err = _deleteTagsByTitle(sOutput.Session, tags)
+	deletedTags, err = _deleteTagsByTitle(testSession, tags)
 	assert.NoError(t, err, err)
 	assert.Equal(t, len(tags), deletedTags)
 }

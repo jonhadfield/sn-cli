@@ -1,37 +1,56 @@
 package sncli
 
 import (
+	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/jonhadfield/gosn"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestExportOneNote(t *testing.T) {
-	cleanUp(&testSession)
-	defer cleanUp(&testSession)
+	cleanUp(testSession)
+	defer cleanUp(testSession)
 
+	// populate DB
+	si := cache.SyncInput{
+		Session: testSession,
+		Debug:   true,
+	}
+
+	so, err := Sync(si, true)
+	assert.NoError(t, err)
+	// DB now populated and open with pointer in session
+	//var existingItems cache.Items
+	//err = so.DB.All(&existingItems)
+	//
+
+	// create a note
 	note := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
-	note.Content = noteContent
+	note.Content = *noteContent
 	note.Content.SetTitle("Example Title")
 	note.Content.SetText("Some example text")
 	itemsToPut := gosn.Items{
-		*note,
+		&note,
 	}
+
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
-		Session: testSession,
-		Items:   encItemsToPut,
+	cItems := cache.ToCacheItems(encItemsToPut, false)
+	for _, ci := range cItems {
+		assert.NoError(t, so.DB.Save(&ci))
 	}
-	_, err = gosn.PutItems(pii)
+
+	assert.NoError(t, so.DB.Close())
+
+	so, err = Sync(si, true)
 	assert.NoError(t, err)
+	assert.NoError(t, so.DB.Close())
 
 	dir, err := ioutil.TempDir("", "test")
 	if err != nil {
@@ -62,7 +81,7 @@ func TestExportOneNote(t *testing.T) {
 	var found bool
 
 	for _, item := range writtenItems {
-		if item.UUID == note.UUID {
+		if item != nil && item.GetUUID() == note.UUID {
 			found = true
 			break
 		}
@@ -71,27 +90,49 @@ func TestExportOneNote(t *testing.T) {
 	assert.True(t, found)
 }
 
+// export one note, delete that note, import the backup and check note has returned
 func TestExportWipeImportOneNote(t *testing.T) {
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
+
+	// populate DB
+	gii := cache.SyncInput{
+		Session: testSession,
+		Debug:   true,
+	}
+
+	gio, err := Sync(gii, true)
+	assert.NoError(t, err)
+	// DB now populated and open with pointer in session
+	var existingItems []cache.Item
+	err = gio.DB.All(&existingItems)
+	assert.NoError(t, err)
 
 	note := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
-	note.Content = noteContent
+	note.Content = *noteContent
 	note.Content.SetTitle("Example Title")
 	note.Content.SetText("Some example text")
 	itemsToPut := gosn.Items{
-		*note,
+		&note,
 	}
+
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
-		Session: testSession,
-		Items:   encItemsToPut,
+	cItems := cache.ToCacheItems(encItemsToPut, false)
+	for _, cItem := range cItems {
+		assert.NoError(t, gio.DB.Save(&cItem))
 	}
-	_, err = gosn.PutItems(pii)
-	assert.NoError(t, err)
 
+	assert.NoError(t, gio.DB.Close())
+
+	pii := cache.SyncInput{
+		Session: testSession,
+	}
+	var so cache.SyncOutput
+	so, err = Sync(pii, true)
+	assert.NoError(t, err)
+	assert.NoError(t, so.DB.Close())
 	dir, err := ioutil.TempDir("", "test")
 	if err != nil {
 		log.Fatal(err)
@@ -105,70 +146,82 @@ func TestExportWipeImportOneNote(t *testing.T) {
 		File:    tmpfn,
 	}
 
-	if ecErr := ec.Run(); ecErr != nil {
-		panic(ecErr)
-	}
-
-	cleanUp(&testSession)
-
+	assert.NoError(t, ec.Run())
+	// delete the db and wipe SN
+	cleanUp(testSession)
+	// import the export made above so that SN is now populated
 	ic := ImportConfig{
 		Session: testSession,
 		File:    tmpfn,
 	}
 
-	if icErr := ic.Run(); icErr != nil {
-		panic(icErr)
-	}
+	assert.NoError(t, ic.Run())
 
-	gii := gosn.GetItemsInput{
+	// get a new database and populate with the new item
+	gii = cache.SyncInput{
 		Session: testSession,
+		Debug:   true,
 	}
-
-	var gio gosn.GetItemsOutput
-	gio, err = gosn.GetItems(gii)
+	assert.NoError(t, gio.DB.Close())
+	gio, err = Sync(gii, true)
 	assert.NoError(t, err)
-
-	var items gosn.Items
-	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
-	assert.NoError(t, err)
+	assert.NotNil(t, gio.DB)
+	assert.NotEmpty(t, gio.DB)
+	var aa []cache.Item
+	assert.NoError(t, gio.DB.All(&aa))
 
 	var found bool
-
-	for _, i := range items {
-		if i.Equals(*note) {
-			found = true
+	for _, i := range aa {
+		switch i.ContentType {
+		case "Note":
+			if i.UUID == note.UUID {
+				found = true
+			}
 		}
 	}
-
 	assert.True(t, found)
 }
 
-func TestExportChangeImportOneNote(t *testing.T) {
-	defer cleanUp(&testSession)
+// Create a note, export it, change original, import
+func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
+	defer cleanUp(testSession)
 
 	// create and put initial originalNote
 	originalNote := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
-	originalNote.Content = noteContent
+	originalNote.Content = *noteContent
 	originalNote.Content.SetTitle("Example Title")
 	originalNote.Content.SetText("Some example text")
 	itemsToPut := gosn.Items{
-		*originalNote,
+		&originalNote,
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
+	// ### sync db
+	pii := cache.SyncInput{
 		Session: testSession,
-		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	var so cache.SyncOutput
+	so, err = Sync(pii, true)
 	assert.NoError(t, err)
+
+	// ### add note to the database
+	pi := cache.ToCacheItems(encItemsToPut, false)
+	for _, p := range pi {
+		assert.NoError(t, so.DB.Save(&p))
+	}
+	assert.NoError(t, so.DB.Close())
+
+	// ### sync db with SN
+	so, err = Sync(pii, true)
+	assert.NoError(t, err)
+	assert.NoError(t, so.DB.Close())
 
 	dir, err := ioutil.TempDir("", "test")
 	assert.NoError(t, err)
 
-	defer os.RemoveAll(dir) // clean up
+	defer os.RemoveAll(dir) // clean up at the end
 
 	// export initial originalNote
 	tmpfn := filepath.Join(dir, "tmpfile")
@@ -184,46 +237,70 @@ func TestExportChangeImportOneNote(t *testing.T) {
 	updatedNote.Content.SetTitle("Example Title UPDATED")
 	updatedNote.Content.SetText("Some example text UPDATED")
 	itemsToPut = gosn.Items{
-		*updatedNote,
+		&updatedNote,
 	}
+
+	// get db
+	so, err = Sync(pii, true)
+
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii = gosn.PutItemsInput{
-		Session: testSession,
-		Items:   encItemsToPut,
+	pi = cache.ToCacheItems(encItemsToPut, false)
+
+	for _, i := range pi {
+		assert.NoError(t, so.DB.Save(&i))
 	}
-	_, err = gosn.PutItems(pii)
+
+	pii = cache.SyncInput{
+		Session: testSession,
+	}
+	assert.NoError(t, so.DB.Close())
+	so, err = Sync(pii, true)
 	assert.NoError(t, err)
+	assert.NoError(t, so.DB.Close())
 
 	// import original export
 	ic := ImportConfig{
-		Session: testSession,
-		File:    tmpfn,
+		Session:   testSession,
+		File:      tmpfn,
+		Overwrite: true,
 	}
 
-	if icErr := ic.Run(); icErr != nil {
-		panic(icErr)
-	}
+	assert.NoError(t, ic.Run())
 
 	// get items again
-	gii := gosn.GetItemsInput{
+	gii := cache.SyncInput{
 		Session: testSession,
 	}
 
-	var gio gosn.GetItemsOutput
-	gio, err = gosn.GetItems(gii)
+	var gio cache.SyncOutput
+	gio, err = Sync(gii, true)
 	assert.NoError(t, err)
 
-	var items gosn.Items
-	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
+	var items cache.Items
+	assert.NoError(t, gio.DB.Find("UUID", originalNote.UUID, &items))
+	assert.NoError(t, gio.DB.Close())
+	var gItems gosn.Items
+	gItems, err = items.ToItems(testSession.Mk, testSession.Ak)
+
 	assert.NoError(t, err)
 
 	var found bool
 
-	for _, i := range items {
-		if i.Equals(*originalNote) {
-			found = true
+	for _, i := range gItems {
+		switch i.(type) {
+		case *gosn.Note:
+			n := i.(*gosn.Note)
+			assert.Equal(t, originalNote.UUID, n.UUID)
+			assert.Equal(t, originalNote.ContentType, n.ContentType)
+			assert.Equal(t, originalNote.UpdatedAt, n.UpdatedAt)
+			assert.Equal(t, originalNote.CreatedAt, n.CreatedAt)
+			assert.Equal(t, originalNote.Content, n.Content)
+			assert.Equal(t, originalNote.Deleted, n.Deleted)
+			if i.(*gosn.Note).Equals(originalNote) {
+				found = true
+			}
 		}
 	}
 
@@ -231,25 +308,39 @@ func TestExportChangeImportOneNote(t *testing.T) {
 }
 
 func TestExportChangeImportOneTag(t *testing.T) {
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
 
 	// create and put initial originalTag
 	originalTag := gosn.NewTag()
 	tagContent := gosn.NewTagContent()
-	originalTag.Content = tagContent
+	originalTag.Content = *tagContent
 	originalTag.Content.SetTitle("Example Title")
 	itemsToPut := gosn.Items{
-		*originalTag,
+		&originalTag,
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
+	// get db
+	pii := cache.SyncInput{
 		Session: testSession,
-		Items:   encItemsToPut,
 	}
-	_, err = gosn.PutItems(pii)
+	var so cache.SyncOutput
+	so, err = Sync(pii, true)
 	assert.NoError(t, err)
+
+	// add item to db
+	ci := cache.ToCacheItems(encItemsToPut, false)
+	for _, i := range ci {
+		assert.NoError(t, so.DB.Save(&i))
+	}
+	assert.NoError(t, so.DB.Close())
+
+	// sync db with SN
+	so, err = Sync(pii, true)
+	assert.NoError(t, err)
+	// close db
+	assert.NoError(t, so.DB.Close())
 
 	dir, err := ioutil.TempDir("", "test")
 	if err != nil {
@@ -273,16 +364,26 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	updatedTag := originalTag.Copy()
 	updatedTag.Content.SetTitle("Example Title UPDATED")
 	itemsToPut = gosn.Items{
-		*updatedTag,
+		&updatedTag,
 	}
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii = gosn.PutItemsInput{
-		Session: testSession,
-		Items:   encItemsToPut,
+	// get db
+	so, err = Sync(pii, true)
+	assert.NoError(t, err)
+	// add items to db
+	ci = cache.ToCacheItems(encItemsToPut, false)
+	for _, i := range ci {
+		assert.NoError(t, so.DB.Save(&i))
 	}
-	_, err = gosn.PutItems(pii)
+	assert.NoError(t, so.DB.Close())
+
+	pii = cache.SyncInput{
+		Session: testSession,
+		Close:   true,
+	}
+	_, err = Sync(pii, true)
 	assert.NoError(t, err)
 
 	// import original export
@@ -295,24 +396,31 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	assert.NoError(t, err)
 
 	// get items again
-	gii := gosn.GetItemsInput{
+	gii := cache.SyncInput{
 		Session: testSession,
 	}
 
-	var gio gosn.GetItemsOutput
-	gio, err = gosn.GetItems(gii)
+	var gio cache.SyncOutput
+	gio, err = Sync(gii, true)
 	assert.NoError(t, err)
 
-	var items gosn.Items
-	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
+	var cItems cache.Items
+	assert.NoError(t, gio.DB.All(&cItems))
+	assert.NoError(t, gio.DB.Close())
+
+	var gItems gosn.Items
+	gItems, err = cItems.ToItems(testSession.Mk, testSession.Ak)
 
 	assert.NoError(t, err)
 
 	var found bool
 
-	for _, i := range items {
-		if i.Equals(*originalTag) {
-			found = true
+	for _, i := range gItems {
+		switch i.(type) {
+		case *gosn.Tag:
+			if i.(*gosn.Tag).Equals(originalTag) {
+				found = true
+			}
 		}
 	}
 
@@ -320,29 +428,39 @@ func TestExportChangeImportOneTag(t *testing.T) {
 }
 
 func TestExportDeleteImportOneTag(t *testing.T) {
-	defer cleanUp(&testSession)
+	defer cleanUp(testSession)
+	pii := cache.SyncInput{
+		Session: testSession,
+	}
+
+	// Get DB
+	so, err := Sync(pii, true)
+	assert.NoError(t, err)
+
 	// create and put originalTag
 	originalTag := gosn.NewTag()
 	tagContent := gosn.NewTagContent()
-	originalTag.Content = tagContent
+	originalTag.Content = *tagContent
 	originalTag.Content.SetTitle("Example Title")
 	itemsToPut := gosn.Items{
-		*originalTag,
+		&originalTag,
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii := gosn.PutItemsInput{
-		Session: testSession,
-		Items:   encItemsToPut,
+	if err = cache.SaveEncryptedItems(so.DB, encItemsToPut, true); err != nil {
+		return
 	}
-	_, err = gosn.PutItems(pii)
-	assert.NoError(t, err)
 
+	var cItems cache.Items
+
+	so, err = Sync(pii, true)
+	assert.NoError(t, err)
+	assert.NoError(t, so.DB.Close())
+
+	// Export existing content to a temporary directory
 	dir, err := ioutil.TempDir("", "test")
-	if err != nil {
-		log.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	defer os.RemoveAll(dir) // clean up
 
@@ -357,48 +475,63 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 		panic(ecErr)
 	}
 
-	// create copy of original tag
-	copyOfOriginalTag := originalTag.Copy()
 	// delete originalTag
 	originalTag.Deleted = true
 	itemsToPut = gosn.Items{
-		*originalTag,
+		&originalTag,
 	}
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
 
-	pii = gosn.PutItemsInput{
-		Session: testSession,
-		Items:   encItemsToPut,
-	}
-	_, err = gosn.PutItems(pii)
+	so, err = Sync(pii, true)
 	assert.NoError(t, err)
+
+	if err = cache.SaveEncryptedItems(so.DB, encItemsToPut, true); err != nil {
+		return
+	}
+
+	pii = cache.SyncInput{
+		Session: testSession,
+	}
+	so, err = Sync(pii, true)
+	assert.NoError(t, err)
+	assert.NoError(t, so.DB.Close())
+
 	// import original export
 	ic := ImportConfig{
 		Session: testSession,
 		File:    tmpfn,
 	}
+
 	err = ic.Run()
 	assert.NoError(t, err)
 
 	// get items again
-	gii := gosn.GetItemsInput{
+	gii := cache.SyncInput{
 		Session: testSession,
 	}
 
-	var gio gosn.GetItemsOutput
-	gio, err = gosn.GetItems(gii)
+	var gio cache.SyncOutput
+	gio, err = Sync(gii, true)
 	assert.NoError(t, err)
 
-	var items gosn.Items
-	items, err = gio.Items.DecryptAndParse(testSession.Mk, testSession.Ak, true)
+	err = gio.DB.All(&cItems)
+	assert.NoError(t, gio.DB.Close())
+	var gItems gosn.Items
+	gItems, err = cItems.ToItems(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
 
 	var found bool
 
-	for _, i := range items {
-		if i.Equals(*copyOfOriginalTag) {
-			found = true
+	for _, i := range gItems {
+		switch i.(type) {
+		case *gosn.Tag:
+			if i.GetUUID() == originalTag.UUID {
+				found = true
+			}
+			//if i.(*gosn.Tag).Equals(copyOfOriginalTag) {
+			//	found = true
+			//}
 		}
 	}
 
