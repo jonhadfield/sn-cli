@@ -120,18 +120,10 @@ func tagNotes(input tagNotesInput) (err error) {
 		return
 	}
 
-	f := cache.ToCacheItems(eTagsToPush, false)
-	for _, et := range f {
-		err = so.DB.Save(&et)
-		if err != nil {
-			return
-		}
+	if err = cache.SaveEncryptedItems(so.DB, eTagsToPush, true); err != nil {
+		return
 	}
 
-	err = so.DB.Close()
-	if err != nil {
-		return err
-	}
 	if len(tagsToPush) > 0 {
 		pii := cache.SyncInput{
 			Session: input.session,
@@ -315,16 +307,7 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 	var eTagsToDelete gosn.EncryptedItems
 	eTagsToDelete, err = tagsToDelete.Encrypt(session.Mk, session.Ak, false)
 
-	// UPDATE DB HERE
-	cItems := cache.ToCacheItems(eTagsToDelete, false)
-	for _, cItem := range cItems {
-		err = so.DB.Save(&cItem)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	if err = so.DB.Close(); err != nil {
+	if err = cache.SaveEncryptedItems(so.DB, eTagsToDelete, true); err != nil {
 		return
 	}
 

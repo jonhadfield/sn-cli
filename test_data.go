@@ -114,8 +114,6 @@ func createNotes(session cache.Session, num int, paras int) error {
 		return err
 	}
 
-	cItems := cache.ToCacheItems(eGendNotes, false)
-
 	// get db
 	var so cache.SyncOutput
 	so, err = Sync(cache.SyncInput{
@@ -126,17 +124,11 @@ func createNotes(session cache.Session, num int, paras int) error {
 		return err
 	}
 
-	for _, x := range cItems {
-		err = so.DB.Save(&x)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = so.DB.Close()
+	err = cache.SaveEncryptedItems(so.DB, eGendNotes, true)
 	if err != nil {
 		return err
 	}
+
 	so, err = Sync(pii, true)
 	if err != nil {
 		return err

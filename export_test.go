@@ -160,7 +160,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	// get a new database and populate with the new item
 	gii = cache.SyncInput{
 		Session: testSession,
-		Debug: true,
+		Debug:   true,
 	}
 	assert.NoError(t, gio.DB.Close())
 	gio, err = Sync(gii, true)
@@ -262,12 +262,12 @@ func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
 
 	// import original export
 	ic := ImportConfig{
-		Session: testSession,
-		File:    tmpfn,
+		Session:   testSession,
+		File:      tmpfn,
 		Overwrite: true,
 	}
 
-	assert.NoError(t,ic.Run())
+	assert.NoError(t, ic.Run())
 
 	// get items again
 	gii := cache.SyncInput{
@@ -437,7 +437,6 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	so, err := Sync(pii, true)
 	assert.NoError(t, err)
 
-
 	// create and put originalTag
 	originalTag := gosn.NewTag()
 	tagContent := gosn.NewTagContent()
@@ -448,17 +447,16 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
-	cItems := cache.ToCacheItems(encItemsToPut, false)
-	for _, ci := range cItems {
-		assert.NoError(t, so.DB.Save(&ci))
+
+	if err = cache.SaveEncryptedItems(so.DB, encItemsToPut, true); err != nil {
+		return
 	}
-	assert.NoError(t, so.DB.Close())
+
+	var cItems cache.Items
+
 	so, err = Sync(pii, true)
 	assert.NoError(t, err)
 	assert.NoError(t, so.DB.Close())
-
-
-
 
 	// Export existing content to a temporary directory
 	dir, err := ioutil.TempDir("", "test")
@@ -487,11 +485,10 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 
 	so, err = Sync(pii, true)
 	assert.NoError(t, err)
-	cItems = cache.ToCacheItems(encItemsToPut, false)
-	for _, ci := range cItems {
-		assert.NoError(t, so.DB.Save(&ci))
+
+	if err = cache.SaveEncryptedItems(so.DB, encItemsToPut, true); err != nil {
+		return
 	}
-	assert.NoError(t, so.DB.Close())
 
 	pii = cache.SyncInput{
 		Session: testSession,

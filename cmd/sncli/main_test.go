@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//const tempDBPath = "test.db"
-
 func removeDB(dbPath string) {
 	if err := os.Remove(dbPath); err != nil {
 		if !strings.Contains(err.Error(), "no such file or directory") {
@@ -42,12 +40,6 @@ func TestAddTagErrorMissingTitle(t *testing.T) {
 	_, _, err := startCLI([]string{"sncli", "--no-stdout", "add", "tag"})
 	assert.Error(t, err, "error should be returned if title is unspecified")
 }
-
-//func TestDeleteTagMissingUUID(t *testing.T) {
-//	msg, _, err := startCLI([]string{"sncli", "delete", "tag", "--uuid", "3a277f8d-f247-4236-a803-80795123135g"})
-//	assert.NoError(t, err)
-//	assert.Equal(t, msg, fmt.Sprintf("0 %s", msgDeleted))
-//}
 
 func TestDeleteTagErrorMissingTitle(t *testing.T) {
 	_, _, err := startCLI([]string{"sncli", "--no-stdout", "delete", "tag"})
