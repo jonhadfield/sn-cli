@@ -186,52 +186,9 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						}
 						useStdOut = opts.useStdOut
 
-						// validate input
-						tagInput := c.String("title")
-						if strings.TrimSpace(tagInput) == "" {
-							if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
-								panic(cErr)
-							}
-							return errors.New("tag title not defined")
-						}
-
-						// get session
-						session, _, err := cache.GetSession(opts.useSession,
-							opts.sessKey, opts.server)
+						msg, err = processAddTags(c, opts)
 						if err != nil {
 							return err
-						}
-
-						session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
-						if err != nil {
-							return err
-						}
-
-						// prepare input
-						tags := sncli.CommaSplit(tagInput)
-						addTagInput := sncli.AddTagsInput{
-							Session: session,
-							Tags:    tags,
-							Debug:   opts.debug,
-						}
-
-						// attempt to add tags
-						var ato sncli.AddTagsOutput
-						ato, err = addTagInput.Run()
-						if err != nil {
-							return fmt.Errorf(sncli.Red(err))
-						}
-
-						// present results
-						if len(ato.Added) > 0 {
-							msg = sncli.Green(msgAddSuccess+": ", strings.Join(ato.Added, ", "))
-						}
-						if len(ato.Existing) > 0 {
-							// add line break if output already added
-							if len(msg) > 0 {
-								msg += "\n"
-							}
-							msg += sncli.Yellow(msgAlreadyExisting + ": " + strings.Join(ato.Existing, ", "))
 						}
 
 						return nil
@@ -274,52 +231,10 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						}
 						useStdOut = opts.useStdOut
 
-						// get input
-						title := c.String("title")
-						text := c.String("text")
-						if strings.TrimSpace(title) == "" {
-							if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
-								panic(cErr)
-							}
-
-							return errors.New("note title not defined")
-						}
-						if strings.TrimSpace(text) == "" {
-							if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
-								panic(cErr)
-							}
-
-							return errors.New("note text not defined")
-						}
-
-						// get session
-						session, _, err := cache.GetSession(opts.useSession,
-							opts.sessKey, opts.server)
+						msg, err = processAddNotes(c, opts)
 						if err != nil {
 							return err
 						}
-
-						processedTags := sncli.CommaSplit(c.String("tag"))
-
-						var cacheDBPath string
-						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
-						if err != nil {
-							return err
-						}
-						session.CacheDBPath = cacheDBPath
-						AddNoteInput := sncli.AddNoteInput{
-							Session: session,
-							Title:   title,
-							Text:    text,
-							Tags:    processedTags,
-							Replace: false,
-							Debug:   opts.debug,
-						}
-						if err = AddNoteInput.Run(); err != nil {
-							return fmt.Errorf("failed to add note. %+v", err)
-						}
-
-						msg = sncli.Green(msgAddSuccess + " note")
 
 						return nil
 					},

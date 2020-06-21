@@ -8,6 +8,57 @@ import (
 	"github.com/urfave/cli"
 	"strings"
 )
+
+func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+	// validate input
+	tagInput := c.String("title")
+	if strings.TrimSpace(tagInput) == "" {
+		_ = cli.ShowSubcommandHelp(c)
+		return "", errors.New("tag title not defined")
+	}
+
+	// get session
+	session, _, err := cache.GetSession(opts.useSession,
+		opts.sessKey, opts.server)
+	if err != nil {
+		return "", err
+	}
+
+	session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+	if err != nil {
+		return "", err
+	}
+
+	// prepare input
+	tags := sncli.CommaSplit(tagInput)
+	addTagInput := sncli.AddTagsInput{
+		Session: session,
+		Tags:    tags,
+		Debug:   opts.debug,
+	}
+
+	// attempt to add tags
+	var ato sncli.AddTagsOutput
+	ato, err = addTagInput.Run()
+	if err != nil {
+		return "", fmt.Errorf(sncli.Red(err))
+	}
+
+	// present results
+	if len(ato.Added) > 0 {
+		msg = sncli.Green(msgAddSuccess+": ", strings.Join(ato.Added, ", "))
+	}
+	if len(ato.Existing) > 0 {
+		// add line break if output already added
+		if len(msg) > 0 {
+			msg += "\n"
+		}
+		msg += sncli.Yellow(msgAlreadyExisting + ": " + strings.Join(ato.Existing, ", "))
+	}
+
+	return msg, err
+}
+
 func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	findTitle := c.String("find-title")
 	findText := c.String("find-text")
