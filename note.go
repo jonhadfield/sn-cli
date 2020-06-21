@@ -70,7 +70,7 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 		return
 	}
 
-	if err = cache.SaveEncryptedItems(so.DB, eNewNoteItems, true) ; err != nil {
+	if err = cache.SaveEncryptedItems(so.DB, eNewNoteItems, true); err != nil {
 		return
 	}
 
@@ -82,7 +82,7 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 	if err != nil {
 		return
 	}
-	defer func(){
+	defer func() {
 		_ = so.DB.Close()
 	}()
 
@@ -185,7 +185,7 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 
 	getItemsInput := cache.SyncInput{
 		Session: session,
-		Debug: debug,
+		Debug:   debug,
 	}
 
 	var gio cache.SyncOutput

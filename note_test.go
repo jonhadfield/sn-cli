@@ -112,8 +112,8 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 		Filters: []gosn.Filter{filter},
 	}
 	gnc := GetNoteConfig{
-		Session:     testSession,
-		Filters:     iFilter,
+		Session: testSession,
+		Filters: iFilter,
 	}
 
 	var preRes, postRes gosn.Items
@@ -124,8 +124,8 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 
 	newItemUUID := preRes[0].GetUUID()
 	deleteNoteConfig := DeleteNoteConfig{
-		Session:     testSession,
-		NoteUUIDs:   []string{newItemUUID},
+		Session:   testSession,
+		NoteUUIDs: []string{newItemUUID},
 	}
 
 	var noDeleted int

@@ -71,7 +71,6 @@ func TestGetTag(t *testing.T) {
 	assert.EqualValues(t, len(output), 2, "expected two items but got: %+v", output)
 }
 
-
 func _addNotes(session cache.Session, input map[string]string) error {
 	for k, v := range input {
 		addNoteConfig := AddNoteInput{
