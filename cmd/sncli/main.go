@@ -1247,13 +1247,6 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 				useStdOut = opts.useStdOut
 
-				var apiServer string
-				if viper.GetString("server") != "" {
-					apiServer = viper.GetString("server")
-				} else {
-					apiServer = sncli.SNServerURL
-				}
-
 				if strings.TrimSpace(c.String("email")) == "" {
 					if cErr := cli.ShowCommandHelp(c, "register"); cErr != nil {
 						panic(cErr)
@@ -1273,7 +1266,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				registerConfig := sncli.RegisterConfig{
 					Email:     c.String("email"),
 					Password:  password,
-					APIServer: apiServer,
+					APIServer: opts.server,
 				}
 				err = registerConfig.Run()
 				if err != nil {
