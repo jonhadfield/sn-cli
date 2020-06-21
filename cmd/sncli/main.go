@@ -53,7 +53,44 @@ func main() {
 	os.Exit(0)
 }
 
-func startCLI(args []string) (msg string, display bool, err error) {
+type configOptsOutput struct {
+	useStdOut  bool
+	useSession bool
+	sessKey    string
+	server     string
+	cacheDBDir string
+	debug      bool
+}
+
+func getOpts(c *cli.Context) (out configOptsOutput, err error) {
+	if !c.GlobalBool("no-stdout") {
+		out.useStdOut = true
+	}
+
+	if c.GlobalBool("use-session") || viper.GetBool("use_session") {
+		out.useSession = true
+	}
+
+	out.sessKey = c.GlobalString("session-key")
+
+	out.server = c.GlobalString("server")
+	if viper.GetString("server") != "" {
+		out.server = viper.GetString("server")
+	}
+
+	out.cacheDBDir = viper.GetString("cachedb_dir")
+	if out.cacheDBDir != "" {
+		out.cacheDBDir = c.GlobalString("cachedb-dir")
+	}
+
+	if c.GlobalBool("debug") {
+		out.debug = true
+	}
+
+	return
+}
+
+func startCLI(args []string) (msg string, useStdOut bool, err error) {
 	viper.SetEnvPrefix("sn")
 
 	err = viper.BindEnv("email")
@@ -71,7 +108,11 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		return "", false, err
 	}
 
-	err = viper.BindEnv("cachedbdir")
+	err = viper.BindEnv("cachedb_dir")
+	if err != nil {
+		return "", false, err
+	}
+	err = viper.BindEnv("use_session")
 	if err != nil {
 		return "", false, err
 	}
@@ -104,7 +145,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 		cli.BoolFlag{Name: "use-session"},
 		cli.StringFlag{Name: "session-key"},
 		cli.BoolFlag{Name: "no-stdout"},
-		cli.StringFlag{Name: "cachedbdir", Value: viper.GetString("cachedbdir")},
+		cli.StringFlag{Name: "cachedb-dir", Value: viper.GetString("cachedb_dir")},
 	}
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		_, _ = fmt.Fprintf(c.App.Writer, "\ninvalid command: \"%s\" \n\n", command)
@@ -140,9 +181,11 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						if !c.GlobalBool("no-stdout") {
-							display = true
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
 						}
+						useStdOut = opts.useStdOut
 
 						// validate input
 						tagInput := c.String("title")
@@ -154,24 +197,23 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 
 						// get session
-						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
-							c.GlobalString("session-key"), c.GlobalString("server"))
+						session, _, err := cache.GetSession(opts.useSession,
+							opts.sessKey, opts.server)
 						if err != nil {
 							return err
 						}
 
-						session.CacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 						if err != nil {
 							return err
 						}
-
 
 						// prepare input
 						tags := sncli.CommaSplit(tagInput)
 						addTagInput := sncli.AddTagsInput{
 							Session: session,
 							Tags:    tags,
-							Debug:   c.GlobalBool("debug"),
+							Debug:   opts.debug,
 						}
 
 						// attempt to add tags
@@ -227,22 +269,24 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						if !c.GlobalBool("no-stdout") {
-							display = true
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
 						}
+						useStdOut = opts.useStdOut
 
 						// get input
 						title := c.String("title")
 						text := c.String("text")
 						if strings.TrimSpace(title) == "" {
-							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+							if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
 								panic(cErr)
 							}
 
 							return errors.New("note title not defined")
 						}
 						if strings.TrimSpace(text) == "" {
-							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+							if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
 								panic(cErr)
 							}
 
@@ -250,8 +294,8 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						}
 
 						// get session
-						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
-							c.GlobalString("session-key"), c.GlobalString("server"))
+						session, _, err := cache.GetSession(opts.useSession,
+							opts.sessKey, opts.server)
 						if err != nil {
 							return err
 						}
@@ -259,18 +303,18 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						processedTags := sncli.CommaSplit(c.String("tag"))
 
 						var cacheDBPath string
-						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 						if err != nil {
 							return err
 						}
 						session.CacheDBPath = cacheDBPath
 						AddNoteInput := sncli.AddNoteInput{
-							Session:     session,
-							Title:       title,
-							Text:        text,
-							Tags:        processedTags,
-							Replace:     false,
-							Debug:       c.GlobalBool("debug"),
+							Session: session,
+							Title:   title,
+							Text:    text,
+							Tags:    processedTags,
+							Replace: false,
+							Debug:   opts.debug,
 						}
 						if err = AddNoteInput.Run(); err != nil {
 							return fmt.Errorf("failed to add note. %+v", err)
@@ -319,19 +363,22 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						if !c.GlobalBool("no-stdout") {
-							display = true
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
 						}
+						useStdOut = opts.useStdOut
+
 						titleIn := strings.TrimSpace(c.String("title"))
 						uuidIn := strings.Replace(c.String("uuid"), " ", "", -1)
 						if titleIn == "" && uuidIn == "" {
-							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+							if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
 								panic(cErr)
 							}
 							return errors.New("title or uuid required")
 						}
-						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
-							c.GlobalString("session-key"), c.GlobalString("server"))
+						session, _, err := cache.GetSession(opts.useSession,
+							opts.sessKey, opts.server)
 						if err != nil {
 							return err
 						}
@@ -339,17 +386,17 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						uuids := sncli.CommaSplit(uuidIn)
 
 						var cacheDBPath string
-						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 						if err != nil {
 							return err
 						}
 						session.CacheDBPath = cacheDBPath
 
 						DeleteTagConfig := sncli.DeleteTagConfig{
-							Session:     session,
-							TagTitles:   tags,
-							TagUUIDs:    uuids,
-							Debug:       c.GlobalBool("debug"),
+							Session:   session,
+							TagTitles: tags,
+							TagUUIDs:  uuids,
+							Debug:     opts.debug,
 						}
 						var noDeleted int
 						noDeleted, err = DeleteTagConfig.Run()
@@ -389,34 +436,37 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						if !c.GlobalBool("no-stdout") {
-							display = true
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
 						}
+						useStdOut = opts.useStdOut
+
 						title := strings.TrimSpace(c.String("title"))
 						uuid := strings.TrimSpace(c.String("uuid"))
 						if title == "" && uuid == "" {
-							if cErr := cli.ShowSubcommandHelp(c); err != nil {
+							if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
 								panic(cErr)
 							}
 							return errors.New("")
 						}
-						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
-							c.GlobalString("session-key"), c.GlobalString("server"))
+						session, _, err := cache.GetSession(opts.useSession,
+							opts.sessKey, opts.server)
 						if err != nil {
 							return err
 						}
 						processedNotes := sncli.CommaSplit(title)
 
 						var cacheDBPath string
-						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 						if err != nil {
 							return err
 						}
 						session.CacheDBPath = cacheDBPath
 						DeleteNoteConfig := sncli.DeleteNoteConfig{
-							Session:     session,
-							NoteTitles:  processedNotes,
-							Debug:       c.GlobalBool("debug"),
+							Session:    session,
+							NoteTitles: processedNotes,
+							Debug:      opts.debug,
 						}
 						var noDeleted int
 						if noDeleted, err = DeleteNoteConfig.Run(); err != nil {
@@ -474,15 +524,18 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.GlobalBool("no-stdout") {
-					display = true
+				opts, err := getOpts(c)
+				if err != nil {
+					return err
 				}
+				useStdOut = opts.useStdOut
+
 				findTitle := c.String("find-title")
 				findText := c.String("find-text")
 				findTag := c.String("find-tag")
 				newTags := c.String("title")
-				session, _, err := cache.GetSession(c.GlobalBool("use-session"),
-					c.GlobalString("session-key"), c.GlobalString("server"))
+				session, _, err := cache.GetSession(opts.useSession,
+					opts.sessKey, opts.server)
 				if err != nil {
 					return err
 				}
@@ -492,20 +545,20 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				}
 				processedTags := sncli.CommaSplit(newTags)
 
-				session.CacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
 
 				appConfig := sncli.TagItemsConfig{
-					Session:     session,
-					FindText:    findText,
-					FindTitle:   findTitle,
-					FindTag:     findTag,
-					NewTags:     processedTags,
-					Replace:     c.Bool("replace"),
-					IgnoreCase:  c.Bool("ignore-case"),
-					Debug:       c.GlobalBool("debug"),
+					Session:    session,
+					FindText:   findText,
+					FindTitle:  findTitle,
+					FindTag:    findTag,
+					NewTags:    processedTags,
+					Replace:    c.Bool("replace"),
+					IgnoreCase: c.Bool("ignore-case"),
+					Debug:      opts.debug,
 				}
 				err = appConfig.Run()
 				if err != nil {
@@ -536,7 +589,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					Flags: []cli.Flag{
 						cli.BoolFlag{
 							Name:  "count",
-							Usage: "display count only",
+							Usage: "useStdOut count only",
 						},
 						cli.StringFlag{
 							Name:  "output",
@@ -548,9 +601,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						return err
 					},
 					Action: func(c *cli.Context) error {
-						if !c.GlobalBool("no-stdout") {
-							display = true
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
 						}
+
+						useStdOut = opts.useStdOut
 
 						var matchAny bool
 						if c.Bool("match-all") {
@@ -566,14 +622,14 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							},
 						}
 
-						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
-							c.GlobalString("session-key"), c.GlobalString("server"))
+						session, _, err := cache.GetSession(opts.useSession,
+							opts.sessKey, opts.server)
 						if err != nil {
 							return err
 						}
 
 						var cacheDBPath string
-						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 						if err != nil {
 							return err
 						}
@@ -583,10 +639,10 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						// TODO: validate output
 						output := c.String("output")
 						appGetSettingsConfig := sncli.GetSettingsConfig{
-							Session:     session,
-							Filters:     getSettingssIF,
-							Output:      output,
-							Debug:       c.GlobalBool("debug"),
+							Session: session,
+							Filters: getSettingssIF,
+							Output:  output,
+							Debug:   opts.debug,
 						}
 						var rawSettings gosn.Items
 						rawSettings, err = appGetSettingsConfig.Run()
@@ -690,7 +746,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 						cli.BoolFlag{
 							Name:  "count",
-							Usage: "display count only",
+							Usage: "useStdOut count only",
 						},
 						cli.StringFlag{
 							Name:  "output",
@@ -702,9 +758,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						return err
 					},
 					Action: func(c *cli.Context) error {
-						if !c.GlobalBool("no-stdout") {
-							display = true
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
 						}
+						useStdOut = opts.useStdOut
+
 						inTitle := strings.TrimSpace(c.String("title"))
 						inUUID := strings.TrimSpace(c.String("uuid"))
 
@@ -755,8 +814,8 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							})
 						}
 
-						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
-							c.GlobalString("session-key"), c.GlobalString("server"))
+						session, _, err := cache.GetSession(opts.useSession,
+							opts.sessKey, opts.server)
 						if err != nil {
 							return err
 						}
@@ -765,17 +824,17 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						output := c.String("output")
 
 						var cacheDBPath string
-						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 						if err != nil {
 							return err
 						}
 						session.CacheDBPath = cacheDBPath
 
 						appGetTagConfig := sncli.GetTagConfig{
-							Session:     session,
-							Filters:     getTagsIF,
-							Output:      output,
-							Debug:       c.GlobalBool("debug"),
+							Session: session,
+							Filters: getTagsIF,
+							Output:  output,
+							Debug:   opts.debug,
 						}
 						var rawTags gosn.Items
 						rawTags, err = appGetTagConfig.Run()
@@ -883,7 +942,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 						cli.BoolFlag{
 							Name:  "count",
-							Usage: "display countonly",
+							Usage: "useStdOut countonly",
 						},
 						cli.StringFlag{
 							Name:  "output",
@@ -892,9 +951,11 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						if !c.GlobalBool("no-stdout") {
-							display = true
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
 						}
+						useStdOut = opts.useStdOut
 
 						uuid := c.String("uuid")
 						title := c.String("title")
@@ -950,14 +1011,14 @@ func startCLI(args []string) (msg string, display bool, err error) {
 							}
 						}
 
-						session, _, err := cache.GetSession(c.GlobalBool("use-session"),
-							c.GlobalString("session-key"), c.GlobalString("server"))
+						session, _, err := cache.GetSession(opts.useSession,
+							opts.sessKey, opts.server)
 						if err != nil {
 							return err
 						}
 
 						var cacheDBPath string
-						cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 						if err != nil {
 							return err
 						}
@@ -965,9 +1026,9 @@ func startCLI(args []string) (msg string, display bool, err error) {
 						session.CacheDBPath = cacheDBPath
 
 						getNoteConfig := sncli.GetNoteConfig{
-							Session:     session,
-							Filters:     getNotesIF,
-							Debug:       c.GlobalBool("debug"),
+							Session: session,
+							Filters: getNotesIF,
+							Debug:   opts.debug,
 						}
 
 						var rawNotes gosn.Items
@@ -1075,9 +1136,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.GlobalBool("no-stdout") {
-					display = true
+				opts, err := getOpts(c)
+				if err != nil {
+					return err
 				}
+				useStdOut = opts.useStdOut
+
 				outputPath := strings.TrimSpace(c.String("output"))
 				if outputPath == "" {
 					currDir, err := os.Getwd()
@@ -1088,23 +1152,23 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					filePath := fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
 					outputPath = currDir + string(os.PathSeparator) + filePath
 				}
-				session, _, err := cache.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 				if err != nil {
 					return err
 				}
 
 				var cacheDBPath string
-				cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
 
 				session.CacheDBPath = cacheDBPath
 				appExportConfig := sncli.ExportConfig{
-					Session:     session,
+					Session: session,
 					//CacheDBPath: cacheDBPath,
-					File:        outputPath,
-					Debug:       c.GlobalBool("debug"),
+					File:  outputPath,
+					Debug: opts.debug,
 				}
 				err = appExportConfig.Run()
 				if err == nil {
@@ -1129,20 +1193,22 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.GlobalBool("no-stdout") {
-					display = true
+				opts, err := getOpts(c)
+				if err != nil {
+					return err
 				}
+
 				inputPath := strings.TrimSpace(c.String("file"))
 				if inputPath == "" {
 					return errors.New("please specify path using --file")
 				}
 
-				session, _, err := cache.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 				if err != nil {
 					return err
 				}
 
-				session.CacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
@@ -1150,7 +1216,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				appImportConfig := sncli.ImportConfig{
 					Session: session,
 					File:    inputPath,
-					Debug:   c.GlobalBool("debug"),
+					Debug:   opts.debug,
 				}
 				err = appImportConfig.Run()
 				if err == nil {
@@ -1175,17 +1241,21 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.GlobalBool("no-stdout") {
-					display = true
+				opts, err := getOpts(c)
+				if err != nil {
+					return err
 				}
+				useStdOut = opts.useStdOut
+
 				var apiServer string
 				if viper.GetString("server") != "" {
 					apiServer = viper.GetString("server")
 				} else {
 					apiServer = sncli.SNServerURL
 				}
+
 				if strings.TrimSpace(c.String("email")) == "" {
-					if cErr := cli.ShowCommandHelp(c, "register"); err != nil {
+					if cErr := cli.ShowCommandHelp(c, "register"); cErr != nil {
 						panic(cErr)
 					}
 					return errors.New("email required")
@@ -1217,23 +1287,25 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			Name:  "stats",
 			Usage: "show statistics",
 			Action: func(c *cli.Context) error {
-				if err != nil {
-					return err
-				}
-				session, _, err := cache.GetSession(c.GlobalBool("use-session"),
-					c.GlobalString("session-key"), c.GlobalString("server"))
+				opts, err := getOpts(c)
 				if err != nil {
 					return err
 				}
 
-				session.CacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				session, _, err := cache.GetSession(opts.useSession,
+					opts.sessKey, opts.server)
+				if err != nil {
+					return err
+				}
+
+				session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
 
 				statsConfig := sncli.StatsConfig{
 					Session: session,
-					Debug:   c.GlobalBool("debug"),
+					Debug:   opts.debug,
 				}
 				err = statsConfig.Run()
 				return err
@@ -1253,26 +1325,29 @@ func startCLI(args []string) (msg string, display bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				if !c.GlobalBool("no-stdout") {
-					display = true
+				opts, err := getOpts(c)
+				if err != nil {
+					return err
 				}
-				session, email, err := cache.GetSession(c.GlobalBool("use-session"), c.GlobalString("session-key"), c.GlobalString("server"))
+				useStdOut = opts.useStdOut
+
+				session, email, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 				if err != nil {
 
 					return err
 				}
 
 				var cacheDBPath string
-				cacheDBPath, err = cache.GenCacheDBPath(session, c.GlobalString("cachedbdir"), snAppName)
+				cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
 
 				session.CacheDBPath = cacheDBPath
 				wipeConfig := sncli.WipeConfig{
-					Session:     session,
-					Settings:    c.Bool("settings"),
-					Debug:       c.GlobalBool("debug"),
+					Session:  session,
+					Settings: c.Bool("settings"),
+					Debug:    opts.debug,
 				}
 				var numWiped int
 
@@ -1323,9 +1398,12 @@ func startCLI(args []string) (msg string, display bool, err error) {
 			},
 			Hidden: false,
 			Action: func(c *cli.Context) error {
-				if !c.GlobalBool("quiet") {
-					display = true
+				opts, err := getOpts(c)
+				if err != nil {
+					return err
 				}
+				useStdOut = opts.useStdOut
+
 				sAdd := c.Bool("add")
 				sRemove := c.Bool("remove")
 				sStatus := c.Bool("status")
@@ -1341,7 +1419,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 					os.Exit(1)
 				}
 				if sAdd {
-					msg, err = gosn.AddSession(c.GlobalString("server"), sessKey, nil)
+					msg, err = gosn.AddSession(opts.server, sessKey, nil)
 					return err
 				}
 				if sRemove {
@@ -1357,7 +1435,7 @@ func startCLI(args []string) (msg string, display bool, err error) {
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))
 
-	return msg, display, app.Run(args)
+	return msg, useStdOut, app.Run(args)
 }
 
 func numTrue(in ...bool) (total int) {
