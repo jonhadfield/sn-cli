@@ -118,20 +118,20 @@ type NoteYAML struct {
 }
 
 type TagItemsConfig struct {
-	Session     cache.Session
-	FindTitle   string
-	FindText    string
-	FindTag     string
-	NewTags     []string
-	Replace     bool
-	IgnoreCase  bool
-	Debug       bool
+	Session    cache.Session
+	FindTitle  string
+	FindText   string
+	FindTag    string
+	NewTags    []string
+	Replace    bool
+	IgnoreCase bool
+	Debug      bool
 }
 
 type AddTagsInput struct {
-	Session     cache.Session
-	Tags        []string
-	Debug       bool
+	Session cache.Session
+	Tags    []string
+	Debug   bool
 }
 
 type AddTagsOutput struct {
@@ -139,37 +139,37 @@ type AddTagsOutput struct {
 }
 
 type GetTagConfig struct {
-	Session     cache.Session
-	Filters     gosn.ItemFilters
-	Output      string
-	Debug       bool
+	Session cache.Session
+	Filters gosn.ItemFilters
+	Output  string
+	Debug   bool
 }
 
 type GetSettingsConfig struct {
-	Session     cache.Session
-	Filters     gosn.ItemFilters
-	Output      string
-	Debug       bool
+	Session cache.Session
+	Filters gosn.ItemFilters
+	Output  string
+	Debug   bool
 }
 
 type GetNoteConfig struct {
-	Session     cache.Session
-	Filters     gosn.ItemFilters
-	NoteTitles  []string
-	TagTitles   []string
-	TagUUIDs    []string
-	PageSize    int
-	BatchSize   int
-	Debug       bool
+	Session    cache.Session
+	Filters    gosn.ItemFilters
+	NoteTitles []string
+	TagTitles  []string
+	TagUUIDs   []string
+	PageSize   int
+	BatchSize  int
+	Debug      bool
 }
 
 type DeleteTagConfig struct {
-	Session     cache.Session
-	Email       string
-	TagTitles   []string
-	TagUUIDs    []string
-	Regex       bool
-	Debug       bool
+	Session   cache.Session
+	Email     string
+	TagTitles []string
+	TagUUIDs  []string
+	Regex     bool
+	Debug     bool
 }
 
 type AddNoteInput struct {
@@ -182,23 +182,23 @@ type AddNoteInput struct {
 }
 
 type DeleteNoteConfig struct {
-	Session     cache.Session
-	NoteTitles  []string
-	NoteText    string
-	NoteUUIDs   []string
-	Regex       bool
-	Debug       bool
+	Session    cache.Session
+	NoteTitles []string
+	NoteText   string
+	NoteUUIDs  []string
+	Regex      bool
+	Debug      bool
 }
 
 type WipeConfig struct {
-	Session     cache.Session
-	Debug       bool
-	Settings    bool
+	Session  cache.Session
+	Debug    bool
+	Settings bool
 }
 
 type StatsConfig struct {
-	Session     cache.Session
-	Debug       bool
+	Session cache.Session
+	Debug   bool
 }
 
 func referenceExists(tag gosn.Tag, refID string) bool {
@@ -253,7 +253,6 @@ func (input *WipeConfig) Run() (int, error) {
 	// get all existing Tags and Notes and mark for deletion
 	var so cache.SyncOutput
 
-
 	so, err = Sync(syncInput, true)
 	if err != nil {
 		return 0, err
@@ -294,7 +293,6 @@ func (input *WipeConfig) Run() (int, error) {
 		return 0, err
 	}
 	err = so.DB.Close()
-
 
 	return itemsToDel, err
 }
