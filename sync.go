@@ -17,8 +17,11 @@ func Sync(si cache.SyncInput, showProgress bool) (so cache.SyncOutput, err error
 		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond) // Build our new spinner
 		s.Prefix = prefix
 		s.Start()
+
 		so, err = sync(si)
+
 		s.Stop()
+
 		return
 	}
 

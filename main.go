@@ -261,20 +261,24 @@ func (input *WipeConfig) Run() (int, error) {
 	// get all items
 	var allPersistedItems cache.Items
 	err = so.DB.All(&allPersistedItems)
+
 	if err != nil {
 		return 0, err
 	}
 
 	filteredItems := filterCacheItemsByTypes(allPersistedItems, supportedContentTypes)
+
 	var itemsToDel int
+
 	for _, fi := range filteredItems {
 		itemsToDel++
+
 		fi.Deleted = true
 		fi.Dirty = true
 		fi.DirtiedDate = time.Now()
+
 		err = so.DB.Save(&fi)
 		if err != nil {
-
 			return 0, err
 		}
 	}
@@ -286,12 +290,12 @@ func (input *WipeConfig) Run() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	//syncInput.Session.CacheDB = so.DB
 
 	so, err = Sync(syncInput, true)
 	if err != nil {
 		return 0, err
 	}
+
 	err = so.DB.Close()
 
 	return itemsToDel, err

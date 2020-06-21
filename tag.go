@@ -52,13 +52,17 @@ func tagNotes(input tagNotesInput) (err error) {
 	var so cache.SyncOutput
 
 	so, err = Sync(syncInput, true)
+
 	if err != nil {
 		return
 	}
+
 	var allPersistedItems cache.Items
+
 	err = so.DB.All(&allPersistedItems)
 
 	var items gosn.Items
+
 	items, err = allPersistedItems.ToItems(input.session.Mk, input.session.Ak)
 	if err != nil {
 		return
@@ -133,9 +137,11 @@ func tagNotes(input tagNotesInput) (err error) {
 		if err != nil {
 			return
 		}
+
 		if err = so.DB.Close(); err != nil {
 			return
 		}
+
 		return err
 	}
 
@@ -160,11 +166,14 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 		Session: input.Session,
 		Debug:   input.Debug,
 	}
+
 	var so cache.SyncOutput
+
 	so, err = Sync(si, true)
 	if err != nil {
 		return
 	}
+
 	err = so.DB.Close()
 	if err != nil {
 		return
@@ -180,6 +189,7 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}
 
 	var ato addTagsOutput
+
 	ato, err = addTags(ati)
 	if err != nil {
 		return
@@ -193,6 +203,7 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	if err != nil {
 		return
 	}
+
 	so, err = Sync(cache.SyncInput{
 		Session: input.Session,
 		Debug:   input.Debug,
@@ -211,20 +222,24 @@ func (input *GetTagConfig) Run() (items gosn.Items, err error) {
 		Session: input.Session,
 		Debug:   input.Debug,
 	}
+
 	so, err = Sync(si, true)
 	if err != nil {
 		return
 	}
 
 	var allPersistedItems cache.Items
+
 	err = so.DB.All(&allPersistedItems)
 	if err != nil {
 		return
 	}
+
 	err = so.DB.Close()
 	if err != nil {
 		return
 	}
+
 	//var items gosn.Items
 	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
 	if err != nil {
@@ -257,10 +272,12 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 
 	// load db
 	var so cache.SyncOutput
+
 	so, err = Sync(syncInput, true)
 	if err != nil {
 		return 0, err
 	}
+
 	defer func() {
 		_ = so.DB.Close()
 	}()
@@ -269,12 +286,14 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 
 	// get items from db
 	var allPersistedItems cache.Items
+
 	err = so.DB.All(&allPersistedItems)
 	if err != nil {
 		return
 	}
 
 	var items gosn.Items
+
 	items, err = allPersistedItems.ToItems(session.Mk, session.Ak)
 	if err != nil {
 		return
@@ -322,6 +341,7 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 			return
 		}
 	}
+
 	noDeleted = len(tagsToDelete)
 
 	return noDeleted, err
@@ -342,7 +362,9 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	addTagsFilter := gosn.Filter{
 		Type: "Tag",
 	}
+
 	filters := []gosn.Filter{addTagsFilter}
+
 	addFilter := gosn.ItemFilters{
 		MatchAny: true,
 		Filters:  filters,
@@ -353,27 +375,32 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	}
 
 	var so cache.SyncOutput
+
 	so, err = Sync(putItemsInput, true)
 	if err != nil {
 		return
 	}
+
 	var allPersistedItems cache.Items
+
 	err = so.DB.All(&allPersistedItems)
 	if err != nil {
-
 		return
 	}
 
 	var items gosn.Items
+
 	items, err = allPersistedItems.ToItems(ati.session.Mk, ati.session.Ak)
 	if err != nil {
 		return
 	}
+
 	if err = so.DB.Close(); err != nil {
 		return
 	}
 
 	items.Filter(addFilter)
+
 	var allTags gosn.Tags
 
 	for _, item := range items {
@@ -394,6 +421,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 			ato.existing = append(ato.existing, tag)
 			continue
 		}
+
 		newTagContent := gosn.NewTagContent()
 		newTag := gosn.NewTag()
 		newTagContent.Title = tag
@@ -412,6 +440,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		}
 
 		var eTagsToAdd gosn.EncryptedItems
+
 		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Mk, ati.session.Ak, false)
 		if err != nil {
 			return
@@ -431,7 +460,6 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		if err != nil {
 			return
 		}
-
 	}
 
 	return ato, err

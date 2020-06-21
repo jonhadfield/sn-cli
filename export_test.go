@@ -129,10 +129,13 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	pii := cache.SyncInput{
 		Session: testSession,
 	}
+
 	var so cache.SyncOutput
 	so, err = Sync(pii, true)
+
 	assert.NoError(t, err)
 	assert.NoError(t, so.DB.Close())
+
 	dir, err := ioutil.TempDir("", "test")
 	if err != nil {
 		log.Fatal(err)
@@ -162,15 +165,20 @@ func TestExportWipeImportOneNote(t *testing.T) {
 		Session: testSession,
 		Debug:   true,
 	}
+
 	assert.NoError(t, gio.DB.Close())
 	gio, err = Sync(gii, true)
+
 	assert.NoError(t, err)
 	assert.NotNil(t, gio.DB)
 	assert.NotEmpty(t, gio.DB)
+
 	var aa []cache.Item
+
 	assert.NoError(t, gio.DB.All(&aa))
 
 	var found bool
+
 	for _, i := range aa {
 		switch i.ContentType {
 		case "Note":
@@ -179,6 +187,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 			}
 		}
 	}
+
 	assert.True(t, found)
 }
 
@@ -202,8 +211,10 @@ func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
 	pii := cache.SyncInput{
 		Session: testSession,
 	}
+
 	var so cache.SyncOutput
 	so, err = Sync(pii, true)
+
 	assert.NoError(t, err)
 
 	// ### add note to the database
@@ -211,10 +222,12 @@ func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
 	for _, p := range pi {
 		assert.NoError(t, so.DB.Save(&p))
 	}
+
 	assert.NoError(t, so.DB.Close())
 
 	// ### sync db with SN
 	so, err = Sync(pii, true)
+
 	assert.NoError(t, err)
 	assert.NoError(t, so.DB.Close())
 
@@ -225,11 +238,14 @@ func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
 
 	// export initial originalNote
 	tmpfn := filepath.Join(dir, "tmpfile")
+
 	ec := ExportConfig{
 		Session: testSession,
 		File:    tmpfn,
 	}
+
 	err = ec.Run()
+
 	assert.NoError(t, err)
 
 	// change initial originalNote and re-put
@@ -255,8 +271,11 @@ func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
 	pii = cache.SyncInput{
 		Session: testSession,
 	}
+
 	assert.NoError(t, so.DB.Close())
+
 	so, err = Sync(pii, true)
+
 	assert.NoError(t, err)
 	assert.NoError(t, so.DB.Close())
 
@@ -279,8 +298,10 @@ func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
 	assert.NoError(t, err)
 
 	var items cache.Items
+
 	assert.NoError(t, gio.DB.Find("UUID", originalNote.UUID, &items))
 	assert.NoError(t, gio.DB.Close())
+
 	var gItems gosn.Items
 	gItems, err = items.ToItems(testSession.Mk, testSession.Ak)
 
@@ -298,6 +319,7 @@ func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
 			assert.Equal(t, originalNote.CreatedAt, n.CreatedAt)
 			assert.Equal(t, originalNote.Content, n.Content)
 			assert.Equal(t, originalNote.Deleted, n.Deleted)
+
 			if i.(*gosn.Note).Equals(originalNote) {
 				found = true
 			}
@@ -325,8 +347,10 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	pii := cache.SyncInput{
 		Session: testSession,
 	}
+
 	var so cache.SyncOutput
 	so, err = Sync(pii, true)
+
 	assert.NoError(t, err)
 
 	// add item to db
@@ -334,6 +358,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	for _, i := range ci {
 		assert.NoError(t, so.DB.Save(&i))
 	}
+
 	assert.NoError(t, so.DB.Close())
 
 	// sync db with SN
@@ -377,6 +402,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	for _, i := range ci {
 		assert.NoError(t, so.DB.Save(&i))
 	}
+
 	assert.NoError(t, so.DB.Close())
 
 	pii = cache.SyncInput{
@@ -405,6 +431,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	assert.NoError(t, err)
 
 	var cItems cache.Items
+
 	assert.NoError(t, gio.DB.All(&cItems))
 	assert.NoError(t, gio.DB.Close())
 
@@ -429,6 +456,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 
 func TestExportDeleteImportOneTag(t *testing.T) {
 	defer cleanUp(testSession)
+
 	pii := cache.SyncInput{
 		Session: testSession,
 	}
@@ -516,9 +544,12 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = gio.DB.All(&cItems)
+
 	assert.NoError(t, gio.DB.Close())
+
 	var gItems gosn.Items
 	gItems, err = cItems.ToItems(testSession.Mk, testSession.Ak)
+
 	assert.NoError(t, err)
 
 	var found bool
@@ -529,9 +560,6 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 			if i.GetUUID() == originalTag.UUID {
 				found = true
 			}
-			//if i.(*gosn.Tag).Equals(copyOfOriginalTag) {
-			//	found = true
-			//}
 		}
 	}
 

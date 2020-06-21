@@ -17,11 +17,14 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
+
 	testSession.Server = gs.Server
 	testSession.Mk = gs.Mk
 	testSession.Ak = gs.Ak
 	testSession.Token = gs.Token
+
 	var path string
+
 	path, err = cache.GenCacheDBPath(testSession, "", SNAppName)
 	if err != nil {
 		panic(err)
@@ -59,10 +62,12 @@ func TestWipeWith50(t *testing.T) {
 
 	// get items from db
 	var items cache.Items
+
 	assert.NoError(t, gno.DB.All(&items))
 	assert.NoError(t, gno.DB.Close())
 
 	var gItems gosn.Items
+
 	gItems, err = items.ToItems(testSession.Mk, testSession.Ak)
 	assert.NoError(t, err)
 
@@ -256,6 +261,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 
 	numNotes := 100
 	textParas := 10
+
 	cleanUp(testSession)
 
 	err := createNotes(testSession, numNotes, textParas)
@@ -291,6 +297,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 
 func cleanUp(session cache.Session) {
 	removeDB(session.CacheDBPath)
+
 	_ = gosn.DeleteContent(&gosn.Session{
 		Token:  testSession.Token,
 		Mk:     testSession.Mk,

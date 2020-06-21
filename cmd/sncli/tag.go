@@ -21,6 +21,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	if c.Bool("match-all") {
 		matchAny = false
 	}
+
 	regex := c.Bool("regex")
 	count := c.Bool("count")
 
@@ -73,10 +74,12 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	output := c.String("output")
 
 	var cacheDBPath string
+
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return "", err
 	}
+
 	session.CacheDBPath = cacheDBPath
 
 	appGetTagConfig := sncli.GetTagConfig{
@@ -85,7 +88,9 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 		Output:  output,
 		Debug:   opts.debug,
 	}
+
 	var rawTags gosn.Items
+
 	rawTags, err = appGetTagConfig.Run()
 	if err != nil {
 		return "", err
@@ -95,10 +100,14 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	rawTags = sncli.RemoveDeleted(rawTags)
 
 	var tagsYAML []sncli.TagYAML
+
 	var tagsJSON []sncli.TagJSON
+
 	var numResults int
+
 	for _, rt := range rawTags {
 		numResults++
+
 		if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 			tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
 				ClientUpdatedAt: rt.(*gosn.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
@@ -121,6 +130,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 				CreatedAt:   rt.(*gosn.Tag).CreatedAt,
 			})
 		}
+
 		if !count && strings.ToLower(output) == "json" {
 			tagContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
 				ClientUpdatedAt: rt.(*gosn.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
@@ -144,6 +154,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 			})
 		}
 	}
+
 	if numResults <= 0 {
 		if count {
 			msg = "0"
@@ -199,6 +210,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	// attempt to add tags
 	var ato sncli.AddTagsOutput
+
 	ato, err = addTagInput.Run()
 	if err != nil {
 		return "", fmt.Errorf(sncli.Red(err))
@@ -208,11 +220,13 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	if len(ato.Added) > 0 {
 		msg = sncli.Green(msgAddSuccess+": ", strings.Join(ato.Added, ", "))
 	}
+
 	if len(ato.Existing) > 0 {
 		// add line break if output already added
 		if len(msg) > 0 {
 			msg += "\n"
 		}
+
 		msg += sncli.Yellow(msgAlreadyExisting + ": " + strings.Join(ato.Existing, ", "))
 	}
 
@@ -224,15 +238,18 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 	findText := c.String("find-text")
 	findTag := c.String("find-tag")
 	newTags := c.String("title")
+
 	session, _, err := cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
 	if err != nil {
 		return "", err
 	}
+
 	if findText == "" && findTitle == "" && findTag == "" {
 		fmt.Println("you must provide either text, title, or tag to search for")
 		return "", cli.ShowSubcommandHelp(c)
 	}
+
 	processedTags := sncli.CommaSplit(newTags)
 
 	session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
@@ -250,33 +267,42 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 		IgnoreCase: c.Bool("ignore-case"),
 		Debug:      opts.debug,
 	}
+
 	err = appConfig.Run()
 	if err != nil {
 		return "", err
 	}
+
 	msg = msgTagSuccess
+
 	return msg, err
 }
+
 func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	titleIn := strings.TrimSpace(c.String("title"))
 	uuidIn := strings.Replace(c.String("uuid"), " ", "", -1)
+
 	if titleIn == "" && uuidIn == "" {
 		cli.ShowSubcommandHelp(c)
 		return msg, errors.New("title or uuid required")
 	}
+
 	session, _, err := cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
 	if err != nil {
 		return msg, err
 	}
+
 	tags := sncli.CommaSplit(titleIn)
 	uuids := sncli.CommaSplit(uuidIn)
 
 	var cacheDBPath string
+
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return msg, err
 	}
+
 	session.CacheDBPath = cacheDBPath
 
 	DeleteTagConfig := sncli.DeleteTagConfig{
@@ -285,7 +311,9 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 		TagUUIDs:  uuids,
 		Debug:     opts.debug,
 	}
+
 	var noDeleted int
+
 	noDeleted, err = DeleteTagConfig.Run()
 	if err != nil {
 		return msg, fmt.Errorf("failed to delete tag. %+v", err)

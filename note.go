@@ -114,16 +114,19 @@ func (input *GetNoteConfig) Run() (items gosn.Items, err error) {
 		Session: input.Session,
 		Debug:   input.Debug,
 	}, true)
+
 	if err != nil {
 		return
 	}
 
 	var allPersistedItems cache.Items
+
 	err = so.DB.All(&allPersistedItems)
 	if err != nil {
 		return
 	}
 	defer so.DB.Close()
+
 	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return
@@ -186,12 +189,14 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 	}
 
 	var gio cache.SyncOutput
+
 	gio, err = Sync(getItemsInput, true)
 	if err != nil {
 		return
 	}
 
 	var allPersistedItems cache.Items
+
 	err = gio.DB.All(&allPersistedItems)
 	if err != nil {
 		return
@@ -237,10 +242,12 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 	pii := cache.SyncInput{
 		Session: session,
 	}
+
 	gio, err = Sync(pii, true)
 	if err != nil {
 		return
 	}
+
 	_ = gio.DB.Close()
 
 	return len(notesToDelete), err

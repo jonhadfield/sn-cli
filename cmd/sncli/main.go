@@ -111,6 +111,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 	if err != nil {
 		return "", false, err
 	}
+
 	err = viper.BindEnv("use_session")
 	if err != nil {
 		return "", false, err
@@ -277,6 +278,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						}
 
 						useStdOut = opts.useStdOut
+
 						msg, err = processDeleteTags(c, opts)
 
 						return err
@@ -795,7 +797,6 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 
 				return statsConfig.Run()
-
 			},
 		},
 		{
@@ -820,7 +821,6 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 
 				session, email, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 				if err != nil {
-
 					return err
 				}
 

@@ -109,6 +109,7 @@ func createNotes(session cache.Session, num int, paras int) error {
 	var eGendNotes gosn.EncryptedItems
 
 	var err error
+
 	eGendNotes, err = gendNotes.Encrypt(session.Mk, session.Ak, true)
 	if err != nil {
 		return err
@@ -116,6 +117,7 @@ func createNotes(session cache.Session, num int, paras int) error {
 
 	// get db
 	var so cache.SyncOutput
+
 	so, err = Sync(cache.SyncInput{
 		Session: pii.Session,
 		Debug:   pii.Debug,
@@ -133,6 +135,7 @@ func createNotes(session cache.Session, num int, paras int) error {
 	if err != nil {
 		return err
 	}
+
 	err = so.DB.Close()
 
 	return err

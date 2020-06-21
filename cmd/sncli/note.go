@@ -37,6 +37,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 		}
 		getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
 	}
+
 	if title != "" {
 		titleFilter := gosn.Filter{
 			Type:       "Note",
@@ -46,6 +47,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 		}
 		getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
 	}
+
 	if text != "" {
 		titleFilter := gosn.Filter{
 			Type:       "Note",
@@ -55,6 +57,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 		}
 		getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
 	}
+
 	processedTags := sncli.CommaSplit(c.String("tag"))
 
 	if len(processedTags) > 0 {
@@ -76,6 +79,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	var cacheDBPath string
+
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return "", err
@@ -90,6 +94,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	var rawNotes gosn.Items
+
 	rawNotes, err = getNoteConfig.Run()
 	if err != nil {
 		return "", err
@@ -98,10 +103,14 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	rawNotes = sncli.RemoveDeleted(rawNotes)
 
 	var numResults int
+
 	var notesYAML []sncli.NoteYAML
+
 	var notesJSON []sncli.NoteJSON
+
 	for _, rt := range rawNotes {
 		numResults++
+
 		if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 			noteContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
 				ClientUpdatedAt: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
@@ -124,6 +133,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 				CreatedAt:   rt.(*gosn.Note).CreatedAt,
 			})
 		}
+
 		if !count && strings.ToLower(output) == "json" {
 			noteContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
 				ClientUpdatedAt: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
@@ -177,6 +187,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	// get input
 	title := c.String("title")
 	text := c.String("text")
+
 	if strings.TrimSpace(title) == "" {
 		if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
 			panic(cErr)
@@ -184,6 +195,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 		return "", errors.New("note title not defined")
 	}
+
 	if strings.TrimSpace(text) == "" {
 		_ = cli.ShowSubcommandHelp(c)
 		return "", errors.New("note text not defined")
@@ -199,11 +211,14 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	processedTags := sncli.CommaSplit(c.String("tag"))
 
 	var cacheDBPath string
+
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return "", err
 	}
+
 	session.CacheDBPath = cacheDBPath
+
 	AddNoteInput := sncli.AddNoteInput{
 		Session: session,
 		Title:   title,
@@ -212,6 +227,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 		Replace: false,
 		Debug:   opts.debug,
 	}
+
 	if err = AddNoteInput.Run(); err != nil {
 		return "", fmt.Errorf("failed to add note. %+v", err)
 	}
@@ -224,29 +240,36 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	title := strings.TrimSpace(c.String("title"))
 	uuid := strings.TrimSpace(c.String("uuid"))
+
 	if title == "" && uuid == "" {
 		_ = cli.ShowSubcommandHelp(c)
 		return "", errors.New("")
 	}
+
 	session, _, err := cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
 	if err != nil {
 		return msg, err
 	}
+
 	processedNotes := sncli.CommaSplit(title)
 
 	var cacheDBPath string
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+
 	if err != nil {
 		return msg, err
 	}
+
 	session.CacheDBPath = cacheDBPath
 	DeleteNoteConfig := sncli.DeleteNoteConfig{
 		Session:    session,
 		NoteTitles: processedNotes,
 		Debug:      opts.debug,
 	}
+
 	var noDeleted int
+
 	if noDeleted, err = DeleteNoteConfig.Run(); err != nil {
 		return msg, fmt.Errorf("failed to delete note. %+v", err)
 	}
@@ -257,5 +280,6 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 	}
 
 	msg = sncli.Green(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strNote))
+
 	return msg, err
 }

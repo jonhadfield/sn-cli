@@ -21,6 +21,7 @@ var (
 
 func (input *StatsConfig) Run() error {
 	var err error
+
 	var so cache.SyncOutput
 
 	so, err = Sync(cache.SyncInput{

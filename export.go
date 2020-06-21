@@ -81,10 +81,9 @@ func (i *ImportConfig) Run() error {
 
 	// get existing encItemsToImport
 	var rawItems gosn.Items
-
 	rawItems, err = existingItems.ToItems(i.Session.Mk, i.Session.Ak)
-	if err != nil {
 
+	if err != nil {
 		return err
 	}
 

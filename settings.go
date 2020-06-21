@@ -22,6 +22,7 @@ func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 	err = so.DB.All(&allPersistedItems)
 
 	var items gosn.Items
+
 	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
 	if err != nil {
 		return
