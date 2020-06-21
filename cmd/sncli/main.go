@@ -367,9 +367,12 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						if err != nil {
 							return err
 						}
+						
 						useStdOut = opts.useStdOut
 						msg, err = processDeleteTags(c, opts)
-
+						if err != nil {
+							return err
+						}
 						return nil
 					},
 				},
