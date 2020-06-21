@@ -40,20 +40,11 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 		return msg, fmt.Errorf("failed to delete note. %+v", err)
 	}
 
-	//if noDeleted > 0 {
-	//	msg = sncli.Green(fmt.Sprintf("%s note", msgDeleted))
-	//} else {
-	//	msg = sncli.Yellow("Note not found")
-	//
-	//	return nil
-	//}
-
 	strNote := "notes"
 	if noDeleted == 1 {
 		strNote = "note"
 	}
 
 	msg = sncli.Green(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strNote))
-	fmt.Println("Returning msg:", msg)
 	return msg, err
 }
