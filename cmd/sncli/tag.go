@@ -16,12 +16,12 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 		if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
 			panic(cErr)
 		}
-		return "", errors.New("title or uuid required")
+		return msg, errors.New("title or uuid required")
 	}
 	session, _, err := cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
 	if err != nil {
-		return "", err
+		return msg, err
 	}
 	tags := sncli.CommaSplit(titleIn)
 	uuids := sncli.CommaSplit(uuidIn)
@@ -29,7 +29,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 	var cacheDBPath string
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return msg, err
 	}
 	session.CacheDBPath = cacheDBPath
 
@@ -42,7 +42,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 	var noDeleted int
 	noDeleted, err = DeleteTagConfig.Run()
 	if err != nil {
-		return "", fmt.Errorf("failed to delete tag. %+v", err)
+		return msg, fmt.Errorf("failed to delete tag. %+v", err)
 	}
 
 	if noDeleted > 0 {
@@ -51,5 +51,5 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 		msg = sncli.Yellow("Tag not found")
 	}
 
-	return "", err
+	return msg, err
 }
