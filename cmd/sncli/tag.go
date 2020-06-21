@@ -13,9 +13,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 	titleIn := strings.TrimSpace(c.String("title"))
 	uuidIn := strings.Replace(c.String("uuid"), " ", "", -1)
 	if titleIn == "" && uuidIn == "" {
-		if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
-			panic(cErr)
-		}
+		cli.ShowSubcommandHelp(c)
 		return msg, errors.New("title or uuid required")
 	}
 	session, _, err := cache.GetSession(opts.useSession,
