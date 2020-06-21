@@ -15,7 +15,6 @@ import (
 	sncli "github.com/jonhadfield/sn-cli"
 	"gopkg.in/yaml.v2"
 
-	"github.com/divan/num2words"
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
@@ -367,7 +366,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						if err != nil {
 							return err
 						}
-						
+
 						useStdOut = opts.useStdOut
 						msg, err = processDeleteTags(c, opts)
 						if err != nil {
@@ -405,51 +404,10 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						}
 						useStdOut = opts.useStdOut
 
-						title := strings.TrimSpace(c.String("title"))
-						uuid := strings.TrimSpace(c.String("uuid"))
-						if title == "" && uuid == "" {
-							if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
-								panic(cErr)
-							}
-							return errors.New("")
-						}
-						session, _, err := cache.GetSession(opts.useSession,
-							opts.sessKey, opts.server)
+						msg, err = processDeleteNote(c, opts)
 						if err != nil {
 							return err
 						}
-						processedNotes := sncli.CommaSplit(title)
-
-						var cacheDBPath string
-						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
-						if err != nil {
-							return err
-						}
-						session.CacheDBPath = cacheDBPath
-						DeleteNoteConfig := sncli.DeleteNoteConfig{
-							Session:    session,
-							NoteTitles: processedNotes,
-							Debug:      opts.debug,
-						}
-						var noDeleted int
-						if noDeleted, err = DeleteNoteConfig.Run(); err != nil {
-							return fmt.Errorf("failed to delete note. %+v", err)
-						}
-
-						if noDeleted > 0 {
-							msg = sncli.Green(fmt.Sprintf("%s note", msgDeleted))
-						} else {
-							msg = sncli.Yellow("Note not found")
-
-							return nil
-						}
-
-						strNote := "notes"
-						if noDeleted == 1 {
-							strNote = "note"
-						}
-
-						msg = sncli.Green(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strNote))
 
 						return nil
 					},
