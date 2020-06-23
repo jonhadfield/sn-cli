@@ -47,7 +47,9 @@ func (i *ExportConfig) Run() error {
 			q.Eq("ContentType", "Tag")),
 	)
 
-	err = query.Find(&allPersistedItems)
+	if err = query.Find(&allPersistedItems); err != nil {
+		return err
+	}
 
 	out, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
 	if err != nil {
@@ -56,6 +58,9 @@ func (i *ExportConfig) Run() error {
 
 	var e gosn.EncryptedItems
 	e, err = out.Encrypt(i.Session.Mk, i.Session.Ak, i.Debug)
+	if err != nil {
+		return err
+	}
 
 	return writeGob(i.File, e)
 }
@@ -72,33 +77,16 @@ func (i *ImportConfig) Run() error {
 		return err
 	}
 
-	// DB now populated and open with pointer in session
-	var existingItems cache.Items
-	err = gio.DB.Find("Deleted", false, &existingItems)
-
 	var encItemsToImport gosn.EncryptedItems
 
 	err = readGob(i.File, &encItemsToImport)
-
 	if err != nil {
 		return err
 	}
 
 	var encFinalList gosn.EncryptedItems
 
-	// get existing encItemsToImport
-	var rawItems gosn.Items
-	rawItems, err = existingItems.ToItems(i.Session.Mk, i.Session.Ak)
-
-	if err != nil {
-		return err
-	}
-
-	rawItems = filterItemsByTypes(rawItems, supportedContentTypes)
-
-	// TODO: Handle import of an item with same UUID
-	// TODO: Decrypt conflicting item (if note or tag), create a copy with new uuid, encrypt and import
-	// for each (tag and note) item to import, check if uuid exists
+	// only items with uuids that don't yet exist will be imported
 	for _, itemToImport := range encItemsToImport {
 		encFinalList = append(encFinalList, itemToImport)
 	}

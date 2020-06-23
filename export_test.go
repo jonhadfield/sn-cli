@@ -152,6 +152,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	assert.NoError(t, ec.Run())
 	// delete the db and wipe SN
 	cleanUp(testSession)
+
 	// import the export made above so that SN is now populated
 	ic := ImportConfig{
 		Session: testSession,
@@ -168,9 +169,9 @@ func TestExportWipeImportOneNote(t *testing.T) {
 
 	assert.NoError(t, gio.DB.Close())
 	gio, err = Sync(gii, true)
-
 	assert.NoError(t, err)
-	assert.NotNil(t, gio.DB)
+
+	assert.NotNil(t, gio)
 	assert.NotEmpty(t, gio.DB)
 
 	var aa []cache.Item
