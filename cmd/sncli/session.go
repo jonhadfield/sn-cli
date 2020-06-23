@@ -27,12 +27,12 @@ func processSession(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	if sAdd {
 		msg, err = gosn.AddSession(opts.server, sessKey, nil)
-		return "", err
+		return msg, err
 	}
 
 	if sRemove {
 		msg = gosn.RemoveSession(nil)
-		return "", nil
+		return msg, nil
 	}
 
 	if sStatus {
