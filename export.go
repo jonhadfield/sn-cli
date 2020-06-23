@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/asdine/storm/v3/q"
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 )
@@ -40,7 +41,13 @@ func (i *ExportConfig) Run() error {
 	var allPersistedItems cache.Items
 
 	// only export undeleted tags and notes
-	err = gio.DB.Find("Deleted", false, &allPersistedItems)
+	query := gio.DB.Select(q.Eq("Deleted", false),
+		q.Or(
+			q.Eq("ContentType", "Note"),
+			q.Eq("ContentType", "Tag")),
+	)
+
+	err = query.Find(&allPersistedItems)
 
 	out, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
 	if err != nil {
