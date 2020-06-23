@@ -25,6 +25,7 @@ func TestWipe(t *testing.T) {
 func TestAddDeleteTag(t *testing.T) {
 	msg, _, err := startCLI([]string{"sncli", "wipe", "--yes"})
 	assert.NoError(t, err)
+	assert.Contains(t, msg, msgItemsDeleted)
 	msg, _, err = startCLI([]string{"sncli", "add", "tag", "--title", "testTag"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
@@ -92,11 +93,14 @@ func TestTagNotesByTextWithNewTags(t *testing.T) {
 	assert.NoError(t, err, err)
 
 	msg, _, err = startCLI([]string{"sncli", "get", "note"})
+	assert.NotEmpty(t, msg)
 
 	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "0", msg)
 	msg, _, err = startCLI([]string{"sncli", "get", "note"})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, msg)
 
 	_, _, err = startCLI([]string{"sncli", "--no-stdout", "delete", "tag", "--title", "testTagOne,testTagTwo"})
 	assert.NoError(t, err, err)
@@ -108,6 +112,8 @@ func TestAddOneNoteGetCount(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
 	msg, _, err = startCLI([]string{"sncli", "get", "note"})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, msg)
 	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
