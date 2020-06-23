@@ -713,7 +713,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 				err = appImportConfig.Run()
 				if err == nil {
-					msg = fmt.Sprintf("import successful")
+					msg = "import successful"
 				}
 
 				return err
