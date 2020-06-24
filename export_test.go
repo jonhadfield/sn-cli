@@ -544,7 +544,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	gio, err = Sync(gii, true)
 	assert.NoError(t, err)
 
-	err = gio.DB.All(&cItems)
+	assert.NoError(t, gio.DB.All(&cItems))
 
 	assert.NoError(t, gio.DB.Close())
 
