@@ -214,7 +214,7 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 		return
 	}
 
-	return
+	return output, err
 }
 
 func (input *GetTagConfig) Run() (items gosn.Items, err error) {
@@ -250,7 +250,7 @@ func (input *GetTagConfig) Run() (items gosn.Items, err error) {
 
 	items.Filter(input.Filters)
 
-	return
+	return items, err
 }
 
 func (input *DeleteTagConfig) Run() (noDeleted int, err error) {

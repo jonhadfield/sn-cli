@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jonhadfield/gosn-v2/cache"
 	"os"
 	"sort"
 	"strconv"
@@ -12,10 +11,12 @@ import (
 	"syscall"
 	"time"
 
-	sncli "github.com/jonhadfield/sn-cli"
-	"gopkg.in/yaml.v2"
+	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
+	yaml "gopkg.in/yaml.v2"
 
-	"github.com/jonhadfield/gosn-v2"
+	sncli "github.com/jonhadfield/sn-cli"
+
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh/terminal"

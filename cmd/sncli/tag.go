@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jonhadfield/gosn-v2"
+	"strconv"
+	"strings"
+
+	gosn "github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v3"
-	"strconv"
-	"strings"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {

@@ -90,10 +90,7 @@ func (i *ImportConfig) Run() error {
 
 	var encFinalList gosn.EncryptedItems
 
-	// only items with uuids that don't yet exist will be imported
-	for _, itemToImport := range encItemsToImport {
-		encFinalList = append(encFinalList, itemToImport)
-	}
+	encFinalList = append(encFinalList, encItemsToImport...)
 
 	if len(encFinalList) == 0 {
 		return fmt.Errorf("no items to import were loaded")

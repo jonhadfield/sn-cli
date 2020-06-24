@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/divan/num2words"
-	"github.com/jonhadfield/gosn-v2"
+	gosn "github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v3"
-	"strconv"
-	"strings"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err error) {

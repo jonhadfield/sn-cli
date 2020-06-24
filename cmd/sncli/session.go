@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/jonhadfield/gosn-v2"
-	"github.com/urfave/cli"
 	"os"
+
+	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/urfave/cli"
 )
 
 func processSession(c *cli.Context, opts configOptsOutput) (msg string, err error) {

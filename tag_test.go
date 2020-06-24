@@ -1,10 +1,11 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn-v2"
+	"testing"
+
+	gosn "github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestAddDeleteTagByTitle(t *testing.T) {
