@@ -1,10 +1,11 @@
 package sncli
 
 import (
-	"github.com/briandowns/spinner"
-	"github.com/jonhadfield/gosn-v2/cache"
 	"os"
 	"time"
+
+	"github.com/briandowns/spinner"
+	"github.com/jonhadfield/gosn-v2/cache"
 )
 
 func Sync(si cache.SyncInput, showProgress bool) (so cache.SyncOutput, err error) {

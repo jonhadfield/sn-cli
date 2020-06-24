@@ -283,7 +283,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 	uuidIn := strings.Replace(c.String("uuid"), " ", "", -1)
 
 	if titleIn == "" && uuidIn == "" {
-		cli.ShowSubcommandHelp(c)
+		_ = cli.ShowSubcommandHelp(c)
 		return msg, errors.New("title or uuid required")
 	}
 

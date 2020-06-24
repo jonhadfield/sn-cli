@@ -101,8 +101,10 @@ func TestAddOneNoteGetCount(t *testing.T) {
 		"--text", "testAddOneNoteGetCount Text"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
+
 	_, _, err = startCLI([]string{"sncli", "get", "note"})
 	assert.NoError(t, err)
+
 	msg, _, err = startCLI([]string{"sncli", "get", "note", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)

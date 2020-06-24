@@ -2,8 +2,9 @@ package sncli
 
 import (
 	"fmt"
+
 	"github.com/asdine/storm/v3/q"
-	"github.com/jonhadfield/gosn-v2"
+	gosn "github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 )
 
@@ -14,9 +15,9 @@ type ExportConfig struct {
 }
 
 type ImportConfig struct {
-	Session   cache.Session
-	File      string
-	Debug     bool
+	Session cache.Session
+	File    string
+	Debug   bool
 }
 
 func (i *ExportConfig) Run() error {
@@ -30,7 +31,10 @@ func (i *ExportConfig) Run() error {
 	if err != nil {
 		return err
 	}
-	defer gio.DB.Close()
+
+	defer func() {
+		_ = gio.DB.Close()
+	}()
 
 	// DB now populated and open with pointer in session
 	// strip deleted items
@@ -56,6 +60,7 @@ func (i *ExportConfig) Run() error {
 	}
 
 	var e gosn.EncryptedItems
+
 	e, err = out.Encrypt(i.Session.Mk, i.Session.Ak, i.Debug)
 	if err != nil {
 		return err

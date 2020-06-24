@@ -1,9 +1,10 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn-v2"
-	"github.com/jonhadfield/gosn-v2/cache"
 	"strings"
+
+	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
 )
 
 type tagNotesInput struct {

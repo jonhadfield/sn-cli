@@ -82,6 +82,7 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 	if err != nil {
 		return
 	}
+
 	defer func() {
 		_ = so.DB.Close()
 	}()
