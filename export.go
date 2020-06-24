@@ -15,7 +15,6 @@ type ExportConfig struct {
 
 type ImportConfig struct {
 	Session   cache.Session
-	Overwrite bool
 	File      string
 	Debug     bool
 }

@@ -192,8 +192,8 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	assert.True(t, found)
 }
 
-// Create a note, export it, change original, import
-func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
+// Create a note, export it, change original, import and check exported items replace modified
+func TestExportChangeImportOneNote(t *testing.T) {
 	defer cleanUp(testSession)
 
 	// create and put initial originalNote
@@ -284,7 +284,6 @@ func TestExportChangeImportOneNoteWithoutOverwrite(t *testing.T) {
 	ic := ImportConfig{
 		Session:   testSession,
 		File:      tmpfn,
-		Overwrite: true,
 	}
 
 	assert.NoError(t, ic.Run())
