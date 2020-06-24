@@ -52,14 +52,15 @@ func tagNotes(input tagNotesInput) (err error) {
 	var so cache.SyncOutput
 
 	so, err = Sync(syncInput, true)
-
 	if err != nil {
 		return
 	}
 
 	var allPersistedItems cache.Items
 
-	err = so.DB.All(&allPersistedItems)
+	if err = so.DB.All(&allPersistedItems); err != nil {
+		return
+	}
 
 	var items gosn.Items
 

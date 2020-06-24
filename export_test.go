@@ -259,6 +259,7 @@ func TestExportChangeImportOneNote(t *testing.T) {
 
 	// get db
 	so, err = Sync(pii, true)
+	assert.NoError(t, err)
 
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Mk, testSession.Ak, true)
 	assert.NoError(t, err)
@@ -282,8 +283,8 @@ func TestExportChangeImportOneNote(t *testing.T) {
 
 	// import original export
 	ic := ImportConfig{
-		Session:   testSession,
-		File:      tmpfn,
+		Session: testSession,
+		File:    tmpfn,
 	}
 
 	assert.NoError(t, ic.Run())

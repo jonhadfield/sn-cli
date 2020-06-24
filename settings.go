@@ -19,7 +19,11 @@ func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 	}
 
 	var allPersistedItems cache.Items
+
 	err = so.DB.All(&allPersistedItems)
+	if err != nil {
+		return
+	}
 
 	var items gosn.Items
 

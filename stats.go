@@ -33,7 +33,9 @@ func (input *StatsConfig) Run() error {
 	}
 
 	var allPersistedItems cache.Items
-	err = so.DB.All(&allPersistedItems)
+	if err = so.DB.All(&allPersistedItems); err != nil {
+		return err
+	}
 
 	var items gosn.Items
 	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
