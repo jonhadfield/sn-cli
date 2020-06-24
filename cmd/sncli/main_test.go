@@ -1,20 +1,10 @@
 package main
 
 import (
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func removeDB(dbPath string) {
-	if err := os.Remove(dbPath); err != nil {
-		if !strings.Contains(err.Error(), "no such file or directory") {
-			panic(err)
-		}
-	}
-}
 
 func TestWipe(t *testing.T) {
 	msg, _, err := startCLI([]string{"sncli", "wipe", "--yes"})
