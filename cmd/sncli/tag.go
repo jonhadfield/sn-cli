@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/asdine/storm/v3/q"
+	"os"
 	"strconv"
 	"strings"
 
@@ -13,6 +16,231 @@ import (
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
 )
+
+func getTagByUUID(session cache.Session, uuid string, debug bool) (tag gosn.Tag, err error) {
+	if session.CacheDBPath == "" {
+		return tag, errors.New("CacheDBPath missing from session")
+	}
+
+	if uuid == "" {
+		return tag, errors.New("uuid not supplied")
+	}
+
+	var so cache.SyncOutput
+
+	si := cache.SyncInput{
+		Session: session,
+		Debug:   debug,
+		Close:   false,
+	}
+
+	so, err = cache.Sync(si)
+	if err != nil {
+		return
+	}
+
+	defer so.DB.Close()
+
+	var encTags cache.Items
+
+	query := so.DB.Select(q.And(q.Eq("UUID", uuid), q.Eq("Deleted", false)))
+	if err = query.Find(&encTags); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return tag, errors.New(fmt.Sprintf("could not find tag with inUUID %s", uuid))
+		}
+		return
+	}
+
+	var rawEncItems gosn.Items
+	rawEncItems, err = encTags.ToItems(session.Mk, session.Ak)
+
+	return *rawEncItems[0].(*gosn.Tag), err
+}
+
+func getTagsByTitle(session cache.Session, title string, debug bool) (tags gosn.Tags, err error) {
+	var so cache.SyncOutput
+
+	si := cache.SyncInput{
+		Session: session,
+		Debug:   debug,
+		Close:   false,
+	}
+
+	so, err = cache.Sync(si)
+	if err != nil {
+		return
+	}
+	defer so.DB.Close()
+
+	var allEncTags cache.Items
+
+	query := so.DB.Select(q.And(q.Eq("ContentType", "Tag"), q.Eq("Deleted", false)))
+	if err = query.Find(&allEncTags); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return nil, fmt.Errorf("could not find any tags")
+		}
+		return
+	}
+
+	// decrypt all tags
+	var allRawTags gosn.Items
+	allRawTags, err = allEncTags.ToItems(session.Mk, session.Ak)
+
+	var matchingRawTags gosn.Tags
+	for _, rt := range allRawTags {
+		t := rt.(*gosn.Tag)
+		if t.Content.Title == title {
+			matchingRawTags = append(matchingRawTags, *t)
+		}
+	}
+
+	return matchingRawTags, err
+}
+
+func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+	inUUID := c.String("uuid")
+	inTitle := c.String("title")
+	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
+		_ = cli.ShowSubcommandHelp(c)
+		return "", errors.New("title or UUID is required")
+	}
+
+	var session cache.Session
+	session, _, err = cache.GetSession(opts.useSession,
+		opts.sessKey, opts.server)
+	if err != nil {
+		return "", err
+	}
+
+	var cacheDBPath string
+	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+	if err != nil {
+		return "", err
+	}
+
+	session.CacheDBPath = cacheDBPath
+
+	var tag gosn.Tag
+	var tags gosn.Tags
+
+	// if uuid was passed then retrieve tag from db using uuid
+	if inUUID != "" {
+		if tag, err = getTagByUUID(session, inUUID, opts.debug); err != nil {
+			return
+		}
+	}
+
+	// if title was passed then retrieve tag(s) matching that title
+	if inTitle != "" {
+		if tags, err = getTagsByTitle(session, inTitle, opts.debug); err != nil {
+			return
+		}
+
+		if len(tags) == 0 {
+			return "", errors.New("tag not found")
+		}
+
+		if len(tags) > 1 {
+			return "", errors.New("multiple tags found with same title")
+		}
+
+		tag = tags[0]
+	}
+
+
+	// only show existing title if uuid was passed
+	if inUUID != "" {
+		fmt.Printf("existing title: %s\n", tag.Content.Title)
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("new title: ")
+	text, _ := reader.ReadString('\n')
+	text = strings.TrimSuffix(text, "\n")
+	if len(text) == 0 {
+		return "", errors.New("new tag title not entered")
+	}
+
+	// //
+	//	//switch len(allEncTags) {
+	//	//case 0:
+	//	//	return "", fmt.Errorf("could not find tag with title %s", inTitle)
+	//	//case 1:
+	//	//	encTag = allEncTags[0]
+	//	//	fmt.Println("got one tag")
+	//	//	break
+	//	//default:
+	//	//	for _, et := range allEncTags {
+	//	//		fmt.Println("got multiple tags", et)
+	//	//		return
+	//	//	}
+	//	//}
+	//
+	//	return
+
+	tag.Content.Title = text
+
+	si := cache.SyncInput{
+		Session: session,
+		Debug:   opts.debug,
+		Close:   false,
+	}
+
+	var so cache.SyncOutput
+	so, err = cache.Sync(si)
+	if err != nil {
+		return
+	}
+
+	tags = gosn.Tags{tag}
+	eTags, err := tags.Encrypt(session.Mk, session.Ak, opts.debug)
+	//cache.ToCacheItems(eTags, false)
+
+	err = cache.SaveEncryptedItems(so.DB, eTags, true)
+	if err != nil {
+		fmt.Printf("%+v\n", err)
+		fmt.Println("dead here")
+		return
+	}
+
+	if _, err = cache.Sync(si); err != nil {
+		return
+	}
+
+	//err = so.DB.Close()
+	//if err != nil {
+	//	fmt.Println("dead x")
+	//	return
+	//}
+	//
+	//// decrypt cont
+	//
+	//// save content to tmp file
+	//file, err := ioutil.TempFile("dir", "prefix")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//defer os.Remove(file.Name())
+	//_, err = io.WriteString(file, )
+	//if err != nil {
+	//	return err
+	//}
+	//return file.Sync()
+	//fmt.Println(file.Name()) // For example "dir/prefix054003078"
+	//
+	//
+	//
+	//// edit tmp file using vi
+	//
+	//// if exit code > 0 print the error
+	//
+	//// if exit code == 0 read tmp file
+	//
+	//// sync note content update
+
+	return "", err
+
+}
 
 func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	inTitle := strings.TrimSpace(c.String("title"))

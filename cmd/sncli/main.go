@@ -154,6 +154,85 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 	}
 	app.Commands = []cli.Command{
 		{
+			Name:  "edit",
+			Usage: "edit items",
+			BashComplete: func(c *cli.Context) {
+				addTasks := []string{"tag", "note"}
+				if c.NArg() > 0 {
+					return
+				}
+				for _, t := range addTasks {
+					fmt.Println(t)
+				}
+			},
+			Subcommands: []cli.Command{
+				{
+					Name:  "tag",
+					Usage: "edit a tag",
+					BashComplete: func(c *cli.Context) {
+						addNoteOpts := []string{"--title", "--uuid"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, ano := range addNoteOpts {
+							fmt.Println(ano)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "title",
+							Usage: "title of the tag",
+						},
+						cli.StringFlag{
+							Name:  "uuid",
+							Usage: "uuid of the tag",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
+						}
+						useStdOut = opts.useStdOut
+
+						msg, err = processEditTag(c, opts)
+
+						return err
+					},
+				},
+				//{
+				//	Name:  "note",
+				//	Usage: "edit a note",
+				//	BashComplete: func(c *cli.Context) {
+				//		addNoteOpts := []string{"--uuid"}
+				//		if c.NArg() > 0 {
+				//			return
+				//		}
+				//		for _, ano := range addNoteOpts {
+				//			fmt.Println(ano)
+				//		}
+				//	},
+				//	Flags: []cli.Flag{
+				//		cli.StringFlag{
+				//			Name:  "uuid",
+				//			Usage: "uuid of the note",
+				//		},
+				//	},
+				//	Action: func(c *cli.Context) error {
+				//		opts, err := getOpts(c)
+				//		if err != nil {
+				//			return err
+				//		}
+				//		useStdOut = opts.useStdOut
+				//
+				//		msg, err = processEditNote(c, opts)
+				//
+				//		return err
+				//	},
+				//},
+			},
+		},
+		{
 			Name:  "add",
 			Usage: "add items",
 			BashComplete: func(c *cli.Context) {
