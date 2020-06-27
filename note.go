@@ -5,15 +5,15 @@ import (
 	"github.com/jonhadfield/gosn-v2/cache"
 )
 
-func (input *AddNoteInput) Run() (err error) {
+func (i *AddNoteInput) Run() (err error) {
 	// get DB
 	var syncToken, newNoteUUID string
 
 	ani := addNoteInput{
-		noteTitle: input.Title,
-		noteText:  input.Text,
-		tagTitles: input.Tags,
-		session:   input.Session,
+		noteTitle: i.Title,
+		noteText:  i.Text,
+		tagTitles: i.Tags,
+		session:   i.Session,
 	}
 
 	newNoteUUID, err = addNote(ani)
@@ -25,8 +25,8 @@ func (input *AddNoteInput) Run() (err error) {
 		tni := tagNotesInput{
 			matchNoteUUIDs: []string{newNoteUUID},
 			syncToken:      syncToken,
-			session:        input.Session,
-			newTags:        input.Tags,
+			session:        i.Session,
+			newTags:        i.Tags,
 		}
 		err = tagNotes(tni)
 	}
@@ -41,26 +41,19 @@ type addNoteInput struct {
 	tagTitles []string
 }
 
-func addNote(input addNoteInput) (noteUUID string, err error) {
+func addNote(i addNoteInput) (noteUUID string, err error) {
 	// check if note exists
 	newNote := gosn.NewNote()
 	newNoteContent := gosn.NewNoteContent()
-	newNoteContent.Title = input.noteTitle
-	newNoteContent.Text = input.noteText
+	newNoteContent.Title = i.noteTitle
+	newNoteContent.Text = i.noteText
 	newNote.Content = *newNoteContent
 	newNote.UUID = gosn.GenUUID()
 	noteUUID = newNote.UUID
 	newNoteItems := gosn.Notes{newNote}
 
-	var eNewNoteItems gosn.EncryptedItems
-
-	eNewNoteItems, err = newNoteItems.Encrypt(input.session.Mk, input.session.Ak, false)
-	if err != nil {
-		return
-	}
-
 	si := cache.SyncInput{
-		Session: input.session,
+		Session: i.session,
 	}
 
 	var so cache.SyncOutput
@@ -70,12 +63,12 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 		return
 	}
 
-	if err = cache.SaveEncryptedItems(so.DB, eNewNoteItems, true); err != nil {
+	if err = cache.SaveNotes(so.DB, i.session.Mk, i.session.Ak, newNoteItems, true, false); err != nil {
 		return
 	}
 
 	pii := cache.SyncInput{
-		Session: input.session,
+		Session: i.session,
 	}
 
 	so, err = Sync(pii, true)
@@ -87,11 +80,11 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 		_ = so.DB.Close()
 	}()
 
-	if len(input.tagTitles) > 0 {
+	if len(i.tagTitles) > 0 {
 		tni := tagNotesInput{
-			session:        input.session,
+			session:        i.session,
 			matchNoteUUIDs: []string{newNote.UUID},
-			newTags:        input.tagTitles,
+			newTags:        i.tagTitles,
 		}
 
 		err = tagNotes(tni)
@@ -103,17 +96,17 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 	return noteUUID, err
 }
 
-func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
-	noDeleted, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "", input.Debug)
+func (i *DeleteNoteConfig) Run() (noDeleted int, err error) {
+	noDeleted, err = deleteNotes(i.Session, i.NoteTitles, i.NoteText, i.NoteUUIDs, i.Regex, i.Debug)
 
 	return noDeleted, err
 }
 
-func (input *GetNoteConfig) Run() (items gosn.Items, err error) {
+func (i *GetNoteConfig) Run() (items gosn.Items, err error) {
 	var so cache.SyncOutput
 	so, err = Sync(cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}, true)
 
 	if err != nil {
@@ -126,19 +119,22 @@ func (input *GetNoteConfig) Run() (items gosn.Items, err error) {
 	if err != nil {
 		return
 	}
-	defer so.DB.Close()
 
-	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
+	defer func() {
+		_ = so.DB.Close()
+	}()
+
+	items, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
 	if err != nil {
 		return
 	}
 
-	items.Filter(input.Filters)
+	items.Filter(i.Filters)
 
 	return
 }
 
-func deleteNotes(session cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string, debug bool) (noDeleted int, err error) {
+func deleteNotes(session cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, debug bool) (noDeleted int, err error) {
 	var getNotesFilters []gosn.Filter
 
 	switch {
@@ -228,15 +224,7 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 		return
 	}
 
-	var eNotesToDelete gosn.EncryptedItems
-
-	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak, false)
-	if err != nil {
-		return
-	}
-
-	err = cache.SaveEncryptedItems(gio.DB, eNotesToDelete, true)
-	if err != nil {
+	if err = cache.SaveNotes(gio.DB, session.Mk, session.Ak, notesToDelete, true, debug); err != nil {
 		return 0, err
 	}
 

@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	sncli "github.com/jonhadfield/sn-cli"
 
@@ -153,6 +153,94 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 	app.Commands = []cli.Command{
+		{
+			Name:  "edit",
+			Usage: "edit items",
+			BashComplete: func(c *cli.Context) {
+				addTasks := []string{"tag", "note"}
+				if c.NArg() > 0 {
+					return
+				}
+				for _, t := range addTasks {
+					fmt.Println(t)
+				}
+			},
+			Subcommands: []cli.Command{
+				{
+					Name:  "tag",
+					Usage: "edit a tag",
+					BashComplete: func(c *cli.Context) {
+						addNoteOpts := []string{"--title", "--uuid"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, ano := range addNoteOpts {
+							fmt.Println(ano)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "title",
+							Usage: "title of the tag",
+						},
+						cli.StringFlag{
+							Name:  "uuid",
+							Usage: "uuid of the tag",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
+						}
+						useStdOut = opts.useStdOut
+
+						msg, err = processEditTag(c, opts)
+
+						return err
+					},
+				},
+				{
+					Name:  "note",
+					Usage: "edit a note",
+					BashComplete: func(c *cli.Context) {
+						addNoteOpts := []string{"--title", "--uuid", "--editor"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, ano := range addNoteOpts {
+							fmt.Println(ano)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "title",
+							Usage: "title of the note",
+						},
+						cli.StringFlag{
+							Name:  "uuid",
+							Usage: "uuid of the note",
+						},
+						cli.StringFlag{
+							Name:  "editor",
+							Usage: "path to editor",
+							EnvVar: "EDITOR",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
+						}
+						useStdOut = opts.useStdOut
+
+						msg, err = processEditNote(c, opts)
+
+						return err
+					},
+				},
+			},
+		},
 		{
 			Name:  "add",
 			Usage: "add items",
@@ -646,23 +734,24 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					filePath := fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
 					outputPath = currDir + string(os.PathSeparator) + filePath
 				}
-				session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+
+				var sess cache.Session
+				sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 				if err != nil {
 					return err
 				}
 
 				var cacheDBPath string
-				cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+				cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
 
-				session.CacheDBPath = cacheDBPath
+				sess.CacheDBPath = cacheDBPath
 				appExportConfig := sncli.ExportConfig{
-					Session: session,
-					//CacheDBPath: cacheDBPath,
-					File:  outputPath,
-					Debug: opts.debug,
+					Session: sess,
+					File:    outputPath,
+					Debug:   opts.debug,
 				}
 				err = appExportConfig.Run()
 				if err == nil {
@@ -781,7 +870,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					return err
 				}
 
-				session, _, err := cache.GetSession(opts.useSession,
+				var session cache.Session
+				session, _, err = cache.GetSession(opts.useSession,
 					opts.sessKey, opts.server)
 				if err != nil {
 					return err

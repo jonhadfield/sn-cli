@@ -168,10 +168,10 @@ type TestDataCreateTagsConfig struct {
 	Debug   bool
 }
 
-func (input *TestDataCreateTagsConfig) Run() error {
-	return createTags(input.Session, input.NumTags)
+func (i *TestDataCreateTagsConfig) Run() error {
+	return createTags(i.Session, i.NumTags)
 }
 
-func (input *TestDataCreateNotesConfig) Run() error {
-	return createNotes(input.Session, input.NumNotes, input.NumParas)
+func (i *TestDataCreateNotesConfig) Run() error {
+	return createNotes(i.Session, i.NumNotes, i.NumParas)
 }

@@ -3,7 +3,7 @@ package sncli
 import (
 	"strings"
 
-	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 )
 
@@ -19,11 +19,11 @@ type tagNotesInput struct {
 
 // create tags if they don't exist
 // get all notes and tags
-func tagNotes(input tagNotesInput) (err error) {
+func tagNotes(i tagNotesInput) (err error) {
 	// create tags if they don't exist
 	ati := addTagsInput{
-		session:   input.session,
-		tagTitles: input.newTags,
+		session:   i.session,
+		tagTitles: i.newTags,
 	}
 
 	_, err = addTags(ati)
@@ -46,7 +46,7 @@ func tagNotes(input tagNotesInput) (err error) {
 	}
 
 	syncInput := cache.SyncInput{
-		Session: input.session,
+		Session: i.session,
 	}
 
 	// get all notes and tags from db
@@ -65,7 +65,7 @@ func tagNotes(input tagNotesInput) (err error) {
 
 	var items gosn.Items
 
-	items, err = allPersistedItems.ToItems(input.session.Mk, input.session.Ak)
+	items, err = allPersistedItems.ToItems(i.session.Mk, i.session.Ak)
 	if err != nil {
 		return
 	}
@@ -95,11 +95,11 @@ func tagNotes(input tagNotesInput) (err error) {
 	// loop through all notes and create a list of those that
 	// match the note title or exist in note text
 	for _, note := range allNotes {
-		if StringInSlice(note.UUID, input.matchNoteUUIDs, false) {
+		if StringInSlice(note.UUID, i.matchNoteUUIDs, false) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
-		} else if strings.TrimSpace(input.matchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(input.matchTitle)) {
+		} else if strings.TrimSpace(i.matchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(i.matchTitle)) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
-		} else if strings.TrimSpace(input.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(input.matchText)) {
+		} else if strings.TrimSpace(i.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(i.matchText)) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
 		}
 	}
@@ -110,7 +110,7 @@ func tagNotes(input tagNotesInput) (err error) {
 
 	for _, t := range allTags {
 		// if tag title is in ones to add then update tag with new references
-		if StringInSlice(t.Content.GetTitle(), input.newTags, true) {
+		if StringInSlice(t.Content.GetTitle(), i.newTags, true) {
 			// does it need updating
 			updatedTag, changed := upsertTagReferences(*t, typeUUIDs)
 			if changed {
@@ -119,20 +119,14 @@ func tagNotes(input tagNotesInput) (err error) {
 		}
 	}
 
-	var eTagsToPush gosn.EncryptedItems
-
-	eTagsToPush, err = tagsToPush.Encrypt(input.session.Mk, input.session.Ak, false)
-	if err != nil {
+	if err = cache.SaveTags(so.DB, i.session.Mk, i.session.Ak, tagsToPush, true, false) ; err != nil {
 		return
 	}
 
-	if err = cache.SaveEncryptedItems(so.DB, eTagsToPush, true); err != nil {
-		return
-	}
 
 	if len(tagsToPush) > 0 {
 		pii := cache.SyncInput{
-			Session: input.session,
+			Session: i.session,
 		}
 
 		so, err = Sync(pii, true)
@@ -150,23 +144,23 @@ func tagNotes(input tagNotesInput) (err error) {
 	return nil
 }
 
-func (input *TagItemsConfig) Run() error {
+func (i *TagItemsConfig) Run() error {
 	tni := tagNotesInput{
-		matchTitle: input.FindTitle,
-		matchText:  input.FindText,
-		matchTags:  []string{input.FindTag},
-		newTags:    input.NewTags,
-		session:    input.Session,
+		matchTitle: i.FindTitle,
+		matchText:  i.FindText,
+		matchTags:  []string{i.FindTag},
+		newTags:    i.NewTags,
+		session:    i.Session,
 	}
 
 	return tagNotes(tni)
 }
 
-func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
+func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	// Sync DB
 	si := cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}
 
 	var so cache.SyncOutput
@@ -186,8 +180,8 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}()
 
 	ati := addTagsInput{
-		tagTitles: input.Tags,
-		session:   input.Session,
+		tagTitles: i.Tags,
+		session:   i.Session,
 	}
 
 	var ato addTagsOutput
@@ -207,8 +201,8 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}
 
 	so, err = Sync(cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}, true)
 	if err != nil {
 		return
@@ -217,12 +211,12 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	return output, err
 }
 
-func (input *GetTagConfig) Run() (items gosn.Items, err error) {
+func (i *GetTagConfig) Run() (items gosn.Items, err error) {
 	var so cache.SyncOutput
 
 	si := cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}
 
 	so, err = Sync(si, true)
@@ -243,18 +237,18 @@ func (input *GetTagConfig) Run() (items gosn.Items, err error) {
 	}
 
 	//var items gosn.Items
-	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
+	items, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
 	if err != nil {
 		return
 	}
 
-	items.Filter(input.Filters)
+	items.Filter(i.Filters)
 
 	return items, err
 }
 
-func (input *DeleteTagConfig) Run() (noDeleted int, err error) {
-	noDeleted, err = deleteTags(input.Session, input.TagTitles, input.TagUUIDs)
+func (i *DeleteTagConfig) Run() (noDeleted int, err error) {
+	noDeleted, err = deleteTags(i.Session, i.TagTitles, i.TagUUIDs)
 	return noDeleted, err
 }
 

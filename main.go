@@ -244,10 +244,10 @@ func filterCacheItemsByTypes(ei cache.Items, types []string) (o cache.Items) {
 
 var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
 
-func (input *WipeConfig) Run() (int, error) {
+func (i *WipeConfig) Run() (int, error) {
 	syncInput := cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}
 
 	var err error
@@ -284,9 +284,7 @@ func (input *WipeConfig) Run() (int, error) {
 		}
 	}
 
-	//syncInput.Session.CacheDB = so.DB
-	//syncInput.Session.CacheDBPath = ""
-	// Close DB after each Sync?
+	// TODO: Close DB after each Sync?
 	err = so.DB.Close()
 	if err != nil {
 		return 0, err

@@ -11,15 +11,11 @@ type RegisterConfig struct {
 	Debug     bool
 }
 
-func (input *RegisterConfig) Run() error {
-	//gosn.SetErrorLogger(log.Println)
-	//if input.Debug {
-	//	gosn.SetDebugLogger(log.Println)
-	//}
+func (i *RegisterConfig) Run() error {
 	registerInput := gosn.RegisterInput{
-		Email:     input.Email,
-		Password:  input.Password,
-		APIServer: input.APIServer,
+		Email:     i.Email,
+		Password:  i.Password,
+		APIServer: i.APIServer,
 	}
 
 	_, err := registerInput.Register()

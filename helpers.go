@@ -24,12 +24,12 @@ func StringInSlice(inStr string, inSlice []string, matchCase bool) bool {
 	return false
 }
 
-func outList(input []string, sep string) string {
-	if len(input) == 0 {
+func outList(i []string, sep string) string {
+	if len(i) == 0 {
 		return "-"
 	}
 
-	return strings.Join(input, sep)
+	return strings.Join(i, sep)
 }
 
 func writeGob(filePath string, object interface{}) error {
@@ -39,7 +39,9 @@ func writeGob(filePath string, object interface{}) error {
 		_ = encoder.Encode(object)
 	}
 
-	_ = file.Close()
+	if file != nil {
+		_ = file.Close()
+	}
 
 	return err
 }
@@ -84,9 +86,9 @@ func ItemRefsToJSON(irs []gosn.ItemReference) []ItemReferenceJSON {
 	return iRefs
 }
 
-func CommaSplit(input string) []string {
-	// split input
-	o := strings.Split(input, ",")
+func CommaSplit(i string) []string {
+	// split i
+	o := strings.Split(i, ",")
 	// strip leading and trailing space
 	var s []string
 

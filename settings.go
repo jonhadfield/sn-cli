@@ -5,10 +5,10 @@ import (
 	"github.com/jonhadfield/gosn-v2/cache"
 )
 
-func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
+func (i *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 	getItemsInput := cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}
 
 	var so cache.SyncOutput
@@ -27,12 +27,12 @@ func (input *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 
 	var items gosn.Items
 
-	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
+	items, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
 	if err != nil {
 		return
 	}
 
-	items.Filter(input.Filters)
+	items.Filter(i.Filters)
 
 	return
 }
