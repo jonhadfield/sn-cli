@@ -200,36 +200,40 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						return err
 					},
 				},
-				//{
-				//	Name:  "note",
-				//	Usage: "edit a note",
-				//	BashComplete: func(c *cli.Context) {
-				//		addNoteOpts := []string{"--uuid"}
-				//		if c.NArg() > 0 {
-				//			return
-				//		}
-				//		for _, ano := range addNoteOpts {
-				//			fmt.Println(ano)
-				//		}
-				//	},
-				//	Flags: []cli.Flag{
-				//		cli.StringFlag{
-				//			Name:  "uuid",
-				//			Usage: "uuid of the note",
-				//		},
-				//	},
-				//	Action: func(c *cli.Context) error {
-				//		opts, err := getOpts(c)
-				//		if err != nil {
-				//			return err
-				//		}
-				//		useStdOut = opts.useStdOut
-				//
-				//		msg, err = processEditNote(c, opts)
-				//
-				//		return err
-				//	},
-				//},
+				{
+					Name:  "note",
+					Usage: "edit a note",
+					BashComplete: func(c *cli.Context) {
+						addNoteOpts := []string{"--title", "--uuid"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, ano := range addNoteOpts {
+							fmt.Println(ano)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "title",
+							Usage: "title of the note",
+						},
+						cli.StringFlag{
+							Name:  "uuid",
+							Usage: "uuid of the note",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
+						}
+						useStdOut = opts.useStdOut
+
+						msg, err = processEditNote(c, opts)
+
+						return err
+					},
+				},
 			},
 		},
 		{

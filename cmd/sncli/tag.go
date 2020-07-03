@@ -148,7 +148,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 
-	// only show existing title if uuid was passed
+	// only show existing title information if uuid was passed
 	if inUUID != "" {
 		fmt.Printf("existing title: %s\n", tag.Content.Title)
 	}
@@ -160,23 +160,6 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	if len(text) == 0 {
 		return "", errors.New("new tag title not entered")
 	}
-
-	// //
-	//	//switch len(allEncTags) {
-	//	//case 0:
-	//	//	return "", fmt.Errorf("could not find tag with title %s", inTitle)
-	//	//case 1:
-	//	//	encTag = allEncTags[0]
-	//	//	fmt.Println("got one tag")
-	//	//	break
-	//	//default:
-	//	//	for _, et := range allEncTags {
-	//	//		fmt.Println("got multiple tags", et)
-	//	//		return
-	//	//	}
-	//	//}
-	//
-	//	return
 
 	tag.Content.Title = text
 
@@ -194,7 +177,6 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	tags = gosn.Tags{tag}
 	eTags, err := tags.Encrypt(session.Mk, session.Ak, opts.debug)
-	//cache.ToCacheItems(eTags, false)
 
 	err = cache.SaveEncryptedItems(so.DB, eTags, true)
 	if err != nil {
