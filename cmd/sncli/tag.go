@@ -109,34 +109,34 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 		return "", errors.New("title or UUID is required")
 	}
 
-	var session cache.Session
-	session, _, err = cache.GetSession(opts.useSession,
+	var sess cache.Session
+	sess, _, err = cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
 	if err != nil {
 		return "", err
 	}
 
 	var cacheDBPath string
-	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return "", err
 	}
 
-	session.CacheDBPath = cacheDBPath
+	sess.CacheDBPath = cacheDBPath
 
 	var tag gosn.Tag
 	var tags gosn.Tags
 
 	// if uuid was passed then retrieve tag from db using uuid
 	if inUUID != "" {
-		if tag, err = getTagByUUID(session, inUUID, opts.debug); err != nil {
+		if tag, err = getTagByUUID(sess, inUUID, opts.debug); err != nil {
 			return
 		}
 	}
 
 	// if title was passed then retrieve tag(s) matching that title
 	if inTitle != "" {
-		if tags, err = getTagsByTitle(session, inTitle, opts.debug); err != nil {
+		if tags, err = getTagsByTitle(sess, inTitle, opts.debug); err != nil {
 			return
 		}
 
@@ -167,7 +167,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	tag.Content.Title = text
 
 	si := cache.SyncInput{
-		Session: session,
+		Session: sess,
 		Debug:   opts.debug,
 		Close:   false,
 	}
@@ -180,7 +180,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	tags = gosn.Tags{tag}
 
-	if err = cache.SaveTags(so.DB, session.Mk, session.Ak, tags, true, false) ; err != nil {
+	if err = cache.SaveTags(so.DB, sess.Mk, sess.Ak, tags, true, false) ; err != nil {
 		return
 	}
 
@@ -244,8 +244,8 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 		})
 	}
 
-	var session cache.Session
-	session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+	var sess cache.Session
+	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 	if err != nil {
 		return "", err
 	}
@@ -255,15 +255,15 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	var cacheDBPath string
 
-	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return "", err
 	}
 
-	session.CacheDBPath = cacheDBPath
+	sess.CacheDBPath = cacheDBPath
 
 	appGetTagConfig := sncli.GetTagConfig{
-		Session: session,
+		Session: sess,
 		Filters: getTagsIF,
 		Output:  output,
 		Debug:   opts.debug,
