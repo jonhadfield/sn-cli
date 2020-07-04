@@ -19,11 +19,11 @@ type tagNotesInput struct {
 
 // create tags if they don't exist
 // get all notes and tags
-func tagNotes(input tagNotesInput) (err error) {
+func tagNotes(i tagNotesInput) (err error) {
 	// create tags if they don't exist
 	ati := addTagsInput{
-		session:   input.session,
-		tagTitles: input.newTags,
+		session:   i.session,
+		tagTitles: i.newTags,
 	}
 
 	_, err = addTags(ati)
@@ -46,7 +46,7 @@ func tagNotes(input tagNotesInput) (err error) {
 	}
 
 	syncInput := cache.SyncInput{
-		Session: input.session,
+		Session: i.session,
 	}
 
 	// get all notes and tags from db
@@ -65,7 +65,7 @@ func tagNotes(input tagNotesInput) (err error) {
 
 	var items gosn.Items
 
-	items, err = allPersistedItems.ToItems(input.session.Mk, input.session.Ak)
+	items, err = allPersistedItems.ToItems(i.session.Mk, i.session.Ak)
 	if err != nil {
 		return
 	}
@@ -95,11 +95,11 @@ func tagNotes(input tagNotesInput) (err error) {
 	// loop through all notes and create a list of those that
 	// match the note title or exist in note text
 	for _, note := range allNotes {
-		if StringInSlice(note.UUID, input.matchNoteUUIDs, false) {
+		if StringInSlice(note.UUID, i.matchNoteUUIDs, false) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
-		} else if strings.TrimSpace(input.matchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(input.matchTitle)) {
+		} else if strings.TrimSpace(i.matchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(i.matchTitle)) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
-		} else if strings.TrimSpace(input.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(input.matchText)) {
+		} else if strings.TrimSpace(i.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(i.matchText)) {
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
 		}
 	}
@@ -110,7 +110,7 @@ func tagNotes(input tagNotesInput) (err error) {
 
 	for _, t := range allTags {
 		// if tag title is in ones to add then update tag with new references
-		if StringInSlice(t.Content.GetTitle(), input.newTags, true) {
+		if StringInSlice(t.Content.GetTitle(), i.newTags, true) {
 			// does it need updating
 			updatedTag, changed := upsertTagReferences(*t, typeUUIDs)
 			if changed {
@@ -119,20 +119,14 @@ func tagNotes(input tagNotesInput) (err error) {
 		}
 	}
 
-	var eTagsToPush gosn.EncryptedItems
-
-	eTagsToPush, err = tagsToPush.Encrypt(input.session.Mk, input.session.Ak, false)
-	if err != nil {
+	if err = cache.SaveTags(so.DB, i.session.Mk, i.session.Ak, tagsToPush, true, false) ; err != nil {
 		return
 	}
 
-	if err = cache.SaveEncryptedItems(so.DB, eTagsToPush, true); err != nil {
-		return
-	}
 
 	if len(tagsToPush) > 0 {
 		pii := cache.SyncInput{
-			Session: input.session,
+			Session: i.session,
 		}
 
 		so, err = Sync(pii, true)
