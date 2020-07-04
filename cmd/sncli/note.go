@@ -76,6 +76,7 @@ func getNotesByTitle(sess cache.Session, title string, debug bool) (notes gosn.N
 	if err != nil {
 		return
 	}
+
 	defer func() {
 		_ = so.DB.Close()
 	}()
@@ -87,6 +88,7 @@ func getNotesByTitle(sess cache.Session, title string, debug bool) (notes gosn.N
 		if strings.Contains(err.Error(), "not found") {
 			return nil, fmt.Errorf("could not find any notes")
 		}
+
 		return
 	}
 
@@ -95,6 +97,7 @@ func getNotesByTitle(sess cache.Session, title string, debug bool) (notes gosn.N
 	allRawNotes, err = allEncNotes.ToItems(sess.Mk, sess.Ak)
 
 	var matchingRawNotes gosn.Notes
+
 	for _, rt := range allRawNotes {
 		t := rt.(*gosn.Note)
 		if t.Content.Title == title {
@@ -165,6 +168,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	inUUID := c.String("uuid")
 	inTitle := c.String("title")
 	inEditor := c.String("editor")
+
 	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
 		_ = cli.ShowSubcommandHelp(c)
 		return "", errors.New("title or UUID is required")
@@ -173,11 +177,13 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	var session cache.Session
 	session, _, err = cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
+
 	if err != nil {
 		return "", err
 	}
 
 	var cacheDBPath string
+
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return "", err
@@ -186,6 +192,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	session.CacheDBPath = cacheDBPath
 
 	var note gosn.Note
+
 	var notes gosn.Notes
 
 	// if uuid was passed then retrieve note from db using uuid
@@ -213,12 +220,14 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	var b []byte
+
 	b, err = captureInputFromEditor(note.Content.Title, note.Content.Text, inEditor)
 	if err != nil {
 		return "", err
 	}
 
 	var newTitle, newText string
+
 	newTitle, newText, err = parseEditorOutput(b)
 	if err != nil {
 		return
@@ -235,6 +244,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	var so cache.SyncOutput
+
 	so, err = cache.Sync(si)
 	if err != nil {
 		return
@@ -250,7 +260,6 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	return "", err
-
 }
 
 func parseEditorOutput(in []byte) (title, text string, err error) {

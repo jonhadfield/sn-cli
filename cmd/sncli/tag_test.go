@@ -51,8 +51,10 @@ func TestGetTagsByTitleAndUUID(t *testing.T) {
 	assert.Len(t, tags, 1)
 	assert.Equal(t, "TestTagOne", tags[0].Content.Title)
 
-	var tag gosn.Tag
+
 	tagUUID := tags[0].UUID
+
+	var tag gosn.Tag
 	tag, err = getTagByUUID(testSession, tagUUID, true)
 	assert.NoError(t, err)
 	assert.Equal(t, "TestTagOne", tag.Content.Title)

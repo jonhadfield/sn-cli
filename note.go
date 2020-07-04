@@ -119,6 +119,7 @@ func (i *GetNoteConfig) Run() (items gosn.Items, err error) {
 	if err != nil {
 		return
 	}
+
 	defer func() {
 		_ = so.DB.Close()
 	}()

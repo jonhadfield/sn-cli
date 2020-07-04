@@ -50,6 +50,7 @@ func getTagByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Tag, er
 		if strings.Contains(err.Error(), "not found") {
 			return tag, errors.New(fmt.Sprintf("could not find tag with UUID %s", uuid))
 		}
+
 		return
 	}
 
@@ -72,6 +73,7 @@ func getTagsByTitle(sess cache.Session, title string, debug bool) (tags gosn.Tag
 	if err != nil {
 		return
 	}
+
 	defer func() {
 		_ = so.DB.Close()
 	}()
@@ -79,11 +81,13 @@ func getTagsByTitle(sess cache.Session, title string, debug bool) (tags gosn.Tag
 	var allEncTags cache.Items
 
 	query := so.DB.Select(q.And(q.Eq("ContentType", "Tag"), q.Eq("Deleted", false)))
+
 	err = query.Find(&allEncTags)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return nil, fmt.Errorf("could not find any tags")
 		}
+
 		return
 	}
 
@@ -92,6 +96,7 @@ func getTagsByTitle(sess cache.Session, title string, debug bool) (tags gosn.Tag
 	allRawTags, err = allEncTags.ToItems(sess.Mk, sess.Ak)
 
 	var matchingRawTags gosn.Tags
+
 	for _, rt := range allRawTags {
 		t := rt.(*gosn.Tag)
 		if t.Content.Title == title {
@@ -105,12 +110,14 @@ func getTagsByTitle(sess cache.Session, title string, debug bool) (tags gosn.Tag
 func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	inUUID := c.String("uuid")
 	inTitle := c.String("title")
+
 	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
 		_ = cli.ShowSubcommandHelp(c)
 		return "", errors.New("title or UUID is required")
 	}
 
 	var sess cache.Session
+
 	sess, _, err = cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
 	if err != nil {
@@ -118,6 +125,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	var cacheDBPath string
+
 	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return "", err
@@ -126,6 +134,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	sess.CacheDBPath = cacheDBPath
 
 	var tag gosn.Tag
+
 	var tags gosn.Tags
 
 	// if uuid was passed then retrieve tag from db using uuid
@@ -158,8 +167,11 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	reader := bufio.NewReader(os.Stdin)
+
 	fmt.Print("new title: ")
+
 	text, _ := reader.ReadString('\n')
+
 	text = strings.TrimSuffix(text, "\n")
 	if len(text) == 0 {
 		return "", errors.New("new tag title not entered")
@@ -174,6 +186,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	var so cache.SyncOutput
+
 	so, err = cache.Sync(si)
 	if err != nil {
 		return
@@ -190,7 +203,6 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	return "", err
-
 }
 
 func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
@@ -246,6 +258,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	var sess cache.Session
+
 	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 	if err != nil {
 		return "", err
@@ -469,6 +482,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 	}
 
 	var sess cache.Session
+
 	sess, _, err = cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
 	if err != nil {
