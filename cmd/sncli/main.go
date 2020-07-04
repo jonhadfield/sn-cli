@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	sncli "github.com/jonhadfield/sn-cli"
 
@@ -869,7 +869,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					return err
 				}
 
-				session, _, err := cache.GetSession(opts.useSession,
+				var session cache.Session
+				session, _, err = cache.GetSession(opts.useSession,
 					opts.sessKey, opts.server)
 				if err != nil {
 					return err

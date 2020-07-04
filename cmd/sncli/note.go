@@ -13,11 +13,11 @@ import (
 	"strings"
 
 	"github.com/divan/num2words"
-	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 func getNoteByUUID(session cache.Session, uuid string, debug bool) (tag gosn.Note, err error) {
@@ -42,7 +42,9 @@ func getNoteByUUID(session cache.Session, uuid string, debug bool) (tag gosn.Not
 		return
 	}
 
-	defer so.DB.Close()
+	defer func() {
+		_ = so.DB.Close()
+	}()
 
 	var encNotes cache.Items
 
@@ -237,7 +239,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	notes = gosn.Notes{note}
-	if err = cache.SaveNotes(so.DB, session.Mk, session.Ak, notes, true, opts.debug) ; err != nil {
+	if err = cache.SaveNotes(so.DB, session.Mk, session.Ak, notes, true, opts.debug); err != nil {
 		return
 	}
 
