@@ -179,49 +179,14 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	tags = gosn.Tags{tag}
-	eTags, err := tags.Encrypt(session.Mk, session.Ak, opts.debug)
 
-	err = cache.SaveEncryptedItems(so.DB, eTags, true)
-	if err != nil {
-		fmt.Printf("%+v\n", err)
-		fmt.Println("dead here")
+	if err = cache.SaveTags(so.DB, session.Mk, session.Ak, tags, true, false) ; err != nil {
 		return
 	}
 
 	if _, err = cache.Sync(si); err != nil {
 		return
 	}
-
-	//err = so.DB.Close()
-	//if err != nil {
-	//	fmt.Println("dead x")
-	//	return
-	//}
-	//
-	//// decrypt cont
-	//
-	//// save content to tmp file
-	//file, err := ioutil.TempFile("dir", "prefix")
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//defer os.Remove(file.Name())
-	//_, err = io.WriteString(file, )
-	//if err != nil {
-	//	return err
-	//}
-	//return file.Sync()
-	//fmt.Println(file.Name()) // For example "dir/prefix054003078"
-	//
-	//
-	//
-	//// edit tmp file using vi
-	//
-	//// if exit code > 0 print the error
-	//
-	//// if exit code == 0 read tmp file
-	//
-	//// sync note content update
 
 	return "", err
 
