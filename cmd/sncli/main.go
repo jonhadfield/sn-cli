@@ -734,23 +734,24 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					filePath := fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
 					outputPath = currDir + string(os.PathSeparator) + filePath
 				}
-				session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+
+				var sess cache.Session
+				sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 				if err != nil {
 					return err
 				}
 
 				var cacheDBPath string
-				cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+				cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
 
-				session.CacheDBPath = cacheDBPath
+				sess.CacheDBPath = cacheDBPath
 				appExportConfig := sncli.ExportConfig{
-					Session: session,
-					//CacheDBPath: cacheDBPath,
-					File:  outputPath,
-					Debug: opts.debug,
+					Session: sess,
+					File:    outputPath,
+					Debug:   opts.debug,
 				}
 				err = appExportConfig.Run()
 				if err == nil {

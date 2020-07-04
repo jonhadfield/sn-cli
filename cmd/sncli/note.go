@@ -20,9 +20,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func getNoteByUUID(session cache.Session, uuid string, debug bool) (tag gosn.Note, err error) {
-	if session.CacheDBPath == "" {
-		return tag, errors.New("CacheDBPath missing from session")
+func getNoteByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Note, err error) {
+	if sess.CacheDBPath == "" {
+		return tag, errors.New("CacheDBPath missing from sess")
 	}
 
 	if uuid == "" {
@@ -32,7 +32,7 @@ func getNoteByUUID(session cache.Session, uuid string, debug bool) (tag gosn.Not
 	var so cache.SyncOutput
 
 	si := cache.SyncInput{
-		Session: session,
+		Session: sess,
 		Debug:   debug,
 		Close:   false,
 	}
@@ -57,16 +57,16 @@ func getNoteByUUID(session cache.Session, uuid string, debug bool) (tag gosn.Not
 	}
 
 	var rawEncItems gosn.Items
-	rawEncItems, err = encNotes.ToItems(session.Mk, session.Ak)
+	rawEncItems, err = encNotes.ToItems(sess.Mk, sess.Ak)
 
 	return *rawEncItems[0].(*gosn.Note), err
 }
 
-func getNotesByTitle(session cache.Session, title string, debug bool) (notes gosn.Notes, err error) {
+func getNotesByTitle(sess cache.Session, title string, debug bool) (notes gosn.Notes, err error) {
 	var so cache.SyncOutput
 
 	si := cache.SyncInput{
-		Session: session,
+		Session: sess,
 		Debug:   debug,
 		Close:   false,
 	}
@@ -91,7 +91,7 @@ func getNotesByTitle(session cache.Session, title string, debug bool) (notes gos
 
 	// decrypt all notes
 	var allRawNotes gosn.Items
-	allRawNotes, err = allEncNotes.ToItems(session.Mk, session.Ak)
+	allRawNotes, err = allEncNotes.ToItems(sess.Mk, sess.Ak)
 
 	var matchingRawNotes gosn.Notes
 	for _, rt := range allRawNotes {
@@ -500,7 +500,7 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 		return "", errors.New("")
 	}
 
-	session, _, err := cache.GetSession(opts.useSession,
+	sess, _, err := cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
 	if err != nil {
 		return msg, err
@@ -509,15 +509,15 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 	processedNotes := sncli.CommaSplit(title)
 
 	var cacheDBPath string
-	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 
 	if err != nil {
 		return msg, err
 	}
 
-	session.CacheDBPath = cacheDBPath
+	sess.CacheDBPath = cacheDBPath
 	DeleteNoteConfig := sncli.DeleteNoteConfig{
-		Session:    session,
+		Session:    sess,
 		NoteTitles: processedNotes,
 		Debug:      opts.debug,
 	}
