@@ -144,23 +144,23 @@ func tagNotes(i tagNotesInput) (err error) {
 	return nil
 }
 
-func (input *TagItemsConfig) Run() error {
+func (i *TagItemsConfig) Run() error {
 	tni := tagNotesInput{
-		matchTitle: input.FindTitle,
-		matchText:  input.FindText,
-		matchTags:  []string{input.FindTag},
-		newTags:    input.NewTags,
-		session:    input.Session,
+		matchTitle: i.FindTitle,
+		matchText:  i.FindText,
+		matchTags:  []string{i.FindTag},
+		newTags:    i.NewTags,
+		session:    i.Session,
 	}
 
 	return tagNotes(tni)
 }
 
-func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
+func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	// Sync DB
 	si := cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}
 
 	var so cache.SyncOutput
@@ -180,8 +180,8 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}()
 
 	ati := addTagsInput{
-		tagTitles: input.Tags,
-		session:   input.Session,
+		tagTitles: i.Tags,
+		session:   i.Session,
 	}
 
 	var ato addTagsOutput
@@ -201,8 +201,8 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}
 
 	so, err = Sync(cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}, true)
 	if err != nil {
 		return
@@ -211,12 +211,12 @@ func (input *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	return output, err
 }
 
-func (input *GetTagConfig) Run() (items gosn.Items, err error) {
+func (i *GetTagConfig) Run() (items gosn.Items, err error) {
 	var so cache.SyncOutput
 
 	si := cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}
 
 	so, err = Sync(si, true)
@@ -237,18 +237,18 @@ func (input *GetTagConfig) Run() (items gosn.Items, err error) {
 	}
 
 	//var items gosn.Items
-	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
+	items, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
 	if err != nil {
 		return
 	}
 
-	items.Filter(input.Filters)
+	items.Filter(i.Filters)
 
 	return items, err
 }
 
-func (input *DeleteTagConfig) Run() (noDeleted int, err error) {
-	noDeleted, err = deleteTags(input.Session, input.TagTitles, input.TagUUIDs)
+func (i *DeleteTagConfig) Run() (noDeleted int, err error) {
+	noDeleted, err = deleteTags(i.Session, i.TagTitles, i.TagUUIDs)
 	return noDeleted, err
 }
 

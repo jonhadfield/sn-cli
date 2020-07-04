@@ -19,14 +19,14 @@ var (
 	HiWhite = color.New(color.FgHiWhite).SprintFunc()
 )
 
-func (input *StatsConfig) Run() error {
+func (i *StatsConfig) Run() error {
 	var err error
 
 	var so cache.SyncOutput
 
 	so, err = Sync(cache.SyncInput{
-		Session: input.Session,
-		Debug:   input.Debug,
+		Session: i.Session,
+		Debug:   i.Debug,
 	}, true)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (input *StatsConfig) Run() error {
 	}
 
 	var items gosn.Items
-	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
+	items, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
 
 	var notes gosn.Items
 
