@@ -52,13 +52,6 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 	noteUUID = newNote.UUID
 	newNoteItems := gosn.Notes{newNote}
 
-	var eNewNoteItems gosn.EncryptedItems
-
-	eNewNoteItems, err = newNoteItems.Encrypt(input.session.Mk, input.session.Ak, false)
-	if err != nil {
-		return
-	}
-
 	si := cache.SyncInput{
 		Session: input.session,
 	}
@@ -70,7 +63,7 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 		return
 	}
 
-	if err = cache.SaveEncryptedItems(so.DB, eNewNoteItems, true); err != nil {
+	if err = cache.SaveNotes(so.DB, input.session.Mk, input.session.Ak, newNoteItems, true, false); err != nil {
 		return
 	}
 
@@ -126,7 +119,9 @@ func (input *GetNoteConfig) Run() (items gosn.Items, err error) {
 	if err != nil {
 		return
 	}
-	defer so.DB.Close()
+	defer func() {
+		_ = so.DB.Close()
+	}()
 
 	items, err = allPersistedItems.ToItems(input.Session.Mk, input.Session.Ak)
 	if err != nil {
