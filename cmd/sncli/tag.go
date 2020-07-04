@@ -48,7 +48,7 @@ func getTagByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Tag, er
 	query := so.DB.Select(q.And(q.Eq("UUID", uuid), q.Eq("Deleted", false)))
 	if err = query.Find(&encTags); err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			return tag, errors.New(fmt.Sprintf("could not find tag with inUUID %s", uuid))
+			return tag, errors.New(fmt.Sprintf("could not find tag with UUID %s", uuid))
 		}
 		return
 	}
@@ -79,7 +79,8 @@ func getTagsByTitle(sess cache.Session, title string, debug bool) (tags gosn.Tag
 	var allEncTags cache.Items
 
 	query := so.DB.Select(q.And(q.Eq("ContentType", "Tag"), q.Eq("Deleted", false)))
-	if err = query.Find(&allEncTags); err != nil {
+	err = query.Find(&allEncTags)
+	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return nil, fmt.Errorf("could not find any tags")
 		}
@@ -180,7 +181,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	tags = gosn.Tags{tag}
 
-	if err = cache.SaveTags(so.DB, sess.Mk, sess.Ak, tags, true, false) ; err != nil {
+	if err = cache.SaveTags(so.DB, sess.Mk, sess.Ak, tags, true, false); err != nil {
 		return
 	}
 

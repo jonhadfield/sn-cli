@@ -53,6 +53,7 @@ func getNoteByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Note, 
 		if strings.Contains(err.Error(), "not found") {
 			return tag, errors.New(fmt.Sprintf("could not find note with inUUID %s", uuid))
 		}
+
 		return
 	}
 
@@ -119,6 +120,7 @@ func openInEditor(filename, editor string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
 	return cmd.Run()
 }
 
