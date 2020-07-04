@@ -104,7 +104,7 @@ func addNote(input addNoteInput) (noteUUID string, err error) {
 }
 
 func (input *DeleteNoteConfig) Run() (noDeleted int, err error) {
-	noDeleted, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, "", input.Debug)
+	noDeleted, err = deleteNotes(input.Session, input.NoteTitles, input.NoteText, input.NoteUUIDs, input.Regex, input.Debug)
 
 	return noDeleted, err
 }
@@ -138,7 +138,7 @@ func (input *GetNoteConfig) Run() (items gosn.Items, err error) {
 	return
 }
 
-func deleteNotes(session cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, syncToken string, debug bool) (noDeleted int, err error) {
+func deleteNotes(session cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, debug bool) (noDeleted int, err error) {
 	var getNotesFilters []gosn.Filter
 
 	switch {
@@ -228,15 +228,7 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 		return
 	}
 
-	var eNotesToDelete gosn.EncryptedItems
-
-	eNotesToDelete, err = notesToDelete.Encrypt(session.Mk, session.Ak, false)
-	if err != nil {
-		return
-	}
-
-	err = cache.SaveEncryptedItems(gio.DB, eNotesToDelete, true)
-	if err != nil {
+	if err = cache.SaveNotes(gio.DB, session.Mk, session.Ak, notesToDelete, true, debug); err != nil {
 		return 0, err
 	}
 

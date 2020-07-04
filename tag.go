@@ -3,7 +3,7 @@ package sncli
 import (
 	"strings"
 
-	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 )
 

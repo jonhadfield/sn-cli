@@ -237,11 +237,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	notes = gosn.Notes{note}
-	var eTags gosn.EncryptedItems
-	eTags, err = notes.Encrypt(session.Mk, session.Ak, opts.debug)
-
-	err = cache.SaveEncryptedItems(so.DB, eTags, true)
-	if err != nil {
+	if err = cache.SaveNotes(so.DB, session.Mk, session.Ak, notes, true, opts.debug) ; err != nil {
 		return
 	}
 
