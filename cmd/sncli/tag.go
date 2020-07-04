@@ -10,11 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 func getTagByUUID(session cache.Session, uuid string, debug bool) (tag gosn.Tag, err error) {
@@ -39,7 +39,9 @@ func getTagByUUID(session cache.Session, uuid string, debug bool) (tag gosn.Tag,
 		return
 	}
 
-	defer so.DB.Close()
+	defer func() {
+		_ = so.DB.Close()
+	}()
 
 	var encTags cache.Items
 
@@ -70,7 +72,9 @@ func getTagsByTitle(session cache.Session, title string, debug bool) (tags gosn.
 	if err != nil {
 		return
 	}
-	defer so.DB.Close()
+	defer func() {
+		_ = so.DB.Close()
+	}()
 
 	var allEncTags cache.Items
 
@@ -146,7 +150,6 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 		tag = tags[0]
 	}
-
 
 	// only show existing title information if uuid was passed
 	if inUUID != "" {
@@ -276,7 +279,8 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 		})
 	}
 
-	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+	var session cache.Session
+	session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 	if err != nil {
 		return "", err
 	}
