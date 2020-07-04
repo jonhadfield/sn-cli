@@ -204,7 +204,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					Name:  "note",
 					Usage: "edit a note",
 					BashComplete: func(c *cli.Context) {
-						addNoteOpts := []string{"--title", "--uuid"}
+						addNoteOpts := []string{"--title", "--uuid", "--editor"}
 						if c.NArg() > 0 {
 							return
 						}
@@ -220,6 +220,11 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						cli.StringFlag{
 							Name:  "uuid",
 							Usage: "uuid of the note",
+						},
+						cli.StringFlag{
+							Name:  "editor",
+							Usage: "path to editor",
+							EnvVar: "EDITOR",
 						},
 					},
 					Action: func(c *cli.Context) error {

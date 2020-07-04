@@ -102,9 +102,7 @@ func getNotesByTitle(session cache.Session, title string, debug bool) (notes gos
 	return matchingRawNotes, err
 }
 
-// TODO: enable passing of editor
-func openInEditor(filename string) error {
-	editor := os.Getenv("EDITOR")
+func openInEditor(filename, editor string) error {
 	if editor == "" {
 		return errors.New("could not detect editor")
 	}
@@ -122,7 +120,7 @@ func openInEditor(filename string) error {
 	return cmd.Run()
 }
 
-func captureInputFromEditor(title, text string) ([]byte, error) {
+func captureInputFromEditor(title, text, editor string) ([]byte, error) {
 	file, err := ioutil.TempFile(os.TempDir(), "*")
 	if err != nil {
 		return []byte{}, err
@@ -141,7 +139,7 @@ func captureInputFromEditor(title, text string) ([]byte, error) {
 		_ = os.Remove(filename)
 	}()
 
-	if err = openInEditor(filename); err != nil {
+	if err = openInEditor(filename, editor); err != nil {
 		return []byte{}, err
 	}
 
@@ -162,6 +160,7 @@ func captureInputFromEditor(title, text string) ([]byte, error) {
 func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	inUUID := c.String("uuid")
 	inTitle := c.String("title")
+	inEditor := c.String("editor")
 	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
 		_ = cli.ShowSubcommandHelp(c)
 		return "", errors.New("title or UUID is required")
@@ -210,7 +209,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	var b []byte
-	b, err = captureInputFromEditor(note.Content.Title, note.Content.Text)
+	b, err = captureInputFromEditor(note.Content.Title, note.Content.Text, inEditor)
 	if err != nil {
 		return "", err
 	}
@@ -238,7 +237,8 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	notes = gosn.Notes{note}
-	eTags, err := notes.Encrypt(session.Mk, session.Ak, opts.debug)
+	var eTags gosn.EncryptedItems
+	eTags, err = notes.Encrypt(session.Mk, session.Ak, opts.debug)
 
 	err = cache.SaveEncryptedItems(so.DB, eTags, true)
 	if err != nil {
