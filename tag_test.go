@@ -1,10 +1,10 @@
 package sncli
 
 import (
+	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
 	"testing"
 
-	gosn "github.com/jonhadfield/gosn-v2"
-	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +32,7 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 }
 
 func TestGetTag(t *testing.T) {
-	defer cleanUp(testSession)
+	defer cleanUp(*testSession)
 
 	testTagTitles := []string{"TestTagOne", "TestTagTwo"}
 	addTagInput := AddTagsInput{
@@ -75,7 +75,7 @@ func TestGetTag(t *testing.T) {
 func _addNotes(session cache.Session, i map[string]string) error {
 	for k, v := range i {
 		addNoteConfig := AddNoteInput{
-			Session: session,
+			Session: &session,
 			Title:   k,
 			Text:    v,
 		}
@@ -92,7 +92,7 @@ func _addNotes(session cache.Session, i map[string]string) error {
 func _deleteNotesByTitle(session cache.Session, input map[string]string) (noDeleted int, err error) {
 	for k := range input {
 		deleteNoteConfig := DeleteNoteConfig{
-			Session:    session,
+			Session:    &session,
 			NoteTitles: []string{k},
 		}
 		_, err = deleteNoteConfig.Run()
@@ -108,7 +108,7 @@ func _deleteNotesByTitle(session cache.Session, input map[string]string) (noDele
 
 func _deleteTagsByTitle(session cache.Session, input []string) (noDeleted int, err error) {
 	deleteTagConfig := DeleteTagConfig{
-		Session:   session,
+		Session:   &session,
 		TagTitles: input,
 	}
 
@@ -116,7 +116,7 @@ func _deleteTagsByTitle(session cache.Session, input []string) (noDeleted int, e
 }
 
 func TestTaggingOfNotes(t *testing.T) {
-	defer cleanUp(testSession)
+	defer cleanUp(*testSession)
 
 	// create four notes
 	notes := map[string]string{
@@ -126,7 +126,7 @@ func TestTaggingOfNotes(t *testing.T) {
 		"noteFourTitle":  "noteFourText example",
 	}
 
-	err := _addNotes(testSession, notes)
+	err := _addNotes(*testSession, notes)
 	assert.NoError(t, err, err)
 	// tag new notes with 'testTag'
 	tags := []string{"testTag"}
@@ -162,11 +162,11 @@ func TestTaggingOfNotes(t *testing.T) {
 		t.Errorf("expected two notes but got: %d", len(retNotes))
 	}
 
-	_, err = _deleteNotesByTitle(testSession, notes)
+	_, err = _deleteNotesByTitle(*testSession, notes)
 	assert.NoError(t, err, err)
 
 	var deletedTags int
-	deletedTags, err = _deleteTagsByTitle(testSession, tags)
+	deletedTags, err = _deleteTagsByTitle(*testSession, tags)
 	assert.NoError(t, err, err)
 	assert.Equal(t, len(tags), deletedTags)
 }

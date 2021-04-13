@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/divan/num2words"
 	"github.com/jonhadfield/gosn-v2"
@@ -32,7 +33,7 @@ func getNoteByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Note, 
 	var so cache.SyncOutput
 
 	si := cache.SyncInput{
-		Session: sess,
+		Session: &sess,
 		Debug:   debug,
 		Close:   false,
 	}
@@ -58,32 +59,37 @@ func getNoteByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Note, 
 	}
 
 	var rawEncItems gosn.Items
-	rawEncItems, err = encNotes.ToItems(sess.Mk, sess.Ak)
+	rawEncItems, err = encNotes.ToItems(&sess)
 
 	return *rawEncItems[0].(*gosn.Note), err
 }
 
-func getNotesByTitle(sess cache.Session, title string, debug bool) (notes gosn.Notes, err error) {
-	var so cache.SyncOutput
+func getNotesByTitle(sess cache.Session, title string, debug bool, close bool) (notes gosn.Notes, err error) {
+	if sess.CacheDB == nil {
+		var so cache.SyncOutput
 
-	si := cache.SyncInput{
-		Session: sess,
-		Debug:   debug,
-		Close:   false,
+		si := cache.SyncInput{
+			Session: &sess,
+			Debug:   debug,
+			Close:   false,
+		}
+
+		so, err = cache.Sync(si)
+		if err != nil {
+			return
+		}
+		sess.CacheDB = so.DB
+
+		defer func() {
+			if close {
+				_ = so.DB.Close()
+			}
+		}()
 	}
-
-	so, err = cache.Sync(si)
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		_ = so.DB.Close()
-	}()
 
 	var allEncNotes cache.Items
 
-	query := so.DB.Select(q.And(q.Eq("ContentType", "Note"), q.Eq("Deleted", false)))
+	query := sess.CacheDB.Select(q.And(q.Eq("ContentType", "Note"), q.Eq("Deleted", false)))
 	if err = query.Find(&allEncNotes); err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return nil, fmt.Errorf("could not find any notes")
@@ -94,7 +100,7 @@ func getNotesByTitle(sess cache.Session, title string, debug bool) (notes gosn.N
 
 	// decrypt all notes
 	var allRawNotes gosn.Items
-	allRawNotes, err = allEncNotes.ToItems(sess.Mk, sess.Ak)
+	allRawNotes, err = allEncNotes.ToItems(&sess)
 
 	var matchingRawNotes gosn.Notes
 
@@ -174,22 +180,39 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 		return "", errors.New("title or UUID is required")
 	}
 
-	var session cache.Session
-	session, _, err = cache.GetSession(opts.useSession,
+	var cSession cache.Session
+	cSession, _, err = cache.GetSession(opts.useSession,
 		opts.sessKey, opts.server)
 
 	if err != nil {
 		return "", err
 	}
 
+	cSession.Debug = opts.debug
+
 	var cacheDBPath string
 
-	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+	cacheDBPath, err = cache.GenCacheDBPath(cSession, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return "", err
 	}
 
-	session.CacheDBPath = cacheDBPath
+	cSession.CacheDBPath = cacheDBPath
+
+	// run sync to propagate DB
+	si := cache.SyncInput{
+		Session: &cSession,
+		Debug:   opts.debug,
+		Close:   false,
+	}
+
+	var cso cache.SyncOutput
+
+	cso, err = cache.Sync(si)
+	if err != nil {
+		return
+	}
+	cSession.CacheDB = cso.DB
 
 	var note gosn.Note
 
@@ -197,14 +220,14 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	// if uuid was passed then retrieve note from db using uuid
 	if inUUID != "" {
-		if note, err = getNoteByUUID(session, inUUID, opts.debug); err != nil {
+		if note, err = getNoteByUUID(cSession, inUUID, opts.debug); err != nil {
 			return
 		}
 	}
 
 	// if title was passed then retrieve note(s) matching that title
 	if inTitle != "" {
-		if notes, err = getNotesByTitle(session, inTitle, opts.debug); err != nil {
+		if notes, err = getNotesByTitle(cSession, inTitle, opts.debug, false); err != nil {
 			return
 		}
 
@@ -220,7 +243,6 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	var b []byte
-
 	b, err = captureInputFromEditor(note.Content.Title, note.Content.Text, inEditor)
 	if err != nil {
 		return "", err
@@ -233,28 +255,27 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 		return
 	}
 
+	if note.Content.Title == newTitle && note.Content.Text == newText {
+		return "note unchanged", nil
+	}
+
 	note.Content.Title = newTitle
 	note.Content.Text = newText
+	note.Content.SetUpdateTime(time.Now().UTC())
 
-	// sync note content update
-	si := cache.SyncInput{
-		Session: session,
-		Debug:   opts.debug,
-		Close:   false,
-	}
-
-	var so cache.SyncOutput
-
-	so, err = cache.Sync(si)
-	if err != nil {
-		return
-	}
-
+	// save note to db
 	notes = gosn.Notes{note}
-	if err = cache.SaveNotes(so.DB, session.Mk, session.Ak, notes, true, opts.debug); err != nil {
+
+	if err = cache.SaveNotes(&cSession, cSession.CacheDB, notes, false); err != nil {
 		return
 	}
 
+
+	if err = cSession.CacheDB.Close(); err != nil {
+		return
+	}
+
+	si.Close = false
 	if _, err = cache.Sync(si); err != nil {
 		return
 	}
@@ -353,7 +374,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	session.CacheDBPath = cacheDBPath
 
 	getNoteConfig := sncli.GetNoteConfig{
-		Session: session,
+		Session: &session,
 		Filters: getNotesIF,
 		Debug:   opts.debug,
 	}
@@ -475,17 +496,13 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	processedTags := sncli.CommaSplit(c.String("tag"))
 
-	var cacheDBPath string
-
-	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+	session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
 		return "", err
 	}
 
-	session.CacheDBPath = cacheDBPath
-
 	AddNoteInput := sncli.AddNoteInput{
-		Session: session,
+		Session: &session,
 		Title:   title,
 		Text:    text,
 		Tags:    processedTags,
@@ -528,7 +545,7 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 
 	sess.CacheDBPath = cacheDBPath
 	DeleteNoteConfig := sncli.DeleteNoteConfig{
-		Session:    sess,
+		Session:    &sess,
 		NoteTitles: processedNotes,
 		Debug:      opts.debug,
 	}

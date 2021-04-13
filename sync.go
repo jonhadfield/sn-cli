@@ -26,7 +26,11 @@ func Sync(si cache.SyncInput, showProgress bool) (so cache.SyncOutput, err error
 		return
 	}
 
-	return sync(si)
+	a, err := sync(si)
+	if err != nil {
+		panic(err)
+	}
+	return a, err
 }
 
 func sync(si cache.SyncInput) (so cache.SyncOutput, err error) {

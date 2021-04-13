@@ -9,18 +9,18 @@ import (
 )
 
 type ExportConfig struct {
-	Session cache.Session
+	Session *cache.Session
 	File    string
 	Debug   bool
 }
 
 type ImportConfig struct {
-	Session cache.Session
+	Session *cache.Session
 	File    string
 	Debug   bool
 }
 
-func (i *ExportConfig) Run() error {
+func (i ExportConfig) Run() error {
 	// populate DB
 	gii := cache.SyncInput{
 		Session: i.Session,
@@ -54,14 +54,18 @@ func (i *ExportConfig) Run() error {
 		return err
 	}
 
-	out, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
+	out, err = allPersistedItems.ToItems(i.Session)
 	if err != nil {
 		return err
 	}
 
 	var e gosn.EncryptedItems
 
-	e, err = out.Encrypt(i.Session.Mk, i.Session.Ak, i.Debug)
+	//f := cache.GetSession(i.Session)
+
+
+
+	e, err = out.Encrypt(i.Session.Gosn())
 	if err != nil {
 		return err
 	}

@@ -23,9 +23,8 @@ func (i *StatsConfig) Run() error {
 	var err error
 
 	var so cache.SyncOutput
-
 	so, err = Sync(cache.SyncInput{
-		Session: i.Session,
+		Session: &i.Session,
 		Debug:   i.Debug,
 	}, true)
 	if err != nil {
@@ -38,11 +37,13 @@ func (i *StatsConfig) Run() error {
 	}
 
 	var items gosn.Items
-	items, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
+	items, err = allPersistedItems.ToItems(&i.Session)
 
 	var notes gosn.Items
 
 	var oldestNote, newestNote, lastUpdatedNote time.Time
+
+	var missingItemsKey []string
 
 	var missingContentUUIDs []string
 
@@ -70,6 +71,11 @@ func (i *StatsConfig) Run() error {
 		if item.IsDeleted() {
 			tCounter.update("Deleted")
 		}
+
+		if ! item.IsDeleted() && item.GetItemsKeyID() == ""  {
+			missingItemsKey = append(missingItemsKey, item.GetUUID())
+		}
+
 
 		if !item.IsDeleted() && item.GetContentType() == "" {
 			missingContentTypeUUIDs = append(missingContentTypeUUIDs, item.GetUUID())
@@ -157,7 +163,7 @@ func (i *StatsConfig) Run() error {
 
 	fmt.Println(Green("\nISSUES"))
 
-	if allEmpty(duplicateUUIDs, missingContentUUIDs, missingContentTypeUUIDs) {
+	if allEmpty(duplicateUUIDs, missingContentUUIDs, missingContentTypeUUIDs, missingItemsKey) {
 		fmt.Println("None")
 	}
 
@@ -171,6 +177,10 @@ func (i *StatsConfig) Run() error {
 
 	if len(missingContentTypeUUIDs) > 0 {
 		fmt.Println("Missing content type UUIDs:", outList(missingContentTypeUUIDs, ", "))
+	}
+
+	if len(missingItemsKey) > 0 {
+		fmt.Println("Missing items key ID:", outList(missingItemsKey, ", "))
 	}
 
 	return err

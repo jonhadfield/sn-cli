@@ -119,7 +119,7 @@ type NoteYAML struct {
 }
 
 type TagItemsConfig struct {
-	Session    cache.Session
+	Session    *cache.Session
 	FindTitle  string
 	FindText   string
 	FindTag    string
@@ -130,7 +130,7 @@ type TagItemsConfig struct {
 }
 
 type AddTagsInput struct {
-	Session cache.Session
+	Session *cache.Session
 	Tags    []string
 	Debug   bool
 }
@@ -140,21 +140,21 @@ type AddTagsOutput struct {
 }
 
 type GetTagConfig struct {
-	Session cache.Session
+	Session *cache.Session
 	Filters gosn.ItemFilters
 	Output  string
 	Debug   bool
 }
 
 type GetSettingsConfig struct {
-	Session cache.Session
+	Session *cache.Session
 	Filters gosn.ItemFilters
 	Output  string
 	Debug   bool
 }
 
 type GetNoteConfig struct {
-	Session    cache.Session
+	Session    *cache.Session
 	Filters    gosn.ItemFilters
 	NoteTitles []string
 	TagTitles  []string
@@ -165,7 +165,7 @@ type GetNoteConfig struct {
 }
 
 type DeleteTagConfig struct {
-	Session   cache.Session
+	Session   *cache.Session
 	Email     string
 	TagTitles []string
 	TagUUIDs  []string
@@ -174,7 +174,7 @@ type DeleteTagConfig struct {
 }
 
 type AddNoteInput struct {
-	Session cache.Session
+	Session *cache.Session
 	Title   string
 	Text    string
 	Tags    []string
@@ -183,7 +183,7 @@ type AddNoteInput struct {
 }
 
 type DeleteNoteConfig struct {
-	Session    cache.Session
+	Session    *cache.Session
 	NoteTitles []string
 	NoteText   string
 	NoteUUIDs  []string
@@ -192,7 +192,7 @@ type DeleteNoteConfig struct {
 }
 
 type WipeConfig struct {
-	Session  cache.Session
+	Session  *cache.Session
 	Debug    bool
 	Settings bool
 }
@@ -272,6 +272,9 @@ func (i *WipeConfig) Run() (int, error) {
 	var itemsToDel int
 
 	for _, fi := range filteredItems {
+		if fi.ContentType == "SN|ItemsKey" {
+			panic("attempted to delete SN|ItemsKey")
+		}
 		itemsToDel++
 
 		fi.Deleted = true

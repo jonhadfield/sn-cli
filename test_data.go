@@ -101,7 +101,7 @@ func genTags(num int64) (tags gosn.Items) {
 	return tags
 }
 
-func createNotes(session cache.Session, num int, paras int) error {
+func createNotes(session *cache.Session, num int, paras int) error {
 	var pii cache.SyncInput
 	pii.Session = session
 	gendNotes := genNotes(num, paras)
@@ -110,9 +110,13 @@ func createNotes(session cache.Session, num int, paras int) error {
 
 	var err error
 
-	eGendNotes, err = gendNotes.Encrypt(session.Mk, session.Ak, true)
+	eGendNotes, err = gendNotes.Encrypt(session.Gosn())
 	if err != nil {
 		return err
+	}
+	err = gendNotes.Validate()
+	if err != nil {
+		panic(err)
 	}
 
 	// get db
@@ -125,7 +129,6 @@ func createNotes(session cache.Session, num int, paras int) error {
 	if err != nil {
 		return err
 	}
-
 	err = cache.SaveEncryptedItems(so.DB, eGendNotes, true)
 	if err != nil {
 		return err
@@ -143,12 +146,12 @@ func createNotes(session cache.Session, num int, paras int) error {
 
 func createTags(session gosn.Session, num int64) error {
 	var pii gosn.SyncInput
-	pii.Session = session
+	pii.Session = &session
 	gendTags := genTags(num)
 
 	var eGendTags gosn.EncryptedItems
 
-	eGendTags, _ = gendTags.Encrypt(session.Mk, session.Ak, true)
+	eGendTags, _ = gendTags.Encrypt(session)
 	pii.Items = eGendTags
 	_, err := gosn.Sync(pii)
 
@@ -173,5 +176,5 @@ func (i *TestDataCreateTagsConfig) Run() error {
 }
 
 func (i *TestDataCreateNotesConfig) Run() error {
-	return createNotes(i.Session, i.NumNotes, i.NumParas)
+	return createNotes(&i.Session, i.NumNotes, i.NumParas)
 }

@@ -27,7 +27,7 @@ func (i *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 
 	var items gosn.Items
 
-	items, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
+	items, err = allPersistedItems.ToItems(i.Session)
 	if err != nil {
 		return
 	}

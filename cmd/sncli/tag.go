@@ -17,7 +17,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func getTagByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Tag, err error) {
+func getTagByUUID(sess *cache.Session, uuid string, debug bool) (tag gosn.Tag, err error) {
 	if sess.CacheDBPath == "" {
 		return tag, errors.New("CacheDBPath missing from sess")
 	}
@@ -55,7 +55,7 @@ func getTagByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Tag, er
 	}
 
 	var rawEncItems gosn.Items
-	rawEncItems, err = encTags.ToItems(sess.Mk, sess.Ak)
+	rawEncItems, err = encTags.ToItems(sess)
 
 	return *rawEncItems[0].(*gosn.Tag), err
 }
@@ -64,7 +64,7 @@ func getTagsByTitle(sess cache.Session, title string, debug bool) (tags gosn.Tag
 	var so cache.SyncOutput
 
 	si := cache.SyncInput{
-		Session: sess,
+		Session: &sess,
 		Debug:   debug,
 		Close:   false,
 	}
@@ -93,7 +93,7 @@ func getTagsByTitle(sess cache.Session, title string, debug bool) (tags gosn.Tag
 
 	// decrypt all tags
 	var allRawTags gosn.Items
-	allRawTags, err = allEncTags.ToItems(sess.Mk, sess.Ak)
+	allRawTags, err = allEncTags.ToItems(&sess)
 
 	var matchingRawTags gosn.Tags
 
@@ -139,7 +139,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	// if uuid was passed then retrieve tag from db using uuid
 	if inUUID != "" {
-		if tag, err = getTagByUUID(sess, inUUID, opts.debug); err != nil {
+		if tag, err = getTagByUUID(&sess, inUUID, opts.debug); err != nil {
 			return
 		}
 	}
@@ -180,7 +180,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	tag.Content.Title = text
 
 	si := cache.SyncInput{
-		Session: sess,
+		Session: &sess,
 		Debug:   opts.debug,
 		Close:   false,
 	}
@@ -194,7 +194,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	tags = gosn.Tags{tag}
 
-	if err = cache.SaveTags(so.DB, sess.Mk, sess.Ak, tags, true, false); err != nil {
+	if err = cache.SaveTags(so.DB, &sess, tags, false); err != nil {
 		return
 	}
 
@@ -277,7 +277,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	sess.CacheDBPath = cacheDBPath
 
 	appGetTagConfig := sncli.GetTagConfig{
-		Session: sess,
+		Session: &sess,
 		Filters: getTagsIF,
 		Output:  output,
 		Debug:   opts.debug,
@@ -397,7 +397,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	// prepare input
 	tags := sncli.CommaSplit(tagInput)
 	addTagInput := sncli.AddTagsInput{
-		Session: session,
+		Session: &session,
 		Tags:    tags,
 		Debug:   opts.debug,
 	}
@@ -452,7 +452,7 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	appConfig := sncli.TagItemsConfig{
-		Session:    sess,
+		Session:    &sess,
 		FindText:   findText,
 		FindTitle:  findTitle,
 		FindTag:    findTag,
@@ -502,7 +502,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 	sess.CacheDBPath = cacheDBPath
 
 	DeleteTagConfig := sncli.DeleteTagConfig{
-		Session:   sess,
+		Session:   &sess,
 		TagTitles: tags,
 		TagUUIDs:  uuids,
 		Debug:     opts.debug,

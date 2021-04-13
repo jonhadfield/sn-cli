@@ -8,7 +8,7 @@ import (
 )
 
 type tagNotesInput struct {
-	session        cache.Session
+	session        *cache.Session
 	matchTitle     string
 	matchText      string
 	matchTags      []string
@@ -58,14 +58,13 @@ func tagNotes(i tagNotesInput) (err error) {
 	}
 
 	var allPersistedItems cache.Items
-
 	if err = so.DB.All(&allPersistedItems); err != nil {
 		return
 	}
 
 	var items gosn.Items
 
-	items, err = allPersistedItems.ToItems(i.session.Mk, i.session.Ak)
+	items, err = allPersistedItems.ToItems(i.session)
 	if err != nil {
 		return
 	}
@@ -119,10 +118,9 @@ func tagNotes(i tagNotesInput) (err error) {
 		}
 	}
 
-	if err = cache.SaveTags(so.DB, i.session.Mk, i.session.Ak, tagsToPush, true, false) ; err != nil {
+	if err = cache.SaveTags(so.DB, i.session, tagsToPush, true); err != nil {
 		return
 	}
-
 
 	if len(tagsToPush) > 0 {
 		pii := cache.SyncInput{
@@ -164,8 +162,8 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}
 
 	var so cache.SyncOutput
-
 	so, err = Sync(si, true)
+
 	if err != nil {
 		return
 	}
@@ -199,7 +197,6 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	if err != nil {
 		return
 	}
-
 	so, err = Sync(cache.SyncInput{
 		Session: i.Session,
 		Debug:   i.Debug,
@@ -207,7 +204,6 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	if err != nil {
 		return
 	}
-
 	return output, err
 }
 
@@ -236,8 +232,7 @@ func (i *GetTagConfig) Run() (items gosn.Items, err error) {
 		return
 	}
 
-	//var items gosn.Items
-	items, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
+	items, err = allPersistedItems.ToItems(i.Session)
 	if err != nil {
 		return
 	}
@@ -252,7 +247,7 @@ func (i *DeleteTagConfig) Run() (noDeleted int, err error) {
 	return noDeleted, err
 }
 
-func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (noDeleted int, err error) {
+func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (noDeleted int, err error) {
 	deleteTagsFilter := gosn.Filter{
 		Type: "Tag",
 	}
@@ -290,7 +285,7 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 
 	var items gosn.Items
 
-	items, err = allPersistedItems.ToItems(session.Mk, session.Ak)
+	items, err = allPersistedItems.ToItems(session)
 	if err != nil {
 		return
 	}
@@ -320,7 +315,7 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 	}
 
 	var eTagsToDelete gosn.EncryptedItems
-	eTagsToDelete, err = tagsToDelete.Encrypt(session.Mk, session.Ak, false)
+	eTagsToDelete, err = tagsToDelete.Encrypt(session.Gosn())
 
 	if err = cache.SaveEncryptedItems(so.DB, eTagsToDelete, true); err != nil {
 		return
@@ -344,7 +339,7 @@ func deleteTags(session cache.Session, tagTitles []string, tagUUIDs []string) (n
 }
 
 type addTagsInput struct {
-	session   cache.Session
+	session   *cache.Session
 	tagTitles []string
 }
 
@@ -386,7 +381,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 
 	var items gosn.Items
 
-	items, err = allPersistedItems.ToItems(ati.session.Mk, ati.session.Ak)
+	items, err = allPersistedItems.ToItems(ati.session)
 	if err != nil {
 		return
 	}
@@ -429,7 +424,6 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	}
 
 	if len(tagsToAdd) > 0 {
-
 		so, err = Sync(putItemsInput, true)
 		if err != nil {
 			return
@@ -437,7 +431,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 
 		var eTagsToAdd gosn.EncryptedItems
 
-		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Mk, ati.session.Ak, false)
+		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Gosn())
 		if err != nil {
 			return
 		}

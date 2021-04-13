@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"github.com/asdine/storm/v3/q"
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 )
@@ -35,7 +36,7 @@ func (i *AddNoteInput) Run() (err error) {
 }
 
 type addNoteInput struct {
-	session   cache.Session
+	session   *cache.Session
 	noteTitle string
 	noteText  string
 	tagTitles []string
@@ -62,11 +63,21 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	if err != nil {
 		return
 	}
+	// get items key
+	var allItemsKeys cache.Items
+	kquery := so.DB.Select(q.And(q.Eq("ContentType", "SN|ItemsKey"), q.Eq("Deleted", false)))
+	err = kquery.Find(&allItemsKeys)
 
-	if err = cache.SaveNotes(so.DB, i.session.Mk, i.session.Ak, newNoteItems, true, false); err != nil {
+	var allEncTags cache.Items
+
+	query := so.DB.Select(q.And(q.Eq("ContentType", "Tag"), q.Eq("Deleted", false)))
+
+	err = query.Find(&allEncTags)
+
+	if err = cache.SaveNotes(i.session, so.DB, newNoteItems, false); err != nil {
 		return
 	}
-
+	_ = so.DB.Close()
 	pii := cache.SyncInput{
 		Session: i.session,
 	}
@@ -124,7 +135,7 @@ func (i *GetNoteConfig) Run() (items gosn.Items, err error) {
 		_ = so.DB.Close()
 	}()
 
-	items, err = allPersistedItems.ToItems(i.Session.Mk, i.Session.Ak)
+	items, err = allPersistedItems.ToItems(i.Session)
 	if err != nil {
 		return
 	}
@@ -134,7 +145,7 @@ func (i *GetNoteConfig) Run() (items gosn.Items, err error) {
 	return
 }
 
-func deleteNotes(session cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, debug bool) (noDeleted int, err error) {
+func deleteNotes(session *cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, debug bool) (noDeleted int, err error) {
 	var getNotesFilters []gosn.Filter
 
 	switch {
@@ -201,7 +212,7 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 
 	var notes gosn.Items
 
-	notes, err = allPersistedItems.ToItems(session.Mk, session.Ak)
+	notes, err = allPersistedItems.ToItems(session)
 	if err != nil {
 		return
 	}
@@ -224,7 +235,7 @@ func deleteNotes(session cache.Session, noteTitles []string, noteText string, no
 		return
 	}
 
-	if err = cache.SaveNotes(gio.DB, session.Mk, session.Ak, notesToDelete, true, debug); err != nil {
+	if err = cache.SaveNotes(session, gio.DB, notesToDelete, true); err != nil {
 		return 0, err
 	}
 

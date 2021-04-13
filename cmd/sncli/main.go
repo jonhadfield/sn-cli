@@ -32,6 +32,8 @@ const (
 	msgItemsDeleted    = "Items deleted"
 	msgNoMatches       = "No matches"
 	snAppName          = "sn-cli"
+	timeLayout          = "2006-01-02T15:04:05.000Z"
+	timeLayout2         = "2006-01-02T15:04:05.000000Z"
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
@@ -42,7 +44,7 @@ var version, versionOutput, tag, sha, buildDate string
 func main() {
 	msg, display, err := startCLI(os.Args)
 	if err != nil {
-		fmt.Printf("error: %+v\n", err)
+		fmt.Println("err:", err)
 		os.Exit(1)
 	}
 
@@ -511,7 +513,16 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						if err != nil {
 							return err
 						}
-
+						ss := session.Gosn()
+						// sync to get keys
+						gsi := gosn.SyncInput{
+							Session:     &ss,
+							Debug:       ss.Debug,
+						}
+						_, err = gosn.Sync(gsi)
+						if err != nil {
+							return err
+						}
 						var cacheDBPath string
 						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 						if err != nil {
@@ -523,7 +534,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						// TODO: validate output
 						output := c.String("output")
 						appGetSettingsConfig := sncli.GetSettingsConfig{
-							Session: session,
+							Session: &session,
 							Filters: getSettingssIF,
 							Output:  output,
 							Debug:   opts.debug,
@@ -749,7 +760,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 
 				sess.CacheDBPath = cacheDBPath
 				appExportConfig := sncli.ExportConfig{
-					Session: sess,
+					Session: &sess,
 					File:    outputPath,
 					Debug:   opts.debug,
 				}
@@ -797,7 +808,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 
 				appImportConfig := sncli.ImportConfig{
-					Session: session,
+					Session: &session,
 					File:    inputPath,
 					Debug:   opts.debug,
 				}
@@ -881,7 +892,6 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if err != nil {
 					return err
 				}
-
 				statsConfig := sncli.StatsConfig{
 					Session: session,
 					Debug:   opts.debug,
@@ -911,6 +921,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				useStdOut = opts.useStdOut
 
 				session, email, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+
 				if err != nil {
 					return err
 				}
@@ -923,7 +934,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 
 				session.CacheDBPath = cacheDBPath
 				wipeConfig := sncli.WipeConfig{
-					Session:  session,
+					Session:  &session,
 					Settings: c.Bool("settings"),
 					Debug:    opts.debug,
 				}
