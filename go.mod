@@ -1,6 +1,6 @@
 module github.com/jonhadfield/sn-cli
 
-go 1.14
+go 1.16
 
 require (
 	github.com/asdine/storm/v3 v3.2.1
