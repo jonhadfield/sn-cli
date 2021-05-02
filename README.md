@@ -3,7 +3,9 @@ a command-line interface for [Standard Notes](https://standardnotes.org/).
 
 [![Build Status](https://www.travis-ci.org/jonhadfield/sn-cli.svg?branch=master)](https://www.travis-ci.org/jonhadfield/sn-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/jonhadfield/sn-cli)](https://goreportcard.com/report/github.com/jonhadfield/sn-cli)
 
-### note: this is an early release to add support for SN accounts using encryption version 004 so please ensure you have a backup in case of any issues caused by this app.
+## Important 
+This is an early release to add support for SN accounts using encryption version 004 so please ensure you have a backup in case of any issues caused by this app.
+This is only compatible with accounts either created since November 2020, or older accounts that have backed up, then restored to force an upgrade to 004.
 
 ## current features
 
