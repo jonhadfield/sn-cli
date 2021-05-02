@@ -32,8 +32,8 @@ const (
 	msgItemsDeleted    = "Items deleted"
 	msgNoMatches       = "No matches"
 	snAppName          = "sn-cli"
-	timeLayout          = "2006-01-02T15:04:05.000Z"
-	timeLayout2         = "2006-01-02T15:04:05.000000Z"
+	timeLayout         = "2006-01-02T15:04:05.000Z"
+	timeLayout2        = "2006-01-02T15:04:05.000000Z"
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
@@ -224,8 +224,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 							Usage: "uuid of the note",
 						},
 						cli.StringFlag{
-							Name:  "editor",
-							Usage: "path to editor",
+							Name:   "editor",
+							Usage:  "path to editor",
 							EnvVar: "EDITOR",
 						},
 					},
@@ -516,8 +516,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						ss := session.Gosn()
 						// sync to get keys
 						gsi := gosn.SyncInput{
-							Session:     &ss,
-							Debug:       ss.Debug,
+							Session: &ss,
+							Debug:   ss.Debug,
 						}
 						_, err = gosn.Sync(gsi)
 						if err != nil {
@@ -729,7 +729,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				opts, err := getOpts(c)
+				var opts configOptsOutput
+				opts, err = getOpts(c)
 				if err != nil {
 					return err
 				}
@@ -737,7 +738,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 
 				outputPath := strings.TrimSpace(c.String("output"))
 				if outputPath == "" {
-					currDir, err := os.Getwd()
+					var currDir string
+					currDir, err = os.Getwd()
 					if err != nil {
 						return err
 					}
@@ -787,7 +789,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				opts, err := getOpts(c)
+				var opts configOptsOutput
+				opts, err = getOpts(c)
 				if err != nil {
 					return err
 				}
@@ -796,8 +799,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if inputPath == "" {
 					return errors.New("please specify path using --file")
 				}
-
-				session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+				var session cache.Session
+				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 				if err != nil {
 					return err
 				}
@@ -836,7 +839,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				opts, err := getOpts(c)
+				var opts configOptsOutput
+				opts, err = getOpts(c)
 				if err != nil {
 					return err
 				}
@@ -850,7 +854,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 				var password string
 				fmt.Print("password: ")
-				bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+				var bytePassword []byte
+				bytePassword, err = terminal.ReadPassword(int(syscall.Stdin))
 				fmt.Println()
 				if err == nil {
 					password = string(bytePassword)
@@ -876,7 +881,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			Name:  "stats",
 			Usage: "show statistics",
 			Action: func(c *cli.Context) error {
-				opts, err := getOpts(c)
+				var opts configOptsOutput
+				opts, err = getOpts(c)
 				if err != nil {
 					return err
 				}
@@ -914,13 +920,16 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				opts, err := getOpts(c)
+				var opts configOptsOutput
+				opts, err = getOpts(c)
 				if err != nil {
 					return err
 				}
 				useStdOut = opts.useStdOut
 
-				session, email, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+				var session cache.Session
+				var email string
+				session, email, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
 
 				if err != nil {
 					return err

@@ -3,6 +3,7 @@ package sncli
 import (
 	"os"
 	"strings"
+	"time"
 )
 
 func removeDB(dbPath string) {
@@ -11,4 +12,8 @@ func removeDB(dbPath string) {
 			panic(err)
 		}
 	}
+}
+
+func testDelay() {
+	time.Sleep(2 * time.Second)
 }

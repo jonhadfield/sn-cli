@@ -61,10 +61,6 @@ func (i ExportConfig) Run() error {
 
 	var e gosn.EncryptedItems
 
-	//f := cache.GetSession(i.Session)
-
-
-
 	e, err = out.Encrypt(i.Session.Gosn())
 	if err != nil {
 		return err
@@ -93,7 +89,6 @@ func (i *ImportConfig) Run() error {
 	}
 
 	var encFinalList gosn.EncryptedItems
-
 	encFinalList = append(encFinalList, encItemsToImport...)
 
 	if len(encFinalList) == 0 {
@@ -109,6 +104,7 @@ func (i *ImportConfig) Run() error {
 		Session: i.Session,
 		Close:   true,
 	}
+
 	_, err = Sync(pii, true)
 
 	return err

@@ -12,7 +12,6 @@ func TestWipe(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgItemsDeleted)
 	time.Sleep(1 * time.Second)
-
 }
 
 func TestAddDeleteTag(t *testing.T) {

@@ -9,6 +9,8 @@ import (
 )
 
 func TestAddDeleteTagByTitle(t *testing.T) {
+	testDelay()
+
 	addTagConfig := AddTagsInput{
 		Session: testSession,
 		Tags:    []string{"TestTagOne", "TestTagTwo"},
@@ -32,6 +34,8 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 }
 
 func TestGetTag(t *testing.T) {
+	testDelay()
+
 	defer cleanUp(*testSession)
 
 	testTagTitles := []string{"TestTagOne", "TestTagTwo"}
@@ -116,6 +120,8 @@ func _deleteTagsByTitle(session cache.Session, input []string) (noDeleted int, e
 }
 
 func TestTaggingOfNotes(t *testing.T) {
+	testDelay()
+
 	defer cleanUp(*testSession)
 
 	// create four notes

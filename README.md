@@ -3,6 +3,8 @@ a command-line interface for [Standard Notes](https://standardnotes.org/).
 
 [![Build Status](https://www.travis-ci.org/jonhadfield/sn-cli.svg?branch=master)](https://www.travis-ci.org/jonhadfield/sn-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/jonhadfield/sn-cli)](https://goreportcard.com/report/github.com/jonhadfield/sn-cli)
 
+### note: this is an early release to add support for SN accounts using encryption version 004 so please ensure you have a backup in case of any issues caused by this app.
+
 ## current features
 
 ```
@@ -13,10 +15,8 @@ COMMANDS:
      get        get items
      export     export data
      import     import data
-     register   register a new user
      stats      show statistics
      wipe       deletes all tags and notes
-     fixup      find and fix item issues
      session    manage session credentials
      test-data  create test data (hidden option)
 ```

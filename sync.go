@@ -11,7 +11,7 @@ import (
 func Sync(si cache.SyncInput, showProgress bool) (so cache.SyncOutput, err error) {
 	if showProgress && !si.Debug {
 		prefix := HiWhite("syncing ")
-		if _, err := os.Stat(si.Session.CacheDBPath); os.IsNotExist(err) {
+		if _, err = os.Stat(si.Session.CacheDBPath); os.IsNotExist(err) {
 			prefix = HiWhite("initialising ")
 		}
 
@@ -26,7 +26,8 @@ func Sync(si cache.SyncInput, showProgress bool) (so cache.SyncOutput, err error
 		return
 	}
 
-	a, err := sync(si)
+	var a cache.SyncOutput
+	a, err = sync(si)
 	if err != nil {
 		panic(err)
 	}
