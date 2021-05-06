@@ -20,7 +20,6 @@ func TestExportOneNote(t *testing.T) {
 	// populate DB
 	si := cache.SyncInput{
 		Session: testSession,
-		Debug:   true,
 	}
 
 	so, err := Sync(si, false)
@@ -97,7 +96,6 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	// populate DB
 	gii := cache.SyncInput{
 		Session: testSession,
-		Debug:   true,
 	}
 
 	gio, err := Sync(gii, false)
@@ -164,7 +162,6 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	// get a new database and populate with the new item
 	gii = cache.SyncInput{
 		Session: testSession,
-		Debug:   true,
 	}
 
 	assert.NoError(t, gio.DB.Close())

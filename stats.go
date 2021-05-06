@@ -21,11 +21,9 @@ var (
 
 func (i *StatsConfig) Run() error {
 	var err error
-
 	var so cache.SyncOutput
 	so, err = Sync(cache.SyncInput{
 		Session: &i.Session,
-		Debug:   i.Debug,
 	}, true)
 	if err != nil {
 		return err

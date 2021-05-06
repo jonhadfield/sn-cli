@@ -199,7 +199,6 @@ type WipeConfig struct {
 
 type StatsConfig struct {
 	Session cache.Session
-	Debug   bool
 }
 
 func referenceExists(tag gosn.Tag, refID string) bool {
@@ -247,7 +246,6 @@ var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
 func (i *WipeConfig) Run() (int, error) {
 	syncInput := cache.SyncInput{
 		Session: i.Session,
-		Debug:   i.Debug,
 	}
 
 	var err error

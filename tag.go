@@ -158,7 +158,6 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	// Sync DB
 	si := cache.SyncInput{
 		Session: i.Session,
-		Debug:   i.Debug,
 	}
 
 	var so cache.SyncOutput
@@ -199,7 +198,6 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}
 	so, err = Sync(cache.SyncInput{
 		Session: i.Session,
-		Debug:   i.Debug,
 	}, true)
 	if err != nil {
 		return
@@ -212,7 +210,6 @@ func (i *GetTagConfig) Run() (items gosn.Items, err error) {
 
 	si := cache.SyncInput{
 		Session: i.Session,
-		Debug:   i.Debug,
 	}
 
 	so, err = Sync(si, true)

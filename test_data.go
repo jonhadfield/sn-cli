@@ -124,7 +124,6 @@ func createNotes(session *cache.Session, num int, paras int) error {
 
 	so, err = Sync(cache.SyncInput{
 		Session: pii.Session,
-		Debug:   pii.Debug,
 	}, true)
 	if err != nil {
 		return err

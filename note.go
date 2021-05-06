@@ -117,7 +117,6 @@ func (i *GetNoteConfig) Run() (items gosn.Items, err error) {
 	var so cache.SyncOutput
 	so, err = Sync(cache.SyncInput{
 		Session: i.Session,
-		Debug:   i.Debug,
 	}, true)
 
 	if err != nil {
@@ -193,7 +192,6 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 
 	getItemsInput := cache.SyncInput{
 		Session: session,
-		Debug:   debug,
 	}
 
 	var gio cache.SyncOutput

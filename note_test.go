@@ -45,7 +45,6 @@ func TestMain(m *testing.M) {
 	so, err = sync(cache.SyncInput{
 		Session: testSession,
 		Close:   false,
-		Debug:   true,
 	})
 	if err != nil {
 		panic(err)

@@ -8,7 +8,6 @@ import (
 func (i *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 	getItemsInput := cache.SyncInput{
 		Session: i.Session,
-		Debug:   i.Debug,
 	}
 
 	var so cache.SyncOutput

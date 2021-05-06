@@ -24,7 +24,6 @@ func (i ExportConfig) Run() error {
 	// populate DB
 	gii := cache.SyncInput{
 		Session: i.Session,
-		Debug:   i.Debug,
 	}
 
 	gio, err := Sync(gii, true)
@@ -73,7 +72,6 @@ func (i *ImportConfig) Run() error {
 	// populate DB
 	gii := cache.SyncInput{
 		Session: i.Session,
-		Debug:   i.Debug,
 	}
 
 	gio, err := Sync(gii, true)

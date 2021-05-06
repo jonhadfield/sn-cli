@@ -34,7 +34,6 @@ func getNoteByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Note, 
 
 	si := cache.SyncInput{
 		Session: &sess,
-		Debug:   debug,
 		Close:   false,
 	}
 
@@ -70,7 +69,6 @@ func getNotesByTitle(sess cache.Session, title string, debug bool, close bool) (
 
 		si := cache.SyncInput{
 			Session: &sess,
-			Debug:   debug,
 			Close:   false,
 		}
 
@@ -181,8 +179,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	var cSession cache.Session
-	cSession, _, err = cache.GetSession(opts.useSession,
-		opts.sessKey, opts.server)
+	cSession, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 
 	if err != nil {
 		return "", err
@@ -202,7 +199,6 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	// run sync to propagate DB
 	si := cache.SyncInput{
 		Session: &cSession,
-		Debug:   opts.debug,
 		Close:   false,
 	}
 
@@ -358,8 +354,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 		}
 	}
 
-	session, _, err := cache.GetSession(opts.useSession,
-		opts.sessKey, opts.server)
+	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return "", err
 	}
@@ -488,8 +483,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	// get session
-	session, _, err := cache.GetSession(opts.useSession,
-		opts.sessKey, opts.server)
+	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return "", err
 	}
@@ -528,8 +522,7 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 		return "", errors.New("")
 	}
 
-	sess, _, err := cache.GetSession(opts.useSession,
-		opts.sessKey, opts.server)
+	sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return msg, err
 	}

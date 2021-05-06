@@ -15,7 +15,6 @@ func sync(si cache.SyncInput) (so cache.SyncOutput, err error) {
 	return cache.Sync(cache.SyncInput{
 		Session: si.Session,
 		Close:   si.Close,
-		Debug:   si.Debug,
 	})
 }
 
@@ -52,7 +51,6 @@ func TestMain(m *testing.M) {
 	so, err = sync(cache.SyncInput{
 		Session: testSession,
 		Close:   false,
-		Debug:   true,
 	})
 	if err != nil {
 		panic(err)

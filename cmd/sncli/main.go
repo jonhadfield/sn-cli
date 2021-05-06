@@ -508,8 +508,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 							},
 						}
 
-						session, _, err := cache.GetSession(opts.useSession,
-							opts.sessKey, opts.server)
+						session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 						if err != nil {
 							return err
 						}
@@ -517,7 +516,6 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						// sync to get keys
 						gsi := gosn.SyncInput{
 							Session: &ss,
-							Debug:   ss.Debug,
 						}
 						_, err = gosn.Sync(gsi)
 						if err != nil {
@@ -749,7 +747,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 
 				var sess cache.Session
-				sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+				sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 				if err != nil {
 					return err
 				}
@@ -800,7 +798,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					return errors.New("please specify path using --file")
 				}
 				var session cache.Session
-				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 				if err != nil {
 					return err
 				}
@@ -888,19 +886,16 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 
 				var session cache.Session
-				session, _, err = cache.GetSession(opts.useSession,
-					opts.sessKey, opts.server)
+				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 				if err != nil {
 					return err
 				}
-
 				session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
 				statsConfig := sncli.StatsConfig{
 					Session: session,
-					Debug:   opts.debug,
 				}
 
 				return statsConfig.Run()
@@ -929,7 +924,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 
 				var session cache.Session
 				var email string
-				session, email, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+				session, email, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 
 				if err != nil {
 					return err

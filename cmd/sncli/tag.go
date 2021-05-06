@@ -30,7 +30,6 @@ func getTagByUUID(sess *cache.Session, uuid string, debug bool) (tag gosn.Tag, e
 
 	si := cache.SyncInput{
 		Session: sess,
-		Debug:   debug,
 		Close:   false,
 	}
 
@@ -65,7 +64,6 @@ func getTagsByTitle(sess cache.Session, title string, debug bool) (tags gosn.Tag
 
 	si := cache.SyncInput{
 		Session: &sess,
-		Debug:   debug,
 		Close:   false,
 	}
 
@@ -118,8 +116,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	var sess cache.Session
 
-	sess, _, err = cache.GetSession(opts.useSession,
-		opts.sessKey, opts.server)
+	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return "", err
 	}
@@ -181,7 +178,6 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	si := cache.SyncInput{
 		Session: &sess,
-		Debug:   opts.debug,
 		Close:   false,
 	}
 
@@ -259,7 +255,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	var sess cache.Session
 
-	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server)
+	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return "", err
 	}
@@ -383,8 +379,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	// get session
-	session, _, err := cache.GetSession(opts.useSession,
-		opts.sessKey, opts.server)
+	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return "", err
 	}
@@ -433,8 +428,7 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 	findTag := c.String("find-tag")
 	newTags := c.String("title")
 
-	sess, _, err := cache.GetSession(opts.useSession,
-		opts.sessKey, opts.server)
+	sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return "", err
 	}
@@ -483,8 +477,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 
 	var sess cache.Session
 
-	sess, _, err = cache.GetSession(opts.useSession,
-		opts.sessKey, opts.server)
+	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return msg, err
 	}
