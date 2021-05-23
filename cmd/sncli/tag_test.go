@@ -82,7 +82,7 @@ func TestGetTagsByTitleAndUUID(t *testing.T) {
 	assert.Empty(t, ato.Existing)
 
 	var tags gosn.Tags
-	tags, err = getTagsByTitle(*testSession, "TestTagOne", true)
+	tags, err = getTagsByTitle(*testSession, "TestTagOne")
 	assert.NoError(t, err)
 	assert.Len(t, tags, 1)
 	assert.Equal(t, "TestTagOne", tags[0].Content.Title)
@@ -90,15 +90,15 @@ func TestGetTagsByTitleAndUUID(t *testing.T) {
 	tagUUID := tags[0].UUID
 
 	var tag gosn.Tag
-	tag, err = getTagByUUID(testSession, tagUUID, true)
+	tag, err = getTagByUUID(testSession, tagUUID)
 	assert.NoError(t, err)
 	assert.Equal(t, "TestTagOne", tag.Content.Title)
 
-	tags, err = getTagsByTitle(*testSession, "MissingTagOne", true)
+	tags, err = getTagsByTitle(*testSession, "MissingTagOne")
 	assert.NoError(t, err)
 	assert.Empty(t, tags)
 
-	tag, err = getTagByUUID(testSession, "123", true)
+	tag, err = getTagByUUID(testSession, "123")
 	assert.Error(t, err)
 	assert.Equal(t, "could not find tag with UUID 123", err.Error())
 }

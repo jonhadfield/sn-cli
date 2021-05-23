@@ -21,7 +21,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func getNoteByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Note, err error) {
+func getNoteByUUID(sess cache.Session, uuid string) (tag gosn.Note, err error) {
 	if sess.CacheDBPath == "" {
 		return tag, errors.New("CacheDBPath missing from sess")
 	}
@@ -63,7 +63,7 @@ func getNoteByUUID(sess cache.Session, uuid string, debug bool) (tag gosn.Note, 
 	return *rawEncItems[0].(*gosn.Note), err
 }
 
-func getNotesByTitle(sess cache.Session, title string, debug bool, close bool) (notes gosn.Notes, err error) {
+func getNotesByTitle(sess cache.Session, title string, close bool) (notes gosn.Notes, err error) {
 	if sess.CacheDB == nil {
 		var so cache.SyncOutput
 
@@ -216,14 +216,14 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	// if uuid was passed then retrieve note from db using uuid
 	if inUUID != "" {
-		if note, err = getNoteByUUID(cSession, inUUID, opts.debug); err != nil {
+		if note, err = getNoteByUUID(cSession, inUUID); err != nil {
 			return
 		}
 	}
 
 	// if title was passed then retrieve note(s) matching that title
 	if inTitle != "" {
-		if notes, err = getNotesByTitle(cSession, inTitle, opts.debug, false); err != nil {
+		if notes, err = getNotesByTitle(cSession, inTitle, false); err != nil {
 			return
 		}
 
@@ -265,7 +265,6 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	if err = cache.SaveNotes(&cSession, cSession.CacheDB, notes, false); err != nil {
 		return
 	}
-
 
 	if err = cSession.CacheDB.Close(); err != nil {
 		return

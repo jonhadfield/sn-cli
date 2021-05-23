@@ -108,7 +108,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 }
 
 func (i *DeleteNoteConfig) Run() (noDeleted int, err error) {
-	noDeleted, err = deleteNotes(i.Session, i.NoteTitles, i.NoteText, i.NoteUUIDs, i.Regex, i.Debug)
+	noDeleted, err = deleteNotes(i.Session, i.NoteTitles, i.NoteText, i.NoteUUIDs, i.Regex)
 
 	return noDeleted, err
 }
@@ -144,7 +144,7 @@ func (i *GetNoteConfig) Run() (items gosn.Items, err error) {
 	return
 }
 
-func deleteNotes(session *cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool, debug bool) (noDeleted int, err error) {
+func deleteNotes(session *cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool) (noDeleted int, err error) {
 	var getNotesFilters []gosn.Filter
 
 	switch {

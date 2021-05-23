@@ -17,7 +17,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func getTagByUUID(sess *cache.Session, uuid string, debug bool) (tag gosn.Tag, err error) {
+func getTagByUUID(sess *cache.Session, uuid string) (tag gosn.Tag, err error) {
 	if sess.CacheDBPath == "" {
 		return tag, errors.New("CacheDBPath missing from sess")
 	}
@@ -59,7 +59,7 @@ func getTagByUUID(sess *cache.Session, uuid string, debug bool) (tag gosn.Tag, e
 	return *rawEncItems[0].(*gosn.Tag), err
 }
 
-func getTagsByTitle(sess cache.Session, title string, debug bool) (tags gosn.Tags, err error) {
+func getTagsByTitle(sess cache.Session, title string) (tags gosn.Tags, err error) {
 	var so cache.SyncOutput
 
 	si := cache.SyncInput{
@@ -136,14 +136,14 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	// if uuid was passed then retrieve tag from db using uuid
 	if inUUID != "" {
-		if tag, err = getTagByUUID(&sess, inUUID, opts.debug); err != nil {
+		if tag, err = getTagByUUID(&sess, inUUID); err != nil {
 			return
 		}
 	}
 
 	// if title was passed then retrieve tag(s) matching that title
 	if inTitle != "" {
-		if tags, err = getTagsByTitle(sess, inTitle, opts.debug); err != nil {
+		if tags, err = getTagsByTitle(sess, inTitle); err != nil {
 			return
 		}
 
