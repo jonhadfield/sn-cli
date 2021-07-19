@@ -362,8 +362,11 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 		case "yaml":
 			bOutput, err = yaml.Marshal(tagsYAML)
 		}
+
 		if len(bOutput) > 0 {
-			fmt.Println(string(bOutput))
+			fmt.Print("{\n  \"tags\": ")
+			fmt.Print(string(bOutput))
+			fmt.Print("\n}")
 		}
 	}
 

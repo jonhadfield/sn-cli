@@ -456,7 +456,9 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 			bOutput, err = yaml.Marshal(notesYAML)
 		}
 		if len(bOutput) > 0 {
-			fmt.Println(string(bOutput))
+			fmt.Print("{\n  \"items\": ")
+			fmt.Print(string(bOutput))
+			fmt.Print("\n}")
 		}
 	}
 
