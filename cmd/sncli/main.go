@@ -498,7 +498,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						if c.Bool("match-all") {
 							matchAny = false
 						}
-						//regex := c.Bool("regex")
+
 						count := c.Bool("count")
 
 						getSettingssIF := gosn.ItemFilters{
@@ -884,7 +884,6 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if err != nil {
 					return err
 				}
-
 				var session cache.Session
 				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 				if err != nil {
