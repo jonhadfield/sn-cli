@@ -27,7 +27,7 @@ func processSession(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	if sAdd {
-		msg, err = gosn.AddSession(opts.server, sessKey, nil)
+		msg, err = gosn.AddSession(opts.server, sessKey, nil, opts.debug)
 		return msg, err
 	}
 

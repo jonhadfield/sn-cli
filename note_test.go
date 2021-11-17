@@ -62,6 +62,7 @@ func TestMain(m *testing.M) {
 	if testSession.DefaultItemsKey.ItemsKey == "" {
 		panic("failed in TestMain due to empty default items key")
 	}
+
 	os.Exit(m.Run())
 }
 
