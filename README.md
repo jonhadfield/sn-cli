@@ -73,6 +73,11 @@ If your session is encrypted, you will be prompted for the session key. To speci
 sn --use-session --session-key <key> <command>
 ```
 
+## known issues  
+
+- sessions added to keychain do not currently refresh themselves. The workaround is to run re-add the session if an invalid session message is returned.
+- accounts registered via sn-cli are initialised without initial encryption key(s). The workaround is to login via the offical web/desktop app, to create these keys, after initial registration.
+
 ## bash autocompletion
 
 #### tool
