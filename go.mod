@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
-	github.com/jonhadfield/gosn-v2 v0.0.0-20211117204829-e02435d4d0db
+	github.com/jonhadfield/gosn-v2 v0.0.0-20211121182457-1676b32399ed
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
