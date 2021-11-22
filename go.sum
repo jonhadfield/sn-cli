@@ -211,6 +211,8 @@ github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/jonhadfield/gosn-v2 v0.0.0-20211121182457-1676b32399ed h1:wYFXcHk26jwHMgWWJmBuX+viIUcqXqo7lhwN9IvjsLA=
 github.com/jonhadfield/gosn-v2 v0.0.0-20211121182457-1676b32399ed/go.mod h1:6vFUYI7AXZub9gcFyDc/bbpA6OZ0pGChZjl6LHSQzd0=
+github.com/jonhadfield/gosn-v2 v0.0.0-20211122115538-8d7270fe17a6 h1:S+r1ORNEnpfZp4ZRd7nqY1DjLe1FbntpBEwjiy8Evmk=
+github.com/jonhadfield/gosn-v2 v0.0.0-20211122115538-8d7270fe17a6/go.mod h1:6vFUYI7AXZub9gcFyDc/bbpA6OZ0pGChZjl6LHSQzd0=
 github.com/json-iterator/go v1.1.11/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
