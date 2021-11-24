@@ -1,0 +1,32 @@
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod tidy
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - Merge pull request
+    - Merge branch
+builds:
+  - binary: sn-dotfiles
+    main: cmd/sn-cli/main.go
+    env:
+    - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm
+      - arm64
+
+archives:
+  - id: default
+    wrap_in_directory: true
