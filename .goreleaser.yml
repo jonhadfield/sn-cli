@@ -1,6 +1,6 @@
 env:
   - GO111MODULE=on
-
+  - GOPROXY=https://proxy.golang.org
 before:
   hooks:
     - go mod tidy
@@ -15,8 +15,9 @@ changelog:
     - Merge branch
 builds:
   - binary: sn-cli
-    id: sn-cli
-    main: cmd/sncli/main.go
+    id: sn-cli_linux
+#    main: cmd/sncli/main.go
+    main: ./cmd/sncli/
     env:
     - CGO_ENABLED=0
     mod_timestamp: '{{ .CommitTimestamp }}'
@@ -25,34 +26,83 @@ builds:
     ldflags:
       - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
     goos:
-        - freebsd
-        - windows
-        - linux
-      goarch:
-        - amd64
-        - '386'
-        - arm
-        - arm64
-      ignore:
-        - goos: darwin
-          goarch: '386'
-        - goarch: arm
-        - goarch: '386'
-        - goos: windows
-          goarch: amd64
-  - binary: sn-cli
-    id: sn-cli-macos
-    goos:
-    - darwin
+      - linux
     goarch:
-    - amd64
-    hooks:
-      post: gon gon.json
-
+      - amd64
+#  - binary: sn-cli
+#    id: sn-cli_unix
+#    main: cmd/sncli/main.go
+#    env:
+#    - CGO_ENABLED=0
+#    mod_timestamp: '{{ .CommitTimestamp }}'
+#    flags:
+#      - -trimpath
+#    ldflags:
+#      - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
+#    goos:
+#      - freebsd
+#      - netbsd
+#      - openbsd
+#      - dragonfly
+#    goarch:
+#      - amd64
+#  - binary: sn-cli
+#    id: sn-cli_windows
+#    main: cmd/sncli/main.go
+#    env:
+#    - CGO_ENABLED=0
+#    mod_timestamp: '{{ .CommitTimestamp }}'
+#    flags:
+#      - -trimpath
+#    ldflags:
+#      - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
+#    goos:
+#      - windows
+#    goarch:
+#      - amd64
+  - binary: sn-cli
+    id: sn-cli_macos
+#    main: cmd/sncli/main.go
+    main: ./cmd/sncli/
+    env:
+    - CGO_ENABLED=0
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    flags:
+      - -trimpath
+    ldflags:
+      - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+#    hooks:
+#      post: gon gon.json
 archives:
-  - id: default
-    wrap_in_directory: true
-
-
-
-// "darwin/amd64 linux/amd64 linux/arm linux/arm64 windows/amd64 netbsd/amd64 openbsd/amd64 freebsd/amd64"
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      amd64: x86_64
+#  - id: sn-cli
+#    builds: ['sn-cli_linux','sn-cli_macos']
+#    wrap_in_directory: true
+#    - replacements:
+#        darwin: Darwin
+#        linux: Linux
+#        windows: Windows
+#        386: i386
+#        amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+signs:
+  - signature: "${artifact}.dmg"
+    ids:
+    - sn-cli_macos # here we filter the macos only build id
+    # you'll need to have gon on PATH
+    cmd: gon
+    # you can follow the gon docs to properly create the gon.hcl config file:
+    # https://github.com/mitchellh/gon
+    args:
+    - gon.json
+    artifacts: all

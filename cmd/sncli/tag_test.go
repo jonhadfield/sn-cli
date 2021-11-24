@@ -4,7 +4,6 @@ import (
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	sncli "github.com/jonhadfield/sn-cli"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
@@ -69,36 +68,36 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestGetTagsByTitleAndUUID(t *testing.T) {
-	addTagConfig := sncli.AddTagsInput{
-		Session: testSession,
-		Tags:    []string{"TestTagOne", "TestTagTwo"},
-	}
-
-	ato, err := addTagConfig.Run()
-	assert.NoError(t, err)
-	assert.Contains(t, ato.Added, "TestTagOne")
-	assert.Contains(t, ato.Added, "TestTagTwo")
-	assert.Empty(t, ato.Existing)
-
-	var tags gosn.Tags
-	tags, err = getTagsByTitle(*testSession, "TestTagOne")
-	assert.NoError(t, err)
-	assert.Len(t, tags, 1)
-	assert.Equal(t, "TestTagOne", tags[0].Content.Title)
-
-	tagUUID := tags[0].UUID
-
-	var tag gosn.Tag
-	tag, err = getTagByUUID(testSession, tagUUID)
-	assert.NoError(t, err)
-	assert.Equal(t, "TestTagOne", tag.Content.Title)
-
-	tags, err = getTagsByTitle(*testSession, "MissingTagOne")
-	assert.NoError(t, err)
-	assert.Empty(t, tags)
-
-	tag, err = getTagByUUID(testSession, "123")
-	assert.Error(t, err)
-	assert.Equal(t, "could not find tag with UUID 123", err.Error())
-}
+//func TestGetTagsByTitleAndUUID(t *testing.T) {
+//	addTagConfig := sncli.AddTagsInput{
+//		Session: testSession,
+//		Tags:    []string{"TestTagOne", "TestTagTwo"},
+//	}
+//
+//	ato, err := addTagConfig.Run()
+//	assert.NoError(t, err)
+//	assert.Contains(t, ato.Added, "TestTagOne")
+//	assert.Contains(t, ato.Added, "TestTagTwo")
+//	assert.Empty(t, ato.Existing)
+//
+//	var tags gosn.Tags
+//	tags, err = getTagsByTitle(*testSession, "TestTagOne")
+//	assert.NoError(t, err)
+//	assert.Len(t, tags, 1)
+//	assert.Equal(t, "TestTagOne", tags[0].Content.Title)
+//
+//	tagUUID := tags[0].UUID
+//
+//	var tag gosn.Tag
+//	tag, err = getTagByUUID(testSession, tagUUID)
+//	assert.NoError(t, err)
+//	assert.Equal(t, "TestTagOne", tag.Content.Title)
+//
+//	tags, err = getTagsByTitle(*testSession, "MissingTagOne")
+//	assert.NoError(t, err)
+//	assert.Empty(t, tags)
+//
+//	tag, err = getTagByUUID(testSession, "123")
+//	assert.Error(t, err)
+//	assert.Equal(t, "could not find tag with UUID 123", err.Error())
+//}
