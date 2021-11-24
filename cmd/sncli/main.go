@@ -65,8 +65,10 @@ type configOptsOutput struct {
 }
 
 func getOpts(c *cli.Context) (out configOptsOutput, err error) {
+	out.useStdOut = true
+
 	if !c.GlobalBool("no-stdout") {
-		out.useStdOut = true
+		out.useStdOut = false
 	}
 
 	if c.GlobalBool("use-session") || viper.GetBool("use_session") {
@@ -147,7 +149,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 		cli.StringFlag{Name: "server"},
 		cli.BoolFlag{Name: "use-session"},
 		cli.StringFlag{Name: "session-key"},
-		cli.BoolFlag{Name: "no-stdout"},
+		cli.BoolFlag{Name: "no-stdout", Hidden: true},
 		cli.StringFlag{Name: "cachedb-dir", Value: viper.GetString("cachedb_dir")},
 	}
 	app.CommandNotFound = func(c *cli.Context, command string) {
