@@ -181,6 +181,8 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	}
 
 	assert.True(t, found)
+
+	assert.NoError(t, gio.DB.Close())
 }
 
 // Create a note, export it, change original, import and check exported items replace modified
