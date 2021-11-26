@@ -19,7 +19,7 @@ coverage.txt
 # goland
 .idea/
 
-.local_dist/
+dist
 
 # vscode
 .vscode/

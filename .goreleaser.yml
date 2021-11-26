@@ -1,10 +1,11 @@
 env:
   - GO111MODULE=on
   - GOPROXY=https://proxy.golang.org
+  - CGO_ENABLED=0
+
 before:
   hooks:
     - go mod tidy
-
 changelog:
   sort: asc
   filters:
@@ -13,22 +14,119 @@ changelog:
     - '^test:'
     - Merge pull request
     - Merge branch
+
 builds:
-  - binary: sn-cli
-    id: sn-cli_linux
-#    main: cmd/sncli/main.go
+  - id: sn-cli-macos
     main: ./cmd/sncli/
-    env:
-    - CGO_ENABLED=0
-    mod_timestamp: '{{ .CommitTimestamp }}'
-    flags:
-      - -trimpath
-    ldflags:
-      - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
+    binary: sn-cli
     goos:
-      - linux
+      - darwin
     goarch:
       - amd64
+    ldflags:
+      - "-s -w -X main.version={{ .Version }} -X main.revision={{ .ShortCommit }}"
+    hooks:
+      post: |
+        sh -c '
+        cat > /tmp/sn-cli-gon-amd64.hcl << EOF
+        source = ["./dist/sn-cli-macos_darwin_amd64/sn-cli"]
+        bundle_id = "uk.co.lessknown.sn-cli"
+        apple_id {
+          username = "jon@lessknown.co.uk"
+          password = "@env:AC_PASSWORD"
+        }
+        sign {
+          application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
+        }
+        zip {
+          output_path = "./dist/sn-cli-{{ .Version }}-darwin_amd64.zip"
+        }
+        EOF
+        gon /tmp/sn-cli-gon-amd64.hcl
+        '
+
+  - id: sn-cli-macos-arm
+    main: ./cmd/sncli/
+    binary: sn-cli
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    ldflags:
+      - "-s -w -X main.version={{ .Version }} -X main.revision={{ .ShortCommit }}"
+    hooks:
+      post: |
+        sh -c '
+        cat > /tmp/sn-cli-gon-arm64.hcl << EOF
+        source = ["./dist/sn-cli-macos-arm_darwin_arm64/sn-cli"]
+        bundle_id = "uk.co.lessknown.sn-cli"
+        apple_id {
+          username = "jon@lessknown.co.uk"
+          password = "@env:AC_PASSWORD"
+        }
+        sign {
+          application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
+        }
+        zip {
+          output_path = "./dist/sn-cli-{{ .Version }}-darwin_arm64.zip"
+        }
+        EOF
+        gon /tmp/sn-cli-gon-arm64.hcl
+        '
+
+  - id: sn-cli
+    main: ./cmd/sncli/
+    goos:
+      - linux
+      - windows
+      - freebsd
+      - openbsd
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 5
+      - 6
+      - 7
+    ldflags:
+      - "-s -w -X main.version={{ .Version }} -X main.revision={{ .ShortCommit }}"
+    ignore:
+      - goos: freebsd
+        goarch: arm
+      - goos: openbsd
+        goarch: arm
+      - goos: freebsd
+        goarch: arm64
+      - goos: openbsd
+        goarch: arm64
+
+archives:
+  - name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    builds:
+      - sn-cli
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - non-existent*
+
+#  - binary: sn-cli
+#    id: sn-cli_linux
+##    main: cmd/sncli/main.go
+#    main: ./cmd/sncli/
+#    env:
+#    - CGO_ENABLED=0
+#    mod_timestamp: '{{ .CommitTimestamp }}'
+#    flags:
+#      - -trimpath
+#    ldflags:
+#      - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
+#    goos:
+#      - linux
+#    goarch:
+#      - amd64
 #  - binary: sn-cli
 #    id: sn-cli_unix
 #    main: cmd/sncli/main.go
@@ -60,30 +158,30 @@ builds:
 #      - windows
 #    goarch:
 #      - amd64
-  - binary: sn-cli
-    id: sn-cli_macos
-#    main: cmd/sncli/main.go
-    main: ./cmd/sncli/
-    env:
-    - CGO_ENABLED=0
-    mod_timestamp: '{{ .CommitTimestamp }}'
-    flags:
-      - -trimpath
-    ldflags:
-      - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
-    goos:
-      - darwin
-    goarch:
-      - amd64
-      - arm64
+#  - binary: sn-cli
+#    id: sn-cli_macos
+##    main: cmd/sncli/main.go
+#    main: ./cmd/sncli/
+#    env:
+#    - CGO_ENABLED=0
+#    mod_timestamp: '{{ .CommitTimestamp }}'
+#    flags:
+#      - -trimpath
+#    ldflags:
+#      - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
+#    goos:
+#      - darwin
+#    goarch:
+#      - amd64
+#      - arm64
 #    hooks:
 #      post: gon gon.json
-archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
+#archives:
+#  - replacements:
+#      darwin: Darwin
+#      linux: Linux
+#      windows: Windows
+#      amd64: x86_64
 #  - id: sn-cli
 #    builds: ['sn-cli_linux','sn-cli_macos']
 #    wrap_in_directory: true
@@ -93,16 +191,16 @@ archives:
 #        windows: Windows
 #        386: i386
 #        amd64: x86_64
-checksum:
-  name_template: 'checksums.txt'
-signs:
-  - signature: "${artifact}.dmg"
-    ids:
-    - sn-cli_macos # here we filter the macos only build id
-    # you'll need to have gon on PATH
-    cmd: gon
-    # you can follow the gon docs to properly create the gon.hcl config file:
-    # https://github.com/mitchellh/gon
-    args:
-    - gon.json
-    artifacts: all
+#checksum:
+#  name_template: 'checksums.txt'
+#signs:
+#  - signature: "${artifact}.dmg"
+#    ids:
+#    - sn-cli_macos # here we filter the macos only build id
+#    # you'll need to have gon on PATH
+#    cmd: gon
+#    # you can follow the gon docs to properly create the gon.hcl config file:
+#    # https://github.com/mitchellh/gon
+#    args:
+#    - gon.json
+#    artifacts: all
