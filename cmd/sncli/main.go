@@ -26,14 +26,11 @@ const (
 	msgAddSuccess      = "Added"
 	msgAlreadyExisting = "Already existing"
 	msgDeleted         = "Deleted"
-	msgCreateSuccess   = "Created"
 	msgRegisterSuccess = "Registered"
 	msgTagSuccess      = "Tagged"
 	msgItemsDeleted    = "Items deleted"
 	msgNoMatches       = "No matches"
 	snAppName          = "sn-cli"
-	timeLayout         = "2006-01-02T15:04:05.000Z"
-	timeLayout2        = "2006-01-02T15:04:05.000000Z"
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}

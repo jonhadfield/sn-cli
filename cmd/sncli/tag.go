@@ -471,7 +471,7 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	titleIn := strings.TrimSpace(c.String("title"))
-	uuidIn := strings.Replace(c.String("uuid"), " ", "", -1)
+	uuidIn := strings.ReplaceAll(c.String("uuid"), " ", "")
 
 	if titleIn == "" && uuidIn == "" {
 		_ = cli.ShowSubcommandHelp(c)

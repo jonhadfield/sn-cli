@@ -94,11 +94,12 @@ func tagNotes(i tagNotesInput) (err error) {
 	// loop through all notes and create a list of those that
 	// match the note title or exist in note text
 	for _, note := range allNotes {
-		if StringInSlice(note.UUID, i.matchNoteUUIDs, false) {
+		switch {
+		case StringInSlice(note.UUID, i.matchNoteUUIDs, false):
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
-		} else if strings.TrimSpace(i.matchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(i.matchTitle)) {
+		case strings.TrimSpace(i.matchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(i.matchTitle)):
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
-		} else if strings.TrimSpace(i.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(i.matchText)) {
+		case strings.TrimSpace(i.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(i.matchText)):
 			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
 		}
 	}
@@ -312,7 +313,11 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 	}
 
 	var eTagsToDelete gosn.EncryptedItems
+
 	eTagsToDelete, err = tagsToDelete.Encrypt(session.Gosn())
+	if err != nil {
+		return 0, err
+	}
 
 	if err = cache.SaveEncryptedItems(so.DB, eTagsToDelete, true); err != nil {
 		return

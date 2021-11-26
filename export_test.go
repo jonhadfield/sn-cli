@@ -5,7 +5,6 @@ import (
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -50,9 +49,7 @@ func TestExportOneNote(t *testing.T) {
 	assert.NoError(t, so.DB.Close())
 
 	dir, err := ioutil.TempDir("", "test")
-	if err != nil {
-		log.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	defer os.RemoveAll(dir) // clean up
 
@@ -135,9 +132,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	assert.NoError(t, so.DB.Close())
 
 	dir, err := ioutil.TempDir("", "test")
-	if err != nil {
-		log.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	defer os.RemoveAll(dir) // clean up
 
@@ -178,8 +173,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	var found bool
 
 	for _, i := range aa {
-		switch i.ContentType {
-		case "Note":
+		if i.ContentType == "Note" {
 			if i.UUID == note.UUID {
 				found = true
 			}
@@ -328,9 +322,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	assert.NoError(t, so.DB.Close())
 
 	dir, err := ioutil.TempDir("", "test")
-	if err != nil {
-		log.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	defer os.RemoveAll(dir) // clean up
 
@@ -403,8 +395,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	var found bool
 
 	for _, i := range gItems {
-		switch i.(type) {
-		case *gosn.Tag:
+		if i.GetContentType() == "Tag" {
 			if i.(*gosn.Tag).Equals(originalTag) {
 				found = true
 			}
@@ -517,12 +508,11 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	var found bool
 
 	for _, i := range gItems {
-		switch i.(type) {
-		case *gosn.Tag:
+		if i.GetContentType() == "Tag" {
 			if i.GetUUID() == originalTag.UUID {
 				found = true
 			}
-		}
+        }
 	}
 
 	assert.True(t, found)
