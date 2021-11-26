@@ -128,7 +128,7 @@ func TestAddOneTagGetCount(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
 
-	_, _, err = startCLI([]string{"sncli", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount Title"})
+	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount Title"})
 	assert.NoError(t, err, err)
 
 	time.Sleep(1 * time.Second)
