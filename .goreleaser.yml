@@ -18,8 +18,10 @@ builds:
       - darwin
     goarch:
       - amd64
+    flags:
+      - -trimpath
     ldflags:
-      - "-s -w -X main.version={{ .Version }} -X main.revision={{ .ShortCommit }}"
+      - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
     hooks:
       post: |
         sh -c '
@@ -47,8 +49,10 @@ builds:
       - darwin
     goarch:
       - arm64
+    flags:
+      - -trimpath
     ldflags:
-      - "-s -w -X main.version={{ .Version }} -X main.revision={{ .ShortCommit }}"
+      - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
     hooks:
       post: |
         sh -c '
@@ -80,8 +84,10 @@ builds:
     goarm:
       - 6
       - 7
+    flags:
+      - -trimpath
     ldflags:
-      - "-X main.version={{ .Version }} -X main.revision={{ .ShortCommit }}"
+      - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
 
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"

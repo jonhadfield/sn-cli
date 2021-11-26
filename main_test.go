@@ -20,6 +20,9 @@ func removeDB(dbPath string) {
 	}
 }
 
+// prevent throttling when using official server
 func testDelay() {
-	time.Sleep(2 * time.Second)
+	if strings.Contains(os.Getenv("SN_SERVER"), "api.standardnotes.com") {
+		time.Sleep(2 * time.Second)
+	}
 }
