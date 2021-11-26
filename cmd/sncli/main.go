@@ -123,7 +123,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 	}
 
 	if tag != "" && buildDate != "" {
-		versionOutput = fmt.Sprintf("[%s-%s] %s UTC", tag, sha, buildDate)
+		versionOutput = fmt.Sprintf("[%s-%s] %s", tag, sha, buildDate)
 	} else {
 		versionOutput = version
 	}
