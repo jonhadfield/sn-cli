@@ -20,7 +20,7 @@ fmt:
 	goimports -w .
 
 lint:
-	golangci-lint run --enable-all --disable lll --disable misspell --disable gochecknoglobals --disable dupl
+	golangci-lint run --enable-all --disable lll --disable misspell --disable gochecknoglobals --disable dupl --disable wrapcheck
 
 ci: lint test
 
@@ -57,7 +57,7 @@ find-updates:
 	go list -u -m -json all | go-mod-outdated -update -direct
 
 critic:
-	gocritic check-project .
+	gocritic check ./...
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
