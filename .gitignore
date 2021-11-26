@@ -19,6 +19,9 @@ coverage.txt
 # goland
 .idea/
 
+# local build
+.local_dist
+# github release build
 dist
 
 # vscode
