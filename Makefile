@@ -2,6 +2,9 @@ SOURCE_FILES?=$$(go list ./... | grep -v /vendor/ | grep -v /mocks/)
 TEST_PATTERN?=.
 TEST_OPTIONS?=-race -v
 
+clean:
+	rm -rf ./dist
+
 setup:
 	go get -u github.com/alecthomas/gometalinter
 	go get -u golang.org/x/tools/cmd/cover
