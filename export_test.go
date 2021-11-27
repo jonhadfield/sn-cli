@@ -52,7 +52,11 @@ func TestExportOneNote(t *testing.T) {
 	dir, err := ioutil.TempDir("", "test")
 	assert.NoError(t, err)
 
-	defer os.RemoveAll(dir) // clean up
+	defer func() {
+		if err = os.RemoveAll(dir) ; err != nil {
+			panic("failed to remove temp dir")
+		}
+	}() // clean up
 
 	tmpfn := filepath.Join(dir, "tmpfile")
 	ec := ExportConfig{
@@ -135,7 +139,11 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	dir, err := ioutil.TempDir("", "test")
 	assert.NoError(t, err)
 
-	defer os.RemoveAll(dir) // clean up
+	defer func() {
+		if err = os.RemoveAll(dir) ; err != nil {
+			panic("failed to remove temp dir")
+		}
+	}() // clean up
 
 	tmpfn := filepath.Join(dir, "tmpfile")
 	ec := ExportConfig{
@@ -340,7 +348,11 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	dir, err := ioutil.TempDir("", "test")
 	assert.NoError(t, err)
 
-	defer os.RemoveAll(dir) // clean up
+	defer func() {
+		if err = os.RemoveAll(dir) ; err != nil {
+			panic("failed to remove temp dir")
+		}
+	}() // clean up
 
 	// export initial originalTag
 	tmpfn := filepath.Join(dir, "tmpfile")
@@ -459,7 +471,11 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	dir, err := ioutil.TempDir("", "test")
 	assert.NoError(t, err)
 
-	defer os.RemoveAll(dir) // clean up
+	defer func() {
+		if err = os.RemoveAll(dir) ; err != nil {
+			panic("failed to remove temp dir")
+		}
+	}() // clean up
 
 	// export initial originalTag
 	tmpfn := filepath.Join(dir, "tmpfile")
