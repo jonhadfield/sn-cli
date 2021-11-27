@@ -64,7 +64,7 @@ func TestMain(m *testing.M) {
 		return
 	}
 
-	so.DB.Close()
+	_ = so.DB.Close()
 
 	if testSession.DefaultItemsKey.ItemsKey == "" {
 		panic("failed in TestMain due to empty default items key")
