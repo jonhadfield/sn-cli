@@ -13,13 +13,11 @@ import (
 
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
-	"gopkg.in/yaml.v2"
-
 	sncli "github.com/jonhadfield/sn-cli"
-
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 	"golang.org/x/crypto/ssh/terminal"
+	"gopkg.in/yaml.v2"
 )
 
 const (

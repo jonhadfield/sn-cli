@@ -85,7 +85,7 @@ func TestExportOneNote(t *testing.T) {
 	assert.True(t, found)
 }
 
-// export one note, delete that note, import the backup and check note has returned
+// export one note, delete that note, import the backup and check note has returned.
 func TestExportWipeImportOneNote(t *testing.T) {
 	testDelay()
 
@@ -186,7 +186,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	assert.NoError(t, gio.DB.Close())
 }
 
-// Create a note, export it, change original, import and check exported items replace modified
+// Create a note, export it, change original, import and check exported items replace modified.
 func TestConflictResolution(t *testing.T) {
 	testDelay()
 

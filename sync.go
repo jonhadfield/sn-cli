@@ -12,7 +12,7 @@ func Sync(si cache.SyncInput, useStdErr bool) (so cache.SyncOutput, err error) {
 	if !si.Debug {
 		prefix := HiWhite("syncing ")
 		if _, err = os.Stat(si.Session.CacheDBPath); os.IsNotExist(err) {
-			prefix = HiWhite("initialising ")
+			prefix = HiWhite("initializing ")
 		}
 
 		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stdout))

@@ -18,7 +18,7 @@ type tagNotesInput struct {
 }
 
 // create tags if they don't exist
-// get all notes and tags
+// get all notes and tags.
 func tagNotes(i tagNotesInput) (err error) {
 	// create tags if they don't exist
 	ati := addTagsInput{
