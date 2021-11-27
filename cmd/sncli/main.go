@@ -16,7 +16,7 @@ import (
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 	"gopkg.in/yaml.v2"
 )
 
@@ -610,6 +610,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 								fmt.Println(string(bOutput))
 							}
 						}
+
 						return err
 					},
 				},
@@ -765,6 +766,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if err == nil {
 					msg = fmt.Sprintf("encrypted export written to: %s", outputPath)
 				}
+
 				return err
 			},
 		},
@@ -845,12 +847,13 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					if cErr := cli.ShowCommandHelp(c, "register"); cErr != nil {
 						panic(cErr)
 					}
+
 					return errors.New("email required")
 				}
 				var password string
 				fmt.Print("password: ")
 				var bytePassword []byte
-				bytePassword, err = terminal.ReadPassword(int(syscall.Stdin))
+				bytePassword, err = term.ReadPassword(int(syscall.Stdin))
 				fmt.Println()
 				if err == nil {
 					password = string(bytePassword)
