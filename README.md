@@ -72,6 +72,7 @@ If your session is encrypted, you will be prompted for the session key. To speci
 ```
 sn --use-session --session-key <key> <command>
 ```
+To use your session automatically, set the environment variable ```SN_USE_SESSION``` to ```true```  
 
 ## known issues  
 
