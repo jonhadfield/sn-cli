@@ -99,7 +99,7 @@ func TestGetTagsByTitleAndUUID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Empty(t, tags)
 
-	tag, err = getTagByUUID(testSession, "123")
+	_, err = getTagByUUID(testSession, "123")
 	assert.Error(t, err)
 	assert.Equal(t, "could not find tag with UUID 123", err.Error())
 }
