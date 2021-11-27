@@ -780,6 +780,17 @@ linters:
     #- govet
   enable-all: true
   disable:
+    - goerr113
+    - paralleltest
+    - tagliatelle
+    - lll
+    - testpackage
+    - varnamelen
+    - wrapcheck
+    - dupl
+    - golint
+    - interfacer
+    - scopelint
     - maligned
     - prealloc
       #presets:
