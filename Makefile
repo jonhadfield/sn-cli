@@ -17,7 +17,7 @@ cover: test
 	go tool cover -html=coverage.txt
 
 fmt:
-	goimports -w .
+	find . -name '*.go' | while read -r file; do gofumpt -w -s "$$file"; gofumports -w "$$file"; done
 
 lint:
 	golangci-lint run --enable-all --disable lll --disable misspell --disable gochecknoglobals --disable dupl --disable wrapcheck

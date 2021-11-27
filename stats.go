@@ -70,10 +70,9 @@ func (i *StatsConfig) Run() error {
 			tCounter.update("Deleted")
 		}
 
-		if ! item.IsDeleted() && item.GetItemsKeyID() == ""  {
+		if !item.IsDeleted() && item.GetItemsKeyID() == "" {
 			missingItemsKey = append(missingItemsKey, item.GetUUID())
 		}
-
 
 		if !item.IsDeleted() && item.GetContentType() == "" {
 			missingContentTypeUUIDs = append(missingContentTypeUUIDs, item.GetUUID())

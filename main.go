@@ -31,9 +31,11 @@ type OrgStandardNotesSNDetailJSON struct {
 type OrgStandardNotesSNDetailYAML struct {
 	ClientUpdatedAt string `yaml:"client_updated_at"`
 }
+
 type AppDataContentYAML struct {
 	OrgStandardNotesSN OrgStandardNotesSNDetailYAML `yaml:"org.standardnotes.sn"`
 }
+
 type AppDataContentJSON struct {
 	OrgStandardNotesSN OrgStandardNotesSNDetailJSON `json:"org.standardnotes.sn"`
 }
@@ -43,33 +45,39 @@ type TagContentYAML struct {
 	ItemReferences []ItemReferenceYAML `yaml:"references"`
 	AppData        AppDataContentYAML  `yaml:"appData"`
 }
+
 type TagContentJSON struct {
 	Title          string              `json:"title"`
 	ItemReferences []ItemReferenceJSON `json:"references"`
 	AppData        AppDataContentJSON  `json:"appData"`
 }
+
 type SettingContentYAML struct {
 	Title          string              `yaml:"title"`
 	ItemReferences []ItemReferenceYAML `yaml:"references"`
 	AppData        AppDataContentYAML  `yaml:"appData"`
 }
+
 type SettingContentJSON struct {
 	Title          string              `json:"title"`
 	ItemReferences []ItemReferenceJSON `json:"references"`
 	AppData        AppDataContentJSON  `json:"appData"`
 }
+
 type NoteContentYAML struct {
 	Title          string              `yaml:"title"`
 	Text           string              `json:"text"`
 	ItemReferences []ItemReferenceYAML `yaml:"references"`
 	AppData        AppDataContentYAML  `yaml:"appData"`
 }
+
 type NoteContentJSON struct {
 	Title          string              `json:"title"`
 	Text           string              `json:"text"`
 	ItemReferences []ItemReferenceJSON `json:"references"`
 	AppData        AppDataContentJSON  `json:"appData"`
 }
+
 type TagJSON struct {
 	UUID        string         `json:"uuid"`
 	Content     TagContentJSON `json:"content"`

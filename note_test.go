@@ -2,9 +2,10 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	gosn "github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
@@ -55,7 +56,7 @@ func TestMain(m *testing.M) {
 	if err = so.DB.All(&allPersistedItems); err != nil {
 		return
 	}
-	if err = so.DB.Close() ; err != nil {
+	if err = so.DB.Close(); err != nil {
 		panic(err)
 	}
 
@@ -126,7 +127,6 @@ func TestWipeWith50(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, deleted >= numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
 }
-
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
 	testDelay()
@@ -348,13 +348,13 @@ func TestCreateOneHundredNotes(t *testing.T) {
 func cleanUp(session cache.Session) {
 	removeDB(session.CacheDBPath)
 	err := gosn.DeleteContent(&gosn.Session{
-		Token:     testSession.Token,
-		MasterKey: testSession.MasterKey,
-		Server:    testSession.Server,
-		AccessToken: testSession.AccessToken,
-		AccessExpiration: testSession.AccessExpiration,
+		Token:             testSession.Token,
+		MasterKey:         testSession.MasterKey,
+		Server:            testSession.Server,
+		AccessToken:       testSession.AccessToken,
+		AccessExpiration:  testSession.AccessExpiration,
 		RefreshExpiration: testSession.RefreshExpiration,
-		RefreshToken: testSession.RefreshToken,
+		RefreshToken:      testSession.RefreshToken,
 	})
 	if err != nil {
 		panic(err)

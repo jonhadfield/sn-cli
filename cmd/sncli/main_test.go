@@ -28,7 +28,6 @@ func TestAddDeleteTag(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgDeleted)
 	time.Sleep(1 * time.Second)
-
 }
 
 func TestAddTagErrorMissingTitle(t *testing.T) {
@@ -57,7 +56,6 @@ func TestAddDeleteNote(t *testing.T) {
 	assert.NoError(t, err, "failed to get note count")
 	assert.Equal(t, "0", msg)
 	time.Sleep(1 * time.Second)
-
 }
 
 func TestAddNoteErrorMissingTitle(t *testing.T) {
@@ -99,12 +97,13 @@ func TestTagNotesByTextWithNewTags(t *testing.T) {
 	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testTagOne,testTagTwo"})
 	assert.NoError(t, err, err)
 	time.Sleep(1 * time.Second)
-
 }
 
 func TestAddOneNoteGetCount(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note", "--title", "testAddOneNoteGetCount Title",
-		"--text", "testAddOneNoteGetCount Text"})
+	msg, _, err := startCLI([]string{
+		"sncli", "--debug", "--no-stdout", "add", "note", "--title", "testAddOneNoteGetCount Title",
+		"--text", "testAddOneNoteGetCount Text",
+	})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
 
@@ -139,7 +138,6 @@ func TestGetNoteCountWithNoResults(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "0", msg)
 	time.Sleep(1 * time.Second)
-
 }
 
 func TestGetTagCountWithNoResults(t *testing.T) {
@@ -161,7 +159,6 @@ func TestGetTagsWithNoResults(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, msgNoMatches, msg)
 	time.Sleep(1 * time.Second)
-
 }
 
 func TestFinalWipeAndCountZero(t *testing.T) {

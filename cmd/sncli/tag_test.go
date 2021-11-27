@@ -1,12 +1,13 @@
 package main
 
 import (
+	"os"
+	"testing"
+
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 var testSession *cache.Session

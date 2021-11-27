@@ -1,13 +1,14 @@
 package sncli
 
 import (
-	gosn "github.com/jonhadfield/gosn-v2"
-	"github.com/jonhadfield/gosn-v2/cache"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	gosn "github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestExportOneNote(t *testing.T) {
@@ -514,7 +515,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 			if i.GetUUID() == originalTag.UUID {
 				found = true
 			}
-        }
+		}
 	}
 
 	assert.True(t, found)
