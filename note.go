@@ -106,6 +106,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	}()
 
 	if len(i.tagTitles) > 0 {
+		_ = so.DB.Close()
 		tni := tagNotesInput{
 			session:        i.session,
 			matchNoteUUIDs: []string{newNote.UUID},
