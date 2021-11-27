@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"fmt"
 	"github.com/asdine/storm/v3/q"
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
@@ -69,12 +70,21 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	kquery := so.DB.Select(q.And(q.Eq("ContentType", "SN|ItemsKey"), q.Eq("Deleted", false)))
 
 	err = kquery.Find(&allItemsKeys)
+	if err != nil {
+		err = fmt.Errorf("no items keys were found")
+
+		return
+	}
 
 	var allEncTags cache.Items
 
 	query := so.DB.Select(q.And(q.Eq("ContentType", "Tag"), q.Eq("Deleted", false)))
 
 	err = query.Find(&allEncTags)
+	// it's ok if there are no tags, so only error if something else went wrong
+	if err != nil && err.Error() != "not found" {
+		return
+	}
 
 	if err = cache.SaveNotes(i.session, so.DB, newNoteItems, false); err != nil {
 		return
