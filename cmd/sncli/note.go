@@ -77,6 +77,7 @@ func getNotesByTitle(sess cache.Session, title string, close bool) (notes gosn.N
 		if err != nil {
 			return
 		}
+
 		sess.CacheDB = so.DB
 
 		defer func() {
@@ -209,6 +210,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	if err != nil {
 		return
 	}
+
 	cSession.CacheDB = cso.DB
 
 	var note gosn.Note
@@ -240,6 +242,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	var b []byte
+
 	b, err = captureInputFromEditor(note.Content.Title, note.Content.Text, inEditor)
 	if err != nil {
 		return "", err

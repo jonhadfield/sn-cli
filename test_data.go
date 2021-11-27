@@ -116,6 +116,7 @@ func createNotes(session *cache.Session, num int, paras int) error {
 	if err != nil {
 		return err
 	}
+
 	err = gendNotes.Validate()
 	if err != nil {
 		panic(err)
@@ -130,6 +131,7 @@ func createNotes(session *cache.Session, num int, paras int) error {
 	if err != nil {
 		return err
 	}
+
 	err = cache.SaveEncryptedItems(so.DB, eGendNotes, true)
 	if err != nil {
 		return err

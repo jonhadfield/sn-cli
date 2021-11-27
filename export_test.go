@@ -198,23 +198,29 @@ func TestConflictResolution(t *testing.T) {
 	originalNote.Content = *noteContent
 	originalNoteTitle := "Example Title"
 	originalNoteText := "Some example text"
+
 	originalNote.Content.SetTitle(originalNoteTitle)
 	originalNote.Content.SetText(originalNoteText)
+
 	itemsToPut := gosn.Items{
 		&originalNote,
 	}
+
 	encItemsToPut, err := itemsToPut.Encrypt(*testSession.Session)
 	assert.NoError(t, err)
+
 	// ### sync db
 	pii := cache.SyncInput{
 		Session: testSession,
 	}
+
 	var so cache.SyncOutput
 	so, err = Sync(pii, false)
 
 	assert.NoError(t, err)
-	// ### add note to the database
+
 	pi := cache.ToCacheItems(encItemsToPut, false)
+
 	assert.NotEqual(t, 1, itemsToPut)
 
 	for _, p := range pi {
@@ -223,11 +229,11 @@ func TestConflictResolution(t *testing.T) {
 
 	assert.NoError(t, so.DB.Close())
 
-	// ### sync db with SN
 	so, err = Sync(pii, false)
-
 	assert.NoError(t, err)
+
 	var encItems1 cache.Items
+
 	err = so.DB.All(&encItems1)
 	assert.NoError(t, err)
 	assert.NoError(t, so.DB.Close())
@@ -263,22 +269,29 @@ func TestConflictResolution(t *testing.T) {
 	assert.NoError(t, so.DB.Close())
 
 	pii.CacheDB = nil
+
 	assert.NoError(t, so.DB.Close())
+
 	so, err = Sync(pii, false)
 	assert.NoError(t, err)
 
 	var final cache.Items
 	err = so.DB.All(&final)
+
 	var origFound bool
+
 	var newItemWithDupeIDBeingOrig bool
+
 	for _, x := range final {
 		if x.UUID == originalNote.GetUUID() {
 			origFound = true
 		}
+
 		if x.DuplicateOf == originalNote.GetUUID() && x.UUID != originalNote.GetUUID() {
 			newItemWithDupeIDBeingOrig = true
 		}
 	}
+
 	assert.True(t, origFound)
 	assert.True(t, newItemWithDupeIDBeingOrig)
 	assert.NoError(t, so.DB.Close())

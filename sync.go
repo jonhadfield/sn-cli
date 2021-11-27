@@ -24,15 +24,19 @@ func Sync(si cache.SyncInput, useStdErr bool) (so cache.SyncOutput, err error) {
 		s.Start()
 
 		so, err = sync(si)
+
 		s.Stop()
+
 		return
 	}
 
 	var a cache.SyncOutput
+
 	a, err = sync(si)
 	if err != nil {
 		panic(err)
 	}
+
 	return a, err
 }
 

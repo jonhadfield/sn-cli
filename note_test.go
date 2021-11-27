@@ -43,6 +43,7 @@ func TestMain(m *testing.M) {
 	testSession.CacheDBPath = path
 
 	var so cache.SyncOutput
+
 	so, err = sync(cache.SyncInput{
 		Session: testSession,
 		Close:   false,
@@ -56,6 +57,7 @@ func TestMain(m *testing.M) {
 	if err = so.DB.All(&allPersistedItems); err != nil {
 		return
 	}
+
 	if err = so.DB.Close(); err != nil {
 		panic(err)
 	}
@@ -72,6 +74,7 @@ func TestWipeWith50(t *testing.T) {
 
 	cleanUp(*testSession)
 	defer cleanUp(*testSession)
+
 	numNotes := 50
 	textParas := 3
 
@@ -101,11 +104,13 @@ func TestWipeWith50(t *testing.T) {
 	assert.NoError(t, gno.DB.Close())
 
 	var nonotes int
+
 	for _, i := range items {
 		if i.ContentType == "Note" {
 			nonotes++
 		}
 	}
+
 	var gItems gosn.Items
 	gItems, err = items.ToItems(testSession)
 
@@ -347,6 +352,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 
 func cleanUp(session cache.Session) {
 	removeDB(session.CacheDBPath)
+
 	err := gosn.DeleteContent(&gosn.Session{
 		Token:             testSession.Token,
 		MasterKey:         testSession.MasterKey,

@@ -53,6 +53,7 @@ func TestMain(m *testing.M) {
 		Session: testSession,
 		Close:   false,
 	})
+
 	if err != nil {
 		panic(err)
 	}
@@ -62,11 +63,13 @@ func TestMain(m *testing.M) {
 	if err = so.DB.All(&allPersistedItems); err != nil {
 		return
 	}
+
 	so.DB.Close()
 
 	if testSession.DefaultItemsKey.ItemsKey == "" {
 		panic("failed in TestMain due to empty default items key")
 	}
+
 	os.Exit(m.Run())
 }
 

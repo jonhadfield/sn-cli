@@ -69,18 +69,17 @@ func TestDeleteNoteErrorMissingTitle(t *testing.T) {
 }
 
 func TestTagNotesByTextWithNewTags(t *testing.T) {
-	var msg string
-
-	var err error
-
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note", "--title", "TestNoteOne", "--text", "test note one"})
+	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note", "--title", "TestNoteOne", "--text", "test note one"})
 	assert.Contains(t, msg, msgAddSuccess)
 	assert.NoError(t, err, err)
+
 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note", "--title", "TestNoteTwo", "--text", "test note two"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
+
 	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "tag", "--find-text", "test note", "--title", "testTagOne,testTagTwo"})
 	assert.NoError(t, err)
+
 	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "note", "--title", "TestNoteOne,TestNoteTwo"})
 	assert.NoError(t, err)
 

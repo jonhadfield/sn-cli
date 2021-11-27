@@ -197,12 +197,14 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	if err != nil {
 		return
 	}
+
 	so, err = Sync(cache.SyncInput{
 		Session: i.Session,
 	}, true)
 	if err != nil {
 		return
 	}
+
 	return output, err
 }
 

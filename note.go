@@ -65,7 +65,9 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	}
 	// get items key
 	var allItemsKeys cache.Items
+
 	kquery := so.DB.Select(q.And(q.Eq("ContentType", "SN|ItemsKey"), q.Eq("Deleted", false)))
+
 	err = kquery.Find(&allItemsKeys)
 
 	var allEncTags cache.Items
@@ -77,7 +79,9 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	if err = cache.SaveNotes(i.session, so.DB, newNoteItems, false); err != nil {
 		return
 	}
+
 	_ = so.DB.Close()
+
 	pii := cache.SyncInput{
 		Session: i.session,
 	}

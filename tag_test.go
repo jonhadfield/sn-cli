@@ -99,6 +99,7 @@ func _deleteNotesByTitle(session cache.Session, input map[string]string) (noDele
 			Session:    &session,
 			NoteTitles: []string{k},
 		}
+		
 		_, err = deleteNoteConfig.Run()
 		if err != nil {
 			return noDeleted, err
