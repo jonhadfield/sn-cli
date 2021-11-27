@@ -20,7 +20,7 @@ fmt:
 	find . -name '*.go' | while read -r file; do gofumpt -w -s "$$file"; gofumports -w "$$file"; done
 
 lint:
-	golangci-lint run --enable-all --disable lll --disable misspell --disable gochecknoglobals --disable dupl --disable wrapcheck --disable paralleltest
+	golangci-lint run
 
 ci: lint test
 
