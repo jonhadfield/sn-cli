@@ -111,6 +111,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
 		_ = cli.ShowSubcommandHelp(c)
+
 		return "", errors.New("title or UUID is required")
 	}
 
@@ -378,6 +379,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	tagInput := c.String("title")
 	if strings.TrimSpace(tagInput) == "" {
 		_ = cli.ShowSubcommandHelp(c)
+
 		return "", errors.New("tag title not defined")
 	}
 
@@ -438,6 +440,7 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	if findText == "" && findTitle == "" && findTag == "" {
 		fmt.Println("you must provide either text, title, or tag to search for")
+
 		return "", cli.ShowSubcommandHelp(c)
 	}
 
@@ -475,6 +478,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 
 	if titleIn == "" && uuidIn == "" {
 		_ = cli.ShowSubcommandHelp(c)
+
 		return msg, errors.New("title or uuid required")
 	}
 

@@ -176,6 +176,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
 		_ = cli.ShowSubcommandHelp(c)
+
 		return "", errors.New("title or UUID is required")
 	}
 
@@ -286,6 +287,7 @@ func parseEditorOutput(in []byte) (title, text string, err error) {
 
 	if len(lines) == 0 || len(lines) == 1 && strings.TrimSpace(lines[0]) == "" {
 		err = errors.New("no text saved")
+
 		return
 	}
 
@@ -483,6 +485,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	if strings.TrimSpace(text) == "" {
 		_ = cli.ShowSubcommandHelp(c)
+
 		return "", errors.New("note text not defined")
 	}
 
@@ -523,6 +526,7 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 
 	if title == "" && uuid == "" {
 		_ = cli.ShowSubcommandHelp(c)
+
 		return "", errors.New("")
 	}
 
