@@ -1,8 +1,8 @@
 on: push
 name: sonarqube
 jobs:
-  build:
-    name: sonarqube
+  sonarcloud:
+    name: SonarCloud
     runs-on: ubuntu-latest
     steps:
       -
@@ -17,8 +17,8 @@ jobs:
           go-version: 1.17
 #      - name: Build and Test
 #        run: make test
-      - name: Analyze with SonarCloud
-        uses: sonarsource/sonarcloud-github-action@master
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
