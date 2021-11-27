@@ -14,7 +14,7 @@ require (
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.5
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -41,7 +41,7 @@ require (
 	github.com/zalando/go-keyring v0.1.1 // indirect
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/sys v0.0.0-20211123173158-ef496fb156ab // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.64.0 // indirect
