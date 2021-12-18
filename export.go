@@ -9,9 +9,11 @@ import (
 )
 
 type ExportConfig struct {
-	Session *cache.Session
-	File    string
-	Debug   bool
+	Session   *cache.Session
+	Decrypted bool
+	Format    string
+	File      string
+	Debug     bool
 }
 
 type ImportConfig struct {
@@ -58,14 +60,31 @@ func (i ExportConfig) Run() error {
 		return err
 	}
 
-	var e gosn.EncryptedItems
+	var w interface{}
 
-	e, err = out.Encrypt(i.Session.Gosn())
-	if err != nil {
-		return err
+	if i.Decrypted {
+		w = out
+	} else {
+		w, err = out.Encrypt(i.Session.Gosn())
+		if err != nil {
+			return err
+		}
 	}
 
-	return writeGob(i.File, e)
+	switch i.Format {
+	case "gob":
+		if err = writeGob(i.File, w) ; err == nil {
+			return err
+		}
+	case "json":
+		if err = writeJSON(i.File, w) ; err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("export written to: %s\n", i.File)
+
+	return nil
 }
 
 func (i *ImportConfig) Run() error {

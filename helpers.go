@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"encoding/gob"
+	"encoding/json"
 	"os"
 	"strings"
 
@@ -42,6 +43,29 @@ func writeGob(filePath string, object interface{}) error {
 	if file != nil {
 		_ = file.Close()
 	}
+
+	return err
+}
+
+func writeJSON(filePath string, object interface{}) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	var jsonExport []byte
+	if err == nil {
+		jsonExport, err = json.MarshalIndent(object,"","  ")
+	}
+
+	content := strings.Builder{}
+	content.WriteString("{\n  \"items\": ")
+	content.WriteString(string(jsonExport))
+	content.WriteString("\n}")
+
+	_, err = file.WriteString(content.String())
 
 	return err
 }

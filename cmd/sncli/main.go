@@ -709,15 +709,13 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			Name:  "export",
 			Usage: "export data",
 			Flags: []cli.Flag{
-				cli.BoolTFlag{
-					Name:  "encrypted (default: true)",
-					Usage: "encrypt the exported data",
+				cli.BoolFlag{
+					Name:  "decrypted",
+					Usage: "exported data without encryption",
 				},
 				cli.StringFlag{
-					Name:   "format",
-					Usage:  "hidden whilst gob is the only supported format",
-					Value:  "gob",
-					Hidden: true,
+					Name:  "format",
+					Usage: "choose from gob or json (default: gob)",
 				},
 				cli.StringFlag{
 					Name:  "output (default: current directory)",
@@ -732,6 +730,13 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 				useStdOut = opts.useStdOut
 
+				format := strings.TrimSpace(c.String("format"))
+				if format != "gob" && format != "json" {
+					_ = cli.ShowCommandHelp(c, "export")
+
+					return fmt.Errorf("format must be gob or json")
+				}
+
 				outputPath := strings.TrimSpace(c.String("output"))
 				if outputPath == "" {
 					var currDir string
@@ -740,7 +745,13 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						return err
 					}
 					timeStamp := time.Now().UTC().Format("20060102150405")
-					filePath := fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
+					var filePath string
+					switch format {
+					case "gob":
+						filePath = fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
+					case "json":
+						filePath = fmt.Sprintf("standard_notes_export_%s.json", timeStamp)
+					}
 					outputPath = currDir + string(os.PathSeparator) + filePath
 				}
 
@@ -759,6 +770,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				sess.CacheDBPath = cacheDBPath
 				appExportConfig := sncli.ExportConfig{
 					Session: &sess,
+					Decrypted: c.Bool("decrypted"),
+					Format:  format,
 					File:    outputPath,
 					Debug:   opts.debug,
 				}
