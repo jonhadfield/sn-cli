@@ -3,6 +3,8 @@ package sncli
 import (
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -78,6 +80,19 @@ func readGob(filePath string, object interface{}) error {
 	}
 
 	_ = file.Close()
+
+	return err
+}
+
+func readJSON(filePath string, items *gosn.EncryptedItems) error {
+	file, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open: %s", filePath)
+	}
+	err = json.Unmarshal(file, &items)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshall json: %w", err)
+	}
 
 	return err
 }

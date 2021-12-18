@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExportOneNote(t *testing.T) {
+func TestExportOneNoteUsingGob(t *testing.T) {
 	testDelay()
 
 	cleanUp(*testSession)
@@ -53,7 +53,7 @@ func TestExportOneNote(t *testing.T) {
 	assert.NoError(t, err)
 
 	defer func() {
-		if err = os.RemoveAll(dir) ; err != nil {
+		if err = os.RemoveAll(dir); err != nil {
 			panic("failed to remove temp dir")
 		}
 	}() // clean up
@@ -61,6 +61,7 @@ func TestExportOneNote(t *testing.T) {
 	tmpfn := filepath.Join(dir, "tmpfile")
 	ec := ExportConfig{
 		Session: testSession,
+		Format:  "gob",
 		File:    tmpfn,
 	}
 
@@ -70,6 +71,85 @@ func TestExportOneNote(t *testing.T) {
 
 	var writtenEncryptedItems gosn.EncryptedItems
 	if expErr := readGob(tmpfn, &writtenEncryptedItems); expErr != nil {
+		panic(expErr)
+	}
+
+	var writtenItems gosn.Items
+	writtenItems, err = writtenEncryptedItems.DecryptAndParse(testSession.Session)
+	assert.NoError(t, err)
+
+	var found bool
+
+	for _, item := range writtenItems {
+		if item != nil && item.GetUUID() == note.UUID {
+			found = true
+			break
+		}
+	}
+
+	assert.True(t, found)
+}
+
+func TestExportOneNoteUsingJSON(t *testing.T) {
+	testDelay()
+
+	cleanUp(*testSession)
+	defer cleanUp(*testSession)
+
+	// populate DB
+	si := cache.SyncInput{
+		Session: testSession,
+	}
+
+	so, err := Sync(si, false)
+	assert.NoError(t, err)
+
+	// create a note
+	note := gosn.NewNote()
+	noteContent := gosn.NewNoteContent()
+	note.Content = *noteContent
+	note.Content.SetTitle("Example Title")
+	note.Content.SetText("Some example text")
+	itemsToPut := gosn.Items{
+		&note,
+	}
+
+	encItemsToPut, err := itemsToPut.Encrypt(*testSession.Session)
+	assert.NoError(t, err)
+
+	cItems := cache.ToCacheItems(encItemsToPut, false)
+	for _, ci := range cItems {
+		assert.NoError(t, so.DB.Save(&ci))
+	}
+
+	assert.NoError(t, so.DB.Close())
+
+	so, err = Sync(si, false)
+	assert.NoError(t, err)
+	assert.NoError(t, so.DB.Close())
+
+	dir, err := ioutil.TempDir("", "test")
+	assert.NoError(t, err)
+
+	defer func() {
+		if err = os.RemoveAll(dir); err != nil {
+			panic("failed to remove temp dir")
+		}
+	}() // clean up
+
+	tmpfn := filepath.Join(dir, "tmpfile")
+	ec := ExportConfig{
+		Session: testSession,
+		Format:  "json",
+		File:    tmpfn,
+	}
+
+	if runErr := ec.Run(); runErr != nil {
+		panic(runErr)
+	}
+
+	var writtenEncryptedItems gosn.EncryptedItems
+	if expErr := readJSON(tmpfn, &writtenEncryptedItems); expErr != nil {
 		panic(expErr)
 	}
 
@@ -140,7 +220,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	assert.NoError(t, err)
 
 	defer func() {
-		if err = os.RemoveAll(dir) ; err != nil {
+		if err = os.RemoveAll(dir); err != nil {
 			panic("failed to remove temp dir")
 		}
 	}() // clean up
@@ -349,7 +429,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	assert.NoError(t, err)
 
 	defer func() {
-		if err = os.RemoveAll(dir) ; err != nil {
+		if err = os.RemoveAll(dir); err != nil {
 			panic("failed to remove temp dir")
 		}
 	}() // clean up
@@ -472,7 +552,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	assert.NoError(t, err)
 
 	defer func() {
-		if err = os.RemoveAll(dir) ; err != nil {
+		if err = os.RemoveAll(dir); err != nil {
 			panic("failed to remove temp dir")
 		}
 	}() // clean up

@@ -159,6 +159,7 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	// Sync DB
 	si := cache.SyncInput{
 		Session: i.Session,
+		Close:   false,
 	}
 
 	var so cache.SyncOutput
@@ -172,7 +173,6 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	if err != nil {
 		return
 	}
-
 	defer func() {
 		_ = so.DB.Close()
 	}()
