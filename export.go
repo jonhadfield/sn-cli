@@ -19,6 +19,7 @@ type ExportConfig struct {
 type ImportConfig struct {
 	Session *cache.Session
 	File    string
+	Format  string
 	Debug   bool
 }
 
@@ -80,6 +81,8 @@ func (i ExportConfig) Run() error {
 		if err = writeJSON(i.File, w) ; err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf("invalid format specified: '%s'", i.Format)
 	}
 
 	fmt.Printf("export written to: %s\n", i.File)
@@ -100,9 +103,17 @@ func (i *ImportConfig) Run() error {
 
 	var encItemsToImport gosn.EncryptedItems
 
-	err = readGob(i.File, &encItemsToImport)
-	if err != nil {
-		return err
+	switch i.Format {
+	case "gob":
+		if err = readGob(i.File, encItemsToImport) ; err == nil {
+			return err
+		}
+	case "json":
+		if err = readJSON(i.File, &encItemsToImport) ; err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("invalid format specified: '%s'", i.Format)
 	}
 
 	var encFinalList gosn.EncryptedItems
