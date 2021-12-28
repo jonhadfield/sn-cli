@@ -2,8 +2,6 @@ package sncli
 
 import (
 	"fmt"
-
-	"github.com/asdine/storm/v3/q"
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 )
@@ -11,7 +9,6 @@ import (
 type ExportConfig struct {
 	Session   *cache.Session
 	Decrypted bool
-	Format    string
 	File      string
 	Debug     bool
 }
@@ -25,64 +22,38 @@ type ImportConfig struct {
 
 func (i ExportConfig) Run() error {
 	// populate DB
-	gii := cache.SyncInput{
-		Session: i.Session,
+	gii := gosn.SyncInput{
+		Session: i.Session.Session,
 	}
 
-	gio, err := Sync(gii, true)
+	gio, err := gosn.Sync(gii)
 	if err != nil {
 		return err
 	}
-
-	defer func() {
-		_ = gio.DB.Close()
-	}()
 
 	// DB now populated and open with pointer in session
-	// strip deleted items
-	var out gosn.Items
-
-	// load all items
-	var allPersistedItems cache.Items
-
-	// only export undeleted tags and notes
-	query := gio.DB.Select(q.Eq("Deleted", false),
-		q.Or(
-			q.Eq("ContentType", "Note"),
-			q.Eq("ContentType", "Tag")),
-	)
-
-	if err = query.Find(&allPersistedItems); err != nil {
-		return err
+	// strip deleted items and re-encrypt
+	var out gosn.EncryptedItems
+	for _, item := range gio.Items {
+		if item.Deleted == false {
+			// set new uuid
+			out = append(out, item)
+		}
 	}
 
-	out, err = allPersistedItems.ToItems(i.Session)
+	// decrypt
+	di, err := out.DecryptAndParse(i.Session.Session)
+	if err != nil {
+		return err
+	}
+	// encrypt
+	nei, err := di.Encrypt(*i.Session.Session)
 	if err != nil {
 		return err
 	}
 
-	var w interface{}
-
-	if i.Decrypted {
-		w = out
-	} else {
-		w, err = out.Encrypt(i.Session.Gosn())
-		if err != nil {
-			return err
-		}
-	}
-
-	switch i.Format {
-	case "gob":
-		if err = writeGob(i.File, w) ; err == nil {
-			return err
-		}
-	case "json":
-		if err = writeJSON(i.File, w) ; err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("invalid format specified: '%s'", i.Format)
+	if err = writeJSON(i, nei); err != nil {
+		return err
 	}
 
 	fmt.Printf("export written to: %s\n", i.File)
@@ -90,7 +61,7 @@ func (i ExportConfig) Run() error {
 	return nil
 }
 
-func (i *ImportConfig) Run() error {
+func (i *ImportConfig) Run() (imported int, err error) {
 	// populate DB
 	gii := cache.SyncInput{
 		Session: i.Session,
@@ -98,33 +69,41 @@ func (i *ImportConfig) Run() error {
 
 	gio, err := Sync(gii, true)
 	if err != nil {
-		return err
+		return imported, err
 	}
 
 	var encItemsToImport gosn.EncryptedItems
 
 	switch i.Format {
 	case "gob":
-		if err = readGob(i.File, encItemsToImport) ; err == nil {
-			return err
+		if err = readGob(i.File, &encItemsToImport); err != nil {
+			return imported, fmt.Errorf("%w", err)
 		}
 	case "json":
-		if err = readJSON(i.File, &encItemsToImport) ; err != nil {
-			return err
+		encItemsToImport, err = readJSON(i.File)
+		if err != nil {
+			return imported, fmt.Errorf("%w", err)
 		}
 	default:
-		return fmt.Errorf("invalid format specified: '%s'", i.Format)
+		return imported, fmt.Errorf("invalid format specified: '%s'", i.Format)
 	}
 
 	var encFinalList gosn.EncryptedItems
-	encFinalList = append(encFinalList, encItemsToImport...)
+	if encItemsToImport != nil {
+		for _, item := range encItemsToImport {
+			if item.DuplicateOf != nil {
+				err = fmt.Errorf("duplicate of item found: %s", *item.DuplicateOf)
+			}
+		}
+		encFinalList = append(encFinalList, encItemsToImport...)
+	}
 
 	if len(encFinalList) == 0 {
-		return fmt.Errorf("no items to import were loaded")
+		return imported, fmt.Errorf("no items to import were loaded")
 	}
 
 	if err = cache.SaveEncryptedItems(gio.DB, encFinalList, true); err != nil {
-		return err
+		return imported, err
 	}
 
 	// push item and close db
@@ -134,6 +113,7 @@ func (i *ImportConfig) Run() error {
 	}
 
 	_, err = Sync(pii, true)
+	imported = len(encFinalList)
 
-	return err
+	return imported, err
 }
