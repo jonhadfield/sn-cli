@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/jonhadfield/gosn-v2"
@@ -94,24 +95,21 @@ func _addNotes(session cache.Session, i map[string]string) error {
 }
 
 func _deleteNotesByTitle(session cache.Session, input map[string]string) (noDeleted int, err error) {
+	var noteTitles []string
 	for k := range input {
-		deleteNoteConfig := DeleteNoteConfig{
-			Session:    &session,
-			NoteTitles: []string{k},
-		}
-
-		_, err = deleteNoteConfig.Run()
-		if err != nil {
-			return noDeleted, err
-		}
-
-		if err != nil {
-			return noDeleted, err
-		}
-		noDeleted++
+		noteTitles = append(noteTitles, k)
+	}
+	deleteNoteConfig := DeleteNoteConfig{
+		Session:    &session,
+		NoteTitles: noteTitles,
 	}
 
-	return noDeleted, err
+	noDeleted, err = deleteNoteConfig.Run()
+	if err != nil {
+		return noDeleted, err
+	}
+
+	return noDeleted, deleteNoteConfig.Session.CacheDB.Close()
 }
 
 func _deleteTagsByTitle(session cache.Session, input []string) (noDeleted int, err error) {
@@ -125,7 +123,7 @@ func _deleteTagsByTitle(session cache.Session, input []string) (noDeleted int, e
 
 func TestTaggingOfNotes(t *testing.T) {
 	testDelay()
-
+	cleanUp(*testSession)
 	defer cleanUp(*testSession)
 
 	// create four notes
@@ -147,7 +145,6 @@ func TestTaggingOfNotes(t *testing.T) {
 	}
 	err = tni.Run()
 	assert.NoError(t, err, err)
-	// get newly tagged notes
 
 	filterNotesByTagName := gosn.Filter{
 		Type:       "Note",
@@ -171,12 +168,14 @@ func TestTaggingOfNotes(t *testing.T) {
 	if len(retNotes) != 2 {
 		t.Errorf("expected two notes but got: %d", len(retNotes))
 	}
+	require.NoError(t, testSession.CacheDB.Close())
 
-	_, err = _deleteNotesByTitle(*testSession, notes)
+	nd, err := _deleteNotesByTitle(*testSession, notes)
 	assert.NoError(t, err, err)
+	require.Equal(t, 4, nd)
 
 	var deletedTags int
 	deletedTags, err = _deleteTagsByTitle(*testSession, tags)
 	assert.NoError(t, err, err)
-	assert.Equal(t, len(tags), deletedTags)
+	assert.Equal(t, 1, deletedTags)
 }
