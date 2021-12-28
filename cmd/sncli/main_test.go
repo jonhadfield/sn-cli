@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +13,40 @@ func TestWipe(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgItemsDeleted)
 	time.Sleep(1 * time.Second)
+}
+
+func TestAddTagExportDeleteTagReImport(t *testing.T) {
+	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
+	assert.NoError(t, err)
+
+	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
+	assert.NoError(t, err)
+	assert.Contains(t, msg, msgAddSuccess)
+
+	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--count"})
+	assert.NoError(t, err)
+	assert.Equal(t, "1", msg)
+
+	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "export"})
+	assert.NoError(t, err)
+	assert.True(t, strings.HasPrefix(msg, "encrypted export written to:"))
+	path := strings.TrimPrefix(msg, "encrypted export written to:")
+
+	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount"})
+	assert.NoError(t, err)
+	assert.Contains(t, msg, msgDeleted)
+
+	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--count"})
+	assert.NoError(t, err)
+	assert.Equal(t, "0", msg)
+
+	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "import", "--file", path})
+	assert.NoError(t, err)
+	assert.True(t, strings.HasPrefix(msg, "imported"))
+
+	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--count"})
+	assert.NoError(t, err)
+	assert.Equal(t, "1", msg)
 }
 
 func TestAddDeleteTag(t *testing.T) {

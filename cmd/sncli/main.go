@@ -62,7 +62,7 @@ type configOptsOutput struct {
 func getOpts(c *cli.Context) (out configOptsOutput, err error) {
 	out.useStdOut = true
 
-	if !c.GlobalBool("no-stdout") {
+	if c.GlobalBool("no-stdout") {
 		out.useStdOut = false
 	}
 
@@ -73,8 +73,10 @@ func getOpts(c *cli.Context) (out configOptsOutput, err error) {
 	out.sessKey = c.GlobalString("session-key")
 
 	out.server = c.GlobalString("server")
+
 	if viper.GetString("server") != "" {
 		out.server = viper.GetString("server")
+
 	}
 
 	out.cacheDBDir = viper.GetString("cachedb_dir")
@@ -709,17 +711,9 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			Name:  "export",
 			Usage: "export data",
 			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name:  "decrypted",
-					Usage: "exported data without encryption",
-				},
 				cli.StringFlag{
-					Name:  "format",
-					Usage: "choose from gob or json (default: gob)",
-				},
-				cli.StringFlag{
-					Name:  "output (default: current directory)",
-					Usage: "output path",
+					Name:  "path",
+					Usage: "choose directory to place export in (default: current directory)",
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -730,30 +724,17 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 				useStdOut = opts.useStdOut
 
-				format := strings.TrimSpace(c.String("format"))
-				if format != "gob" && format != "json" {
-					_ = cli.ShowCommandHelp(c, "export")
-
-					return fmt.Errorf("format must be gob or json")
-				}
-
 				outputPath := strings.TrimSpace(c.String("output"))
 				if outputPath == "" {
-					var currDir string
-					currDir, err = os.Getwd()
+					outputPath, err = os.Getwd()
 					if err != nil {
 						return err
 					}
-					timeStamp := time.Now().UTC().Format("20060102150405")
-					var filePath string
-					switch format {
-					case "gob":
-						filePath = fmt.Sprintf("standard_notes_export_%s.gob", timeStamp)
-					case "json":
-						filePath = fmt.Sprintf("standard_notes_export_%s.json", timeStamp)
-					}
-					outputPath = currDir + string(os.PathSeparator) + filePath
 				}
+
+				timeStamp := time.Now().UTC().Format("20060102150405")
+				filePath := fmt.Sprintf("standard_notes_export_%s.json", timeStamp)
+				outputPath += string(os.PathSeparator) + filePath
 
 				var sess cache.Session
 				sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
@@ -769,11 +750,10 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 
 				sess.CacheDBPath = cacheDBPath
 				appExportConfig := sncli.ExportConfig{
-					Session: &sess,
+					Session:   &sess,
 					Decrypted: c.Bool("decrypted"),
-					Format:  format,
-					File:    outputPath,
-					Debug:   opts.debug,
+					File:      outputPath,
+					Debug:     opts.debug,
 				}
 				err = appExportConfig.Run()
 				if err == nil {
@@ -788,10 +768,9 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			Usage: "import data",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:   "format",
-					Usage:  "hidden whilst gob is the only supported format",
-					Value:  "gob",
-					Hidden: true,
+					Name:  "format",
+					Usage: "choose from gob or json (default: json)",
+					Value: "json",
 				},
 				cli.StringFlag{
 					Name:  "file",
@@ -804,6 +783,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if err != nil {
 					return err
 				}
+
+				useStdOut = opts.useStdOut
 
 				inputPath := strings.TrimSpace(c.String("file"))
 				if inputPath == "" {
@@ -823,11 +804,16 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				appImportConfig := sncli.ImportConfig{
 					Session: &session,
 					File:    inputPath,
+					Format:  c.String("format"),
 					Debug:   opts.debug,
 				}
-				err = appImportConfig.Run()
+
+				var imported int
+				imported, err = appImportConfig.Run()
 				if err == nil {
-					msg = "import successful"
+					msg = fmt.Sprintf("imported %d items", imported)
+				} else {
+					msg = "import failed"
 				}
 
 				return err
@@ -854,6 +840,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if err != nil {
 					return err
 				}
+
 				useStdOut = opts.useStdOut
 
 				if strings.TrimSpace(c.String("email")) == "" {
