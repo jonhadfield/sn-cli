@@ -278,14 +278,20 @@ func (i *WipeConfig) Run() (int, error) {
 	var itemsToDel int
 
 	for _, fi := range filteredItems {
+		if fi.Deleted == true {
+			continue
+		}
 		if fi.ContentType == "SN|ItemsKey" {
 			panic("attempted to delete SN|ItemsKey")
 		}
 		itemsToDel++
-
+		fi.EncItemKey = ""
 		fi.Deleted = true
 		fi.Dirty = true
 		fi.DirtiedDate = time.Now()
+		fi.DuplicateOf = nil
+		fi.Content = ""
+		fi.ItemsKeyID = nil
 
 		err = so.DB.Save(&fi)
 		if err != nil {
@@ -293,7 +299,6 @@ func (i *WipeConfig) Run() (int, error) {
 		}
 	}
 
-	// TODO: Close DB after each Sync?
 	err = so.DB.Close()
 	if err != nil {
 		return 0, err
