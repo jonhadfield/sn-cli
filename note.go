@@ -142,6 +142,7 @@ func (i *GetNoteConfig) Run() (items gosn.Items, err error) {
 
 	err = so.DB.All(&allPersistedItems)
 	if err != nil {
+		err = fmt.Errorf("getting items from db: %w", err)
 		return
 	}
 
@@ -178,6 +179,7 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 			})
 		}
 	case noteText != "":
+
 		comparison := "=="
 		if regex {
 			comparison = "~"
@@ -190,6 +192,7 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 			Type:       "Note",
 		})
 	case len(noteUUIDs) > 0:
+
 		for _, uuid := range noteUUIDs {
 			getNotesFilters = append(getNotesFilters, gosn.Filter{
 				Key:        "UUID",
@@ -220,6 +223,7 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 
 	err = gio.DB.All(&allPersistedItems)
 	if err != nil {
+		err = fmt.Errorf("getting items from db: %w", err)
 		return
 	}
 
@@ -235,8 +239,10 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 	var notesToDelete gosn.Notes
 
 	for _, item := range notes {
+		if item.GetContentType() != "Note" {
+			panic(fmt.Sprintf("Got a non-note item in the notes list: %s", item.GetContentType()))
+		}
 		note := item.(*gosn.Note)
-
 		if note.GetContent() != nil {
 			note.Content.SetText("")
 			note.SetDeleted(true)
@@ -256,12 +262,11 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 		Session: session,
 	}
 
+	pii.Close = true
 	gio, err = Sync(pii, true)
 	if err != nil {
 		return
 	}
-
-	_ = gio.DB.Close()
 
 	return len(notesToDelete), err
 }

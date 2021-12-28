@@ -21,6 +21,7 @@ func TestMain(m *testing.M) {
 	testSession = &cache.Session{
 		Session: &gosn.Session{
 			Debug:             true,
+			KeyParams:         gs.KeyParams,
 			Server:            gs.Server,
 			Token:             gs.Token,
 			MasterKey:         gs.MasterKey,
@@ -134,6 +135,7 @@ func TestWipeWith50(t *testing.T) {
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
 	testDelay()
+	cleanUp(*testSession)
 
 	defer cleanUp(*testSession)
 
@@ -176,7 +178,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
-	assert.Equal(t, noDeleted, 1)
+	assert.Equal(t, 1, noDeleted)
 	assert.NoError(t, err, err)
 
 	postRes, err = gnc.Run()
