@@ -123,7 +123,6 @@ func _deleteTagsByTitle(session cache.Session, input []string) (noDeleted int, e
 
 func TestTaggingOfNotes(t *testing.T) {
 	testDelay()
-	cleanUp(*testSession)
 	defer cleanUp(*testSession)
 
 	// create four notes

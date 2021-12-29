@@ -72,6 +72,7 @@ func TestMain(m *testing.M) {
 func TestWipeWith50(t *testing.T) {
 	testDelay()
 
+	// initial cleanup before first test
 	cleanUp(*testSession)
 	defer cleanUp(*testSession)
 
@@ -135,7 +136,6 @@ func TestWipeWith50(t *testing.T) {
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
 	testDelay()
-	cleanUp(*testSession)
 
 	defer cleanUp(*testSession)
 
@@ -317,8 +317,6 @@ func TestCreateOneHundredNotes(t *testing.T) {
 
 	numNotes := 100
 	textParas := 10
-
-	cleanUp(*testSession)
 
 	err := createNotes(testSession, numNotes, textParas)
 	assert.NoError(t, err)
