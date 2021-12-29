@@ -1,94 +1,15 @@
 package sncli
 
 import (
+	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/jonhadfield/gosn-v2"
-	"github.com/jonhadfield/gosn-v2/cache"
-	"github.com/stretchr/testify/assert"
 )
-
-func TestExportOneNoteUsingGob(t *testing.T) {
-	testDelay()
-
-	cleanUp(*testSession)
-	defer cleanUp(*testSession)
-
-	// populate DB
-	si := cache.SyncInput{
-		Session: testSession,
-	}
-
-	so, err := Sync(si, false)
-	assert.NoError(t, err)
-
-	// create a note
-	note := gosn.NewNote()
-	noteContent := gosn.NewNoteContent()
-	note.Content = *noteContent
-	note.Content.SetTitle("Example Title")
-	note.Content.SetText("Some example text")
-	itemsToPut := gosn.Items{
-		&note,
-	}
-
-	encItemsToPut, err := itemsToPut.Encrypt(*testSession.Session)
-	assert.NoError(t, err)
-
-	cItems := cache.ToCacheItems(encItemsToPut, false)
-	for _, ci := range cItems {
-		assert.NoError(t, so.DB.Save(&ci))
-	}
-
-	assert.NoError(t, so.DB.Close())
-
-	so, err = Sync(si, false)
-	assert.NoError(t, err)
-	assert.NoError(t, so.DB.Close())
-
-	dir, err := ioutil.TempDir("", "test")
-	assert.NoError(t, err)
-
-	defer func() {
-		if err = os.RemoveAll(dir); err != nil {
-			panic("failed to remove temp dir")
-		}
-	}() // clean up
-
-	tmpfn := filepath.Join(dir, "tmpfile")
-	ec := ExportConfig{
-		Session: testSession,
-		Format:  "gob",
-		File:    tmpfn,
-	}
-
-	if runErr := ec.Run(); runErr != nil {
-		panic(runErr)
-	}
-
-	var writtenEncryptedItems gosn.EncryptedItems
-	if expErr := readGob(tmpfn, &writtenEncryptedItems); expErr != nil {
-		panic(expErr)
-	}
-
-	var writtenItems gosn.Items
-	writtenItems, err = writtenEncryptedItems.DecryptAndParse(testSession.Session)
-	assert.NoError(t, err)
-
-	var found bool
-
-	for _, item := range writtenItems {
-		if item != nil && item.GetUUID() == note.UUID {
-			found = true
-			break
-		}
-	}
-
-	assert.True(t, found)
-}
 
 func TestExportOneNoteUsingJSON(t *testing.T) {
 	testDelay()
@@ -140,7 +61,6 @@ func TestExportOneNoteUsingJSON(t *testing.T) {
 	tmpfn := filepath.Join(dir, "tmpfile")
 	ec := ExportConfig{
 		Session: testSession,
-		Format:  "json",
 		File:    tmpfn,
 	}
 
@@ -148,14 +68,11 @@ func TestExportOneNoteUsingJSON(t *testing.T) {
 		panic(runErr)
 	}
 
-	var writtenEncryptedItems gosn.EncryptedItems
-	if expErr := readJSON(tmpfn, &writtenEncryptedItems); expErr != nil {
-		panic(expErr)
-	}
+	writtenEncryptedItems, err := readJSON(tmpfn)
+	require.NoError(t, err)
 
-	var writtenItems gosn.Items
-	writtenItems, err = writtenEncryptedItems.DecryptAndParse(testSession.Session)
-	assert.NoError(t, err)
+	writtenItems, err := writtenEncryptedItems.DecryptAndParse(testSession.Session)
+	require.NoError(t, err)
 
 	var found bool
 
@@ -170,7 +87,7 @@ func TestExportOneNoteUsingJSON(t *testing.T) {
 }
 
 // export one note, delete that note, import the backup and check note has returned.
-func TestExportWipeImportOneNote(t *testing.T) {
+func TestJSONExportWipeImportOneNote(t *testing.T) {
 	testDelay()
 
 	defer cleanUp(*testSession)
@@ -238,10 +155,12 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	// import the export made above so that SN is now populated
 	ic := ImportConfig{
 		Session: testSession,
+		Format:  "json",
 		File:    tmpfn,
 	}
 
-	assert.NoError(t, ic.Run())
+	_, err = ic.Run()
+	assert.NoError(t, err)
 
 	// get a new database and populate with the new item
 	gii = cache.SyncInput{
@@ -274,7 +193,7 @@ func TestExportWipeImportOneNote(t *testing.T) {
 	assert.NoError(t, gio.DB.Close())
 }
 
-// Create a note, export it, change original, import and check exported items replace modified.
+// Create a note, export it, change original, import and check a duplicate has been created.
 func TestConflictResolution(t *testing.T) {
 	testDelay()
 
@@ -297,7 +216,7 @@ func TestConflictResolution(t *testing.T) {
 	encItemsToPut, err := itemsToPut.Encrypt(*testSession.Session)
 	assert.NoError(t, err)
 
-	// ### sync db
+	// perform initial sync to load keys into session
 	pii := cache.SyncInput{
 		Session: testSession,
 	}
@@ -305,11 +224,11 @@ func TestConflictResolution(t *testing.T) {
 	var so cache.SyncOutput
 	so, err = Sync(pii, false)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	pi := cache.ToCacheItems(encItemsToPut, false)
 
-	assert.NotEqual(t, 1, itemsToPut)
+	require.Len(t, itemsToPut, 1)
 
 	for _, p := range pi {
 		assert.NoError(t, so.DB.Save(&p))
@@ -317,12 +236,8 @@ func TestConflictResolution(t *testing.T) {
 
 	assert.NoError(t, so.DB.Close())
 
+	// sync saved item in db to SN
 	so, err = Sync(pii, false)
-	assert.NoError(t, err)
-
-	var encItems1 cache.Items
-
-	err = so.DB.All(&encItems1)
 	assert.NoError(t, err)
 	assert.NoError(t, so.DB.Close())
 
@@ -346,22 +261,14 @@ func TestConflictResolution(t *testing.T) {
 
 	encItemsToPut, err = itemsToPut.Encrypt(*testSession.Session)
 	assert.NoError(t, err)
-
 	pi = cache.ToCacheItems(encItemsToPut, false)
 	for _, i := range pi {
 		assert.NoError(t, so.DB.Save(&i))
 	}
 
-	err = so.DB.All(&encItems)
-	assert.NoError(t, err)
 	assert.NoError(t, so.DB.Close())
-
-	pii.CacheDB = nil
-
-	assert.NoError(t, so.DB.Close())
-
 	so, err = Sync(pii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var final cache.Items
 	err = so.DB.All(&final)
@@ -375,14 +282,16 @@ func TestConflictResolution(t *testing.T) {
 			origFound = true
 		}
 
-		if x.DuplicateOf == originalNote.GetUUID() && x.UUID != originalNote.GetUUID() {
-			newItemWithDupeIDBeingOrig = true
+		if x.ContentType == "Note" {
+			if x.UUID != originalNote.UUID {
+				newItemWithDupeIDBeingOrig = true
+			}
 		}
 	}
 
-	assert.True(t, origFound)
-	assert.True(t, newItemWithDupeIDBeingOrig)
-	assert.NoError(t, so.DB.Close())
+	require.True(t, origFound)
+	require.True(t, newItemWithDupeIDBeingOrig)
+	require.NoError(t, so.DB.Close())
 }
 
 func TestExportChangeImportOneTag(t *testing.T) {
@@ -475,10 +384,11 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	// import original export
 	ic := ImportConfig{
 		Session: testSession,
+		Format:  "json",
 		File:    tmpfn,
 	}
 
-	err = ic.Run()
+	_, err = ic.Run()
 	assert.NoError(t, err)
 
 	// get items again
@@ -593,10 +503,11 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	// import original export
 	ic := ImportConfig{
 		Session: testSession,
+		Format:  "json",
 		File:    tmpfn,
 	}
 
-	err = ic.Run()
+	_, err = ic.Run()
 	assert.NoError(t, err)
 
 	// get items again
