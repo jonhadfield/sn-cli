@@ -2,7 +2,6 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 )
 
@@ -20,45 +19,9 @@ type ImportConfig struct {
 	Debug   bool
 }
 
+// Run will retrieve all items from SN directly, re-encrypt them with a new ItemsKey and write them to a file.
 func (i ExportConfig) Run() error {
-	// populate DB
-	gii := gosn.SyncInput{
-		Session: i.Session.Session,
-	}
-
-	gio, err := gosn.Sync(gii)
-	if err != nil {
-		return err
-	}
-
-	// DB now populated and open with pointer in session
-	// strip deleted items and re-encrypt
-	var out gosn.EncryptedItems
-	for _, item := range gio.Items {
-		if item.Deleted == false {
-			// set new uuid
-			out = append(out, item)
-		}
-	}
-
-	// decrypt
-	di, err := out.DecryptAndParse(i.Session.Session)
-	if err != nil {
-		return err
-	}
-	// encrypt
-	nei, err := di.Encrypt(*i.Session.Session)
-	if err != nil {
-		return err
-	}
-
-	if err = writeJSON(i, nei); err != nil {
-		return err
-	}
-
-	fmt.Printf("export written to: %s\n", i.File)
-
-	return nil
+	return i.Session.Export(i.File)
 }
 
 func (i *ImportConfig) Run() (imported int, err error) {
@@ -66,44 +29,30 @@ func (i *ImportConfig) Run() (imported int, err error) {
 	gii := cache.SyncInput{
 		Session: i.Session,
 	}
-
 	gio, err := Sync(gii, true)
 	if err != nil {
 		return imported, err
 	}
 
-	var encItemsToImport gosn.EncryptedItems
-
-	switch i.Format {
-	case "gob":
-		if err = readGob(i.File, &encItemsToImport); err != nil {
-			return imported, fmt.Errorf("%w", err)
-		}
-	case "json":
-		encItemsToImport, err = readJSON(i.File)
-		if err != nil {
-			return imported, fmt.Errorf("%w", err)
-		}
-	default:
-		return imported, fmt.Errorf("invalid format specified: '%s'", i.Format)
-	}
-
-	var encFinalList gosn.EncryptedItems
-	if encItemsToImport != nil {
-		for _, item := range encItemsToImport {
-			if item.DuplicateOf != nil {
-				err = fmt.Errorf("duplicate of item found: %s", *item.DuplicateOf)
-			}
-		}
-		encFinalList = append(encFinalList, encItemsToImport...)
-	}
-
-	if len(encFinalList) == 0 {
-		return imported, fmt.Errorf("no items to import were loaded")
-	}
-
-	if err = cache.SaveEncryptedItems(gio.DB, encFinalList, true); err != nil {
+	var syncTokens []cache.SyncToken
+	if err = gio.DB.All(&syncTokens); err != nil {
 		return imported, err
+	}
+	syncToken := ""
+	if len(syncTokens) > 0 {
+		syncToken = syncTokens[0].SyncToken
+	}
+	if err = gio.DB.Close(); err != nil {
+		return imported, err
+	}
+
+	iItems, iItemsKey, err := i.Session.Session.Import(i.File, syncToken)
+	if err != nil {
+		return
+	}
+
+	if iItemsKey.ItemsKey == "" {
+		panic(fmt.Sprintf("iItemsKey.ItemsKey is empty for: '%s'", iItemsKey.UUID))
 	}
 
 	// push item and close db
@@ -113,7 +62,7 @@ func (i *ImportConfig) Run() (imported int, err error) {
 	}
 
 	_, err = Sync(pii, true)
-	imported = len(encFinalList)
+	imported = len(iItems)
 
 	return imported, err
 }

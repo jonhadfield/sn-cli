@@ -1,8 +1,6 @@
 package sncli
 
 import (
-	"time"
-
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 )
@@ -252,64 +250,6 @@ func filterCacheItemsByTypes(ei cache.Items, types []string) (o cache.Items) {
 var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
 
 func (i *WipeConfig) Run() (int, error) {
-	syncInput := cache.SyncInput{
-		Session: i.Session,
-	}
-
-	var err error
-	// get all existing Tags and Notes and mark for deletion
-	var so cache.SyncOutput
-
-	so, err = Sync(syncInput, true)
-	if err != nil {
-		return 0, err
-	}
-
-	// get all items
-	var allPersistedItems cache.Items
-	err = so.DB.All(&allPersistedItems)
-
-	if err != nil {
-		return 0, err
-	}
-
-	filteredItems := filterCacheItemsByTypes(allPersistedItems, supportedContentTypes)
-
-	var itemsToDel int
-
-	for _, fi := range filteredItems {
-		if fi.Deleted == true {
-			continue
-		}
-		if fi.ContentType == "SN|ItemsKey" {
-			panic("attempted to delete SN|ItemsKey")
-		}
-		itemsToDel++
-		fi.EncItemKey = ""
-		fi.Deleted = true
-		fi.Dirty = true
-		fi.DirtiedDate = time.Now()
-		fi.DuplicateOf = nil
-		fi.Content = ""
-		fi.ItemsKeyID = nil
-
-		err = so.DB.Save(&fi)
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	err = so.DB.Close()
-	if err != nil {
-		return 0, err
-	}
-
-	so, err = Sync(syncInput, true)
-	if err != nil {
-		return 0, err
-	}
-
-	err = so.DB.Close()
-
-	return itemsToDel, err
+	i.Session.RemoveDB()
+	return gosn.DeleteContent(i.Session.Session)
 }

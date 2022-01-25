@@ -112,7 +112,7 @@ func createNotes(session *cache.Session, num int, paras int) error {
 
 	var err error
 
-	eGendNotes, err = gendNotes.Encrypt(session.Gosn())
+	eGendNotes, err = gendNotes.Encrypt(session.Session.DefaultItemsKey, session.MasterKey, session.Debug)
 	if err != nil {
 		return err
 	}
@@ -153,10 +153,13 @@ func createTags(session gosn.Session, num int64) error {
 	gendTags := genTags(num)
 
 	var eGendTags gosn.EncryptedItems
+	eGendTags, err := gendTags.Encrypt(session.DefaultItemsKey, session.MasterKey, session.Debug)
+	if err != nil {
+		return err
+	}
 
-	eGendTags, _ = gendTags.Encrypt(session)
 	pii.Items = eGendTags
-	_, err := gosn.Sync(pii)
+	_, err = gosn.Sync(pii)
 
 	return err
 }

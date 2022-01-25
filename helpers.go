@@ -50,11 +50,11 @@ func writeGob(filePath string, object interface{}) error {
 }
 
 type EncryptedItemExport struct {
-	UUID               string  `json:"uuid"`
-	ItemsKeyID         *string `json:"items_key_id,omitempty"`
-	Content            string  `json:"content"`
-	ContentType        string  `json:"content_type"`
-	Deleted            bool    `json:"deleted"`
+	UUID        string  `json:"uuid"`
+	ItemsKeyID  *string `json:"items_key_id,omitempty"`
+	Content     string  `json:"content"`
+	ContentType string  `json:"content_type"`
+	//Deleted            bool    `json:"deleted"`
 	EncItemKey         string  `json:"enc_item_key"`
 	CreatedAt          string  `json:"created_at"`
 	UpdatedAt          string  `json:"updated_at"`
@@ -67,15 +67,11 @@ func writeJSON(i ExportConfig, items gosn.EncryptedItems) error {
 	// prepare for export
 	var itemsExport []EncryptedItemExport
 	for x := range items {
-		if items[x].DuplicateOf != nil {
-			return fmt.Errorf("unexpected duplicate: %s", *items[x].DuplicateOf)
-		}
-
 		itemsExport = append(itemsExport, EncryptedItemExport{
-			UUID:               items[x].UUID,
-			ItemsKeyID:         items[x].ItemsKeyID,
-			Content:            items[x].Content,
-			Deleted:            items[x].Deleted,
+			UUID:       items[x].UUID,
+			ItemsKeyID: items[x].ItemsKeyID,
+			Content:    items[x].Content,
+			//Deleted:            items[x].Deleted,
 			ContentType:        items[x].ContentType,
 			EncItemKey:         items[x].EncItemKey,
 			CreatedAt:          items[x].CreatedAt,
@@ -84,6 +80,7 @@ func writeJSON(i ExportConfig, items gosn.EncryptedItems) error {
 			UpdatedAtTimestamp: items[x].UpdatedAtTimestamp,
 			DuplicateOf:        items[x].DuplicateOf,
 		})
+
 	}
 
 	file, err := os.Create(i.File)
@@ -114,7 +111,6 @@ func writeJSON(i ExportConfig, items gosn.EncryptedItems) error {
 	content.WriteString("\n  }")
 
 	content.WriteString("\n}")
-
 	_, err = file.WriteString(content.String())
 
 	return err

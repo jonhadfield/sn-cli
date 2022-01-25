@@ -1,8 +1,13 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
@@ -10,64 +15,68 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var testSession *cache.Session
+var (
+	testSession      *cache.Session
+	gTtestSession    *gosn.Session
+	testUserEmail    string
+	testUserPassword string
+)
 
-func sync(si cache.SyncInput) (so cache.SyncOutput, err error) {
-	return cache.Sync(cache.SyncInput{
-		Session: si.Session,
-		Close:   si.Close,
-	})
+func localTestMain() {
+	localServer := "http://ramea:3000"
+	testUserEmail = fmt.Sprintf("ramea-%s", strconv.FormatInt(time.Now().UnixNano(), 16))
+	testUserPassword = "secretsanta"
+
+	rInput := gosn.RegisterInput{
+		Password:   testUserPassword,
+		Email:      testUserEmail,
+		Identifier: testUserEmail,
+		APIServer:  localServer,
+		Version:    "004",
+		Debug:      true,
+	}
+
+	_, err := rInput.Register()
+	if err != nil {
+		panic(fmt.Sprintf("failed to register with: %s", localServer))
+	}
+
+	signIn(localServer, testUserEmail, testUserPassword)
+}
+
+func signIn(server, email, password string) {
+	ts, err := gosn.CliSignIn(email, password, server, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gTtestSession = &ts
 }
 
 func TestMain(m *testing.M) {
-	gs, err := gosn.CliSignIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"), true)
+	if os.Getenv("SN_SERVER") == "" || strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
+		localTestMain()
+	} else {
+		signIn(os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"), os.Getenv("SN_SERVER"))
+	}
+
+	if _, err := gosn.Sync(gosn.SyncInput{Session: gTtestSession}); err != nil {
+		log.Fatal(err)
+	}
+
+	if gTtestSession.DefaultItemsKey.ItemsKey == "" {
+		panic("failed in TestMain due to empty default items key")
+	}
+
+	var err error
+	testSession, err = cache.ImportSession(gTtestSession, "")
 	if err != nil {
-		panic(err)
-	}
-
-	testSession = &cache.Session{
-		Session: &gosn.Session{
-			Debug:             true,
-			Server:            gs.Server,
-			Token:             gs.Token,
-			MasterKey:         gs.MasterKey,
-			RefreshExpiration: gs.RefreshExpiration,
-			RefreshToken:      gs.RefreshToken,
-			AccessToken:       gs.AccessToken,
-			AccessExpiration:  gs.AccessExpiration,
-		},
-		CacheDBPath: "",
-	}
-
-	var path string
-
-	path, err = cache.GenCacheDBPath(*testSession, "", sncli.SNAppName)
-	if err != nil {
-		panic(err)
-	}
-
-	testSession.CacheDBPath = path
-
-	var so cache.SyncOutput
-	so, err = sync(cache.SyncInput{
-		Session: testSession,
-		Close:   false,
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	var allPersistedItems cache.Items
-
-	if err = so.DB.All(&allPersistedItems); err != nil {
 		return
 	}
 
-	_ = so.DB.Close()
-
-	if testSession.DefaultItemsKey.ItemsKey == "" {
-		panic("failed in TestMain due to empty default items key")
+	testSession.CacheDBPath, err = cache.GenCacheDBPath(*testSession, "", gosn.LibName)
+	if err != nil {
+		panic(err)
 	}
 
 	os.Exit(m.Run())

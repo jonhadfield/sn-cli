@@ -203,6 +203,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 }
 
 func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+	fmt.Printf("in processGetTags with opts: %+v\n", opts)
 	inTitle := strings.TrimSpace(c.String("title"))
 	inUUID := strings.TrimSpace(c.String("uuid"))
 
@@ -345,8 +346,9 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 			})
 		}
 	}
-
-	if numResults <= 0 {
+	if !opts.useStdOut {
+		return
+	} else if numResults <= 0 {
 		if count {
 			msg = "0"
 		} else {
@@ -370,7 +372,6 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 			fmt.Print("\n}")
 		}
 	}
-
 	return msg, err
 }
 

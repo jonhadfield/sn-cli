@@ -271,12 +271,12 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						opts, err := getOpts(c)
+						var opts configOptsOutput
+						opts, err = getOpts(c)
 						if err != nil {
 							return err
 						}
 						useStdOut = opts.useStdOut
-
 						msg, err = processAddTags(c, opts)
 
 						return err
@@ -902,7 +902,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 		},
 		{
 			Name:  "wipe",
-			Usage: "deletes all tags and notes",
+			Usage: "deletes all supported content",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "yes",
@@ -924,7 +924,6 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				var session cache.Session
 				var email string
 				session, email, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
-
 				if err != nil {
 					return err
 				}
@@ -1000,6 +999,58 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				msg, err = processSession(c, opts)
 
 				return err
+			},
+		},
+		{
+			Name:   "healthcheck",
+			Usage:  "find and fix account data errors",
+			Hidden: true,
+			BashComplete: func(c *cli.Context) {
+				addTasks := []string{"keys"}
+				if c.NArg() > 0 {
+					return
+				}
+				for _, t := range addTasks {
+					fmt.Println(t)
+				}
+			},
+			Subcommands: []cli.Command{
+				{
+					Name:  "keys",
+					Usage: "find issues relating to ItemsKeys",
+					BashComplete: func(c *cli.Context) {
+						addNoteOpts := []string{"--fix"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, ano := range addNoteOpts {
+							fmt.Println(ano)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.BoolFlag{
+							Name:  "fix",
+							Usage: "apply fixes",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						var opts configOptsOutput
+						opts, err = getOpts(c)
+						if err != nil {
+							return err
+						}
+						useStdOut = opts.useStdOut
+
+						var session gosn.Session
+						session, _, err = gosn.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+						if err != nil {
+							return err
+						}
+						err = sncli.ItemKeysHealthcheck(&session, c.Bool("fix"))
+
+						return err
+					},
+				},
 			},
 		},
 	}

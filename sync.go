@@ -31,9 +31,9 @@ func Sync(si cache.SyncInput, useStdErr bool) (so cache.SyncOutput, err error) {
 	}
 
 	so, err = sync(si)
-	if err != nil {
-		panic(err)
-	}
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	return
 }

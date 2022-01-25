@@ -173,6 +173,7 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	if err != nil {
 		return
 	}
+
 	defer func() {
 		_ = so.DB.Close()
 	}()
@@ -183,7 +184,6 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}
 
 	var ato addTagsOutput
-
 	ato, err = addTags(ati)
 	if err != nil {
 		return
@@ -316,7 +316,7 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 
 	var eTagsToDelete gosn.EncryptedItems
 
-	eTagsToDelete, err = tagsToDelete.Encrypt(session.Gosn())
+	eTagsToDelete, err = tagsToDelete.Encrypt(session.Session.DefaultItemsKey, session.MasterKey, session.Debug)
 	if err != nil {
 		return 0, err
 	}
@@ -370,7 +370,6 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	}
 
 	var so cache.SyncOutput
-
 	so, err = Sync(putItemsInput, true)
 	if err != nil {
 		return
@@ -384,7 +383,6 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	}
 
 	var items gosn.Items
-
 	items, err = allPersistedItems.ToItems(ati.session)
 	if err != nil {
 		return

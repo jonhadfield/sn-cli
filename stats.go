@@ -32,12 +32,16 @@ func (i *StatsConfig) Run() error {
 	}
 
 	var allPersistedItems cache.Items
+
 	if err = so.DB.All(&allPersistedItems); err != nil {
 		return err
 	}
 
 	var items gosn.Items
 	items, err = allPersistedItems.ToItems(&i.Session)
+	if err != nil {
+		return err
+	}
 
 	var notes gosn.Items
 
@@ -73,7 +77,7 @@ func (i *StatsConfig) Run() error {
 		}
 
 		if !item.IsDeleted() && item.GetItemsKeyID() == "" {
-			missingItemsKey = append(missingItemsKey, item.GetUUID())
+			missingItemsKey = append(missingItemsKey, fmt.Sprintf("- type: %s uuid: %s %s", item.GetContentType(), item.GetUUID(), item.GetItemsKeyID()))
 		}
 
 		if !item.IsDeleted() && item.GetContentType() == "" {
@@ -179,7 +183,7 @@ func (i *StatsConfig) Run() error {
 	}
 
 	if len(missingItemsKey) > 0 {
-		fmt.Println("Missing items key ID:", outList(missingItemsKey, ", "))
+		fmt.Println("Missing items key ID:\n", outList(missingItemsKey, "\n"))
 	}
 
 	return err

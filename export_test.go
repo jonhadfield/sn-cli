@@ -11,21 +11,109 @@ import (
 	"testing"
 )
 
-func TestExportOneNoteUsingJSON(t *testing.T) {
+func TestEncryptDecryptWithNewItemsKey(t *testing.T) {
+	ik, err := testSession.CreateItemsKey()
+	require.NoError(t, err)
+	require.Equal(t, "SN|ItemsKey", ik.ContentType)
+	require.False(t, ik.Deleted)
+	require.NotEmpty(t, ik.UUID)
+	require.NotEmpty(t, ik.Content)
+	require.NotEmpty(t, ik.CreatedAt)
+	require.NotEmpty(t, ik.CreatedAtTimestamp)
+	require.Empty(t, ik.UpdatedAtTimestamp)
+	require.Empty(t, ik.UpdatedAt)
+
+	n := gosn.NewNote()
+	nc := gosn.NewNoteContent()
+	nc.Title = "test title"
+	nc.Text = "test content"
+	n.Content = *nc
+
+	eis := gosn.Items{&n}
+	encItems, err := eis.Encrypt(ik, testSession.MasterKey, testSession.Debug)
+	require.NoError(t, err)
+	require.NotEmpty(t, encItems[0].UUID)
+	require.NotEmpty(t, encItems[0].CreatedAtTimestamp)
+	require.NotEmpty(t, encItems[0].CreatedAt)
+	require.False(t, encItems[0].Deleted)
+	require.Equal(t, "Note", encItems[0].ContentType)
+	require.NotEmpty(t, encItems[0].Content)
+	require.Empty(t, encItems[0].DuplicateOf)
+
+	testSession.ItemsKeys = append(testSession.Session.ItemsKeys, ik)
+	di, err := encItems.Decrypt(testSession.Session, gosn.ItemsKey{})
+
+	require.NoError(t, err)
+	require.NotEmpty(t, di)
+	require.Greater(t, len(di), 0)
+
+	pi, err := encItems.DecryptAndParse(testSession.Session)
+	require.NoError(t, err)
+	require.Greater(t, len(pi), 0)
+
+	var dn gosn.Note
+
+	for x := range pi {
+		if pi[x].GetContentType() == "Note" {
+			dn = *pi[x].(*gosn.Note)
+
+		}
+	}
+
+	require.Equal(t, "Note", dn.ContentType)
+	require.Equal(t, "test title", dn.Content.GetTitle())
+	require.Equal(t, "test content", dn.Content.GetText())
+	require.NotEmpty(t, dn.UUID)
+	require.NotEmpty(t, dn.CreatedAtTimestamp)
+	require.NotEmpty(t, dn.CreatedAt)
+	require.False(t, dn.Deleted)
+
+}
+
+func TestEncryptionDecryptionOfItemsKey(t *testing.T) {
+	ik, err := testSession.CreateItemsKey()
+	require.NoError(t, err)
+	require.Equal(t, "SN|ItemsKey", ik.ContentType)
+	require.False(t, ik.Deleted)
+	require.NotEmpty(t, ik.UUID)
+	require.NotEmpty(t, ik.Content)
+	require.NotEmpty(t, ik.CreatedAt)
+	require.NotEmpty(t, ik.CreatedAtTimestamp)
+	require.Empty(t, ik.UpdatedAtTimestamp)
+	require.Empty(t, ik.UpdatedAt)
+
+	newItemsKeyUUID := ik.UUID
+	newItemsKeyItemsKey := ik.ItemsKey
+
+	eik, err := ik.Encrypt(testSession.Session, true)
+	require.NoError(t, err)
+	dik, err := gosn.DecryptAndParseItemKeys(testSession.Session.MasterKey, []gosn.EncryptedItem{eik})
+	require.NoError(t, err)
+	require.Equal(t, newItemsKeyUUID, dik[0].UUID)
+	require.Equal(t, newItemsKeyItemsKey, dik[0].ItemsKey)
+}
+
+// export and import of a note to check encryption and cache propagation
+func TestJSONExportImport(t *testing.T) {
 	testDelay()
 
-	cleanUp(*testSession)
 	defer cleanUp(*testSession)
 
 	// populate DB
-	si := cache.SyncInput{
+	gii := cache.SyncInput{
 		Session: testSession,
 	}
 
-	so, err := Sync(si, false)
-	assert.NoError(t, err)
+	gio, err := Sync(gii, false)
+	require.NoError(t, err)
+	// DB now populated and open with pointer in session
+	var existingItems []cache.Item
+	err = gio.DB.All(&existingItems)
+	require.NoError(t, err)
+	// record number of items before adding the note for later comparison
+	allCacheItemsPreExport := len(existingItems)
+	allItemsKeysPreExport := len(testSession.ItemsKeys)
 
-	// create a note
 	note := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
 	note.Content = *noteContent
@@ -34,23 +122,31 @@ func TestExportOneNoteUsingJSON(t *testing.T) {
 	itemsToPut := gosn.Items{
 		&note,
 	}
-
-	encItemsToPut, err := itemsToPut.Encrypt(*testSession.Session)
-	assert.NoError(t, err)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	require.NoError(t, err)
+	require.Len(t, encItemsToPut, 1)
 
 	cItems := cache.ToCacheItems(encItemsToPut, false)
-	for _, ci := range cItems {
-		assert.NoError(t, so.DB.Save(&ci))
+	for _, cItem := range cItems {
+		require.NoError(t, gio.DB.Save(&cItem))
+	}
+	require.Len(t, cItems, 1)
+
+	require.NoError(t, gio.DB.Close())
+
+	pii := cache.SyncInput{
+		Session: testSession,
 	}
 
-	assert.NoError(t, so.DB.Close())
+	// sync note (in cache) to SN
+	var so cache.SyncOutput
+	so, err = Sync(pii, false)
+	require.NoError(t, err)
 
-	so, err = Sync(si, false)
-	assert.NoError(t, err)
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, so.DB.Close())
 
 	dir, err := ioutil.TempDir("", "test")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	defer func() {
 		if err = os.RemoveAll(dir); err != nil {
@@ -59,31 +155,51 @@ func TestExportOneNoteUsingJSON(t *testing.T) {
 	}() // clean up
 
 	tmpfn := filepath.Join(dir, "tmpfile")
-	ec := ExportConfig{
+
+	// copy default items key before export for later comparison
+	defaultItemsKeyPreExport := testSession.DefaultItemsKey.ItemsKey
+	err = testSession.Export(tmpfn)
+	require.NoError(t, err)
+
+	// ensure default items key has not changed since export (export will contain new items key)
+	require.Equal(t, defaultItemsKeyPreExport, testSession.DefaultItemsKey.ItemsKey)
+
+	err = testSession.Import(tmpfn, true)
+	require.NoError(t, err)
+	// ensure default items key has changed after import, as all items should now be re-encrypted with new key
+	require.NotEqual(t, defaultItemsKeyPreExport, testSession.DefaultItemsKey.ItemsKey)
+
+	// get a new database and populate with the new item
+	gii = cache.SyncInput{
 		Session: testSession,
-		File:    tmpfn,
 	}
 
-	if runErr := ec.Run(); runErr != nil {
-		panic(runErr)
-	}
-
-	writtenEncryptedItems, err := readJSON(tmpfn)
+	require.NoError(t, gio.DB.Close())
+	require.NoError(t, gii.Session.CacheDB.Close())
+	gio, err = Sync(gii, false)
 	require.NoError(t, err)
 
-	writtenItems, err := writtenEncryptedItems.DecryptAndParse(testSession.Session)
-	require.NoError(t, err)
+	require.NotNil(t, gio)
+	require.NotEmpty(t, gio.DB)
 
-	var found bool
+	var aa []cache.Item
 
-	for _, item := range writtenItems {
-		if item != nil && item.GetUUID() == note.UUID {
-			found = true
-			break
+	require.NoError(t, gio.DB.All(&aa))
+	require.Equal(t, allCacheItemsPreExport+1, len(aa))
+	var importedNote cache.Item
+
+	for _, i := range aa {
+		if i.ContentType == "Note" {
+			if i.UUID == note.UUID {
+				importedNote = i
+			}
 		}
 	}
 
-	assert.True(t, found)
+	require.NotNil(t, importedNote.ItemsKeyID)
+	require.Equal(t, allItemsKeysPreExport, len(testSession.ItemsKeys))
+
+	require.NoError(t, gio.DB.Close())
 }
 
 // export one note, delete that note, import the backup and check note has returned.
@@ -98,11 +214,11 @@ func TestJSONExportWipeImportOneNote(t *testing.T) {
 	}
 
 	gio, err := Sync(gii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// DB now populated and open with pointer in session
 	var existingItems []cache.Item
 	err = gio.DB.All(&existingItems)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	note := gosn.NewNote()
 	noteContent := gosn.NewNoteContent()
@@ -112,16 +228,15 @@ func TestJSONExportWipeImportOneNote(t *testing.T) {
 	itemsToPut := gosn.Items{
 		&note,
 	}
-
-	encItemsToPut, err := itemsToPut.Encrypt(*testSession.Session)
-	assert.NoError(t, err)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	require.NoError(t, err)
 
 	cItems := cache.ToCacheItems(encItemsToPut, false)
 	for _, cItem := range cItems {
-		assert.NoError(t, gio.DB.Save(&cItem))
+		require.NoError(t, gio.DB.Save(&cItem))
 	}
 
-	assert.NoError(t, gio.DB.Close())
+	require.NoError(t, gio.DB.Close())
 
 	pii := cache.SyncInput{
 		Session: testSession,
@@ -129,12 +244,11 @@ func TestJSONExportWipeImportOneNote(t *testing.T) {
 
 	var so cache.SyncOutput
 	so, err = Sync(pii, false)
-
-	assert.NoError(t, err)
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, err)
+	require.NoError(t, so.DB.Close())
 
 	dir, err := ioutil.TempDir("", "test")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	defer func() {
 		if err = os.RemoveAll(dir); err != nil {
@@ -143,54 +257,73 @@ func TestJSONExportWipeImportOneNote(t *testing.T) {
 	}() // clean up
 
 	tmpfn := filepath.Join(dir, "tmpfile")
-	ec := ExportConfig{
+
+	err = testSession.Export(tmpfn)
+	require.NoError(t, err)
+
+	// delete note
+	so, err = Sync(cache.SyncInput{
 		Session: testSession,
-		File:    tmpfn,
+		Close:   false,
+	}, true)
+
+	var preImportItems []cache.Item
+	require.NoError(t, so.DB.All(&preImportItems))
+	var piNote cache.Item
+	for x := range preImportItems {
+		if preImportItems[x].UUID == note.UUID {
+			piNote = preImportItems[x]
+			piNote.Deleted = true
+			require.NoError(t, so.DB.Save(&piNote))
+		}
 	}
-
-	assert.NoError(t, ec.Run())
-	// delete the db and wipe SN
-	cleanUp(*testSession)
-
-	// import the export made above so that SN is now populated
-	ic := ImportConfig{
+	// resync to remove note
+	require.NotNil(t, piNote.ItemsKeyID)
+	require.NoError(t, so.DB.Close())
+	so, err = Sync(cache.SyncInput{
 		Session: testSession,
-		Format:  "json",
-		File:    tmpfn,
-	}
+		Close:   true,
+	}, true)
 
-	_, err = ic.Run()
-	assert.NoError(t, err)
+	err = testSession.Import(tmpfn, true)
+	require.NoError(t, err)
 
 	// get a new database and populate with the new item
 	gii = cache.SyncInput{
 		Session: testSession,
+		Close:   false,
 	}
 
-	assert.NoError(t, gio.DB.Close())
 	gio, err = Sync(gii, false)
-	assert.NoError(t, err)
-
-	assert.NotNil(t, gio)
-	assert.NotEmpty(t, gio.DB)
+	require.NoError(t, err)
 
 	var aa []cache.Item
 
-	assert.NoError(t, gio.DB.All(&aa))
+	require.NoError(t, gio.DB.All(&aa))
 
-	var found bool
+	var foundNote cache.Item
 
 	for _, i := range aa {
 		if i.ContentType == "Note" {
 			if i.UUID == note.UUID {
-				found = true
+				require.False(t, i.Deleted)
+				foundNote = i
 			}
 		}
 	}
 
-	assert.True(t, found)
+	require.NotEmpty(t, foundNote.ItemsKeyID)
+	require.NoError(t, gio.DB.Close())
 
-	assert.NoError(t, gio.DB.Close())
+	// decrypt note
+	citd := cache.Items{foundNote}
+
+	itd, err := citd.ToItems(testSession)
+	require.NoError(t, err)
+	require.Len(t, itd, 1)
+	dn := itd[0].(*gosn.Note)
+	require.Equal(t, dn.Content.Title, note.Content.Title)
+	require.Equal(t, dn.Content.Text, note.Content.Text)
 }
 
 // Create a note, export it, change original, import and check a duplicate has been created.
@@ -213,7 +346,7 @@ func TestConflictResolution(t *testing.T) {
 		&originalNote,
 	}
 
-	encItemsToPut, err := itemsToPut.Encrypt(*testSession.Session)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
 	assert.NoError(t, err)
 
 	// perform initial sync to load keys into session
@@ -259,7 +392,7 @@ func TestConflictResolution(t *testing.T) {
 		&updatedNote,
 	}
 
-	encItemsToPut, err = itemsToPut.Encrypt(*testSession.Session)
+	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
 	assert.NoError(t, err)
 	pi = cache.ToCacheItems(encItemsToPut, false)
 	for _, i := range pi {
@@ -307,7 +440,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	itemsToPut := gosn.Items{
 		&originalTag,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(*testSession.Session)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
 	assert.NoError(t, err)
 
 	// get db
@@ -360,7 +493,8 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	itemsToPut = gosn.Items{
 		&updatedTag,
 	}
-	encItemsToPut, err = itemsToPut.Encrypt(*testSession.Session)
+	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+
 	assert.NoError(t, err)
 
 	// get db
@@ -444,7 +578,8 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	itemsToPut := gosn.Items{
 		&originalTag,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(*testSession.Session)
+
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
 	assert.NoError(t, err)
 
 	if err = cache.SaveEncryptedItems(so.DB, encItemsToPut, true); err != nil {
@@ -483,7 +618,8 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	itemsToPut = gosn.Items{
 		&originalTag,
 	}
-	encItemsToPut, err = itemsToPut.Encrypt(*testSession.Session)
+
+	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
 	assert.NoError(t, err)
 
 	so, err = Sync(pii, false)
