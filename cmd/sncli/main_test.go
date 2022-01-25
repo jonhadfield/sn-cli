@@ -51,7 +51,7 @@ func TestAddDeleteTag(t *testing.T) {
 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testTag"})
 	assert.NoError(t, err, "'add tag --title testTag' failed")
 	assert.Contains(t, msg, msgAddSuccess)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--title", "testTag", "--count"})
+	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--title", "testTag", "--count"})
 	assert.Equal(t, "1", msg)
 	assert.NoError(t, err)
 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testTag"})
@@ -65,7 +65,7 @@ func TestAddTagExportDeleteTagReImport(t *testing.T) {
 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--count"})
+	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "export"})
@@ -75,13 +75,13 @@ func TestAddTagExportDeleteTagReImport(t *testing.T) {
 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgDeleted)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--count"})
+	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "0", msg)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "import", "--file", path})
+	msg, _, err = startCLI([]string{"sncli", "--debug", "import", "--experiment", "--file", path})
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(msg, "imported"))
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--count"})
+	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
 }
@@ -175,10 +175,10 @@ func TestAddOneNoteGetCount(t *testing.T) {
 }
 
 func TestAddOneTagGetCount(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount Title"})
+	msg, _, err := startCLI([]string{"sncli", "--debug", "add", "tag", "--title", "testAddOneTagGetCount Title"})
 	assert.NoError(t, err)
 	assert.Contains(t, msg, msgAddSuccess)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--count"})
+	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "1", msg)
 
@@ -196,37 +196,37 @@ func TestGetNoteCountWithNoResults(t *testing.T) {
 }
 
 func TestGetTagCountWithNoResults(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--count"})
+	msg, _, err := startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "0", msg)
 	time.Sleep(1 * time.Second)
 }
 
 func TestGetNotesWithNoResults(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note"})
+	msg, _, err := startCLI([]string{"sncli", "--debug", "get", "note"})
 	assert.NoError(t, err)
 	assert.Equal(t, msgNoMatches, msg)
 	time.Sleep(1 * time.Second)
 }
 
 func TestGetTagsWithNoResults(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag"})
+	msg, _, err := startCLI([]string{"sncli", "--debug", "get", "tag"})
 	assert.NoError(t, err)
 	assert.Equal(t, msgNoMatches, msg)
 	time.Sleep(1 * time.Second)
 }
 
 func TestFinalWipeAndCountZero(t *testing.T) {
-	_, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
+	_, _, err := startCLI([]string{"sncli", "--debug", "wipe", "--yes"})
 	assert.NoError(t, err)
 
 	var msg string
 
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note", "--count"})
+	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "note", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "0", msg)
 
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--count"})
+	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
 	assert.NoError(t, err)
 	assert.Equal(t, "0", msg)
 }

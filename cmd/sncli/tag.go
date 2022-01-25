@@ -203,7 +203,6 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 }
 
 func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
-	fmt.Printf("in processGetTags with opts: %+v\n", opts)
 	inTitle := strings.TrimSpace(c.String("title"))
 	inUUID := strings.TrimSpace(c.String("uuid"))
 

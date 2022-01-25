@@ -776,6 +776,10 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					Name:  "file",
 					Usage: "path of file to import",
 				},
+				cli.BoolFlag{
+					Name:  "experiment",
+					Usage: "test import functionality - only use after taking backup as this is experimental",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				var opts configOptsOutput
@@ -790,6 +794,12 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if inputPath == "" {
 					return errors.New("please specify path using --file")
 				}
+
+				if !c.Bool("experiment") {
+					fmt.Printf("\nWARNING: The import functionality is currently for testing only\nDo not use unless you have a backup of your data and intend to restore after testing\nTo proceed run the command with flag --experiment\n")
+					return nil
+				}
+
 				var session cache.Session
 				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 				if err != nil {
