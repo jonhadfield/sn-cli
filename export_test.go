@@ -613,10 +613,33 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 		panic(ecErr)
 	}
 
+	so, err = Sync(cache.SyncInput{
+		Session: testSession,
+		Close:   false,
+	}, true)
+
+	err = so.DB.All(&cItems)
+	require.NoError(t, err)
+	require.NoError(t, so.DB.Close())
+	var cTagToDel cache.Item
+	for _, cItem := range cItems {
+		if originalTag.UUID == cItem.UUID {
+			cTagToDel = cItem
+		}
+	}
+	require.NotEmpty(t, cTagToDel.UUID)
+
+	// get original tag from db so we can delete
 	// delete originalTag
-	originalTag.Deleted = true
+	eItems := cache.Items{cTagToDel}
+	dItems, err := eItems.ToItems(testSession)
+	require.NoError(t, err)
+	require.Len(t, dItems, 1)
+	itd := dItems[0]
+	itd.SetDeleted(true)
+
 	itemsToPut = gosn.Items{
-		&originalTag,
+		itd,
 	}
 
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)

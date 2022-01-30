@@ -875,6 +875,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					Email:     c.String("email"),
 					Password:  password,
 					APIServer: opts.server,
+					Debug:     opts.debug,
 				}
 				err = registerConfig.Run()
 				if err != nil {

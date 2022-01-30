@@ -401,7 +401,8 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 				ClientUpdatedAt: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 			}
 			noteContentAppDataContent := sncli.AppDataContentYAML{
-				OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailYAML,
+				OrgStandardNotesSN:           noteContentOrgStandardNotesSNDetailYAML,
+				OrgStandardNotesSNComponents: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSNComponents,
 			}
 			noteContentYAML := sncli.NoteContentYAML{
 				Title:          rt.(*gosn.Note).Content.GetTitle(),
@@ -421,10 +422,14 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 		if !count && strings.ToLower(output) == "json" {
 			noteContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-				ClientUpdatedAt: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+				ClientUpdatedAt:    rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+				Pinned:             rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.Pinned,
+				PrefersPlainEditor: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.PrefersPlainEditor,
 			}
+
 			noteContentAppDataContent := sncli.AppDataContentJSON{
-				OrgStandardNotesSN: noteContentOrgStandardNotesSNDetailJSON,
+				OrgStandardNotesSN:           noteContentOrgStandardNotesSNDetailJSON,
+				OrgStandardNotesSNComponents: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSNComponents,
 			}
 			noteContentJSON := sncli.NoteContentJSON{
 				Title:          rt.(*gosn.Note).Content.GetTitle(),

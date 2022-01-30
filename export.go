@@ -46,7 +46,7 @@ func (i *ImportConfig) Run() (imported int, err error) {
 		return imported, err
 	}
 
-	iItems, iItemsKey, err := i.Session.Session.Import(i.File, syncToken)
+	iItems, iItemsKey, err := i.Session.Session.Import(i.File, syncToken, "")
 	if err != nil {
 		return
 	}

@@ -29,6 +29,7 @@ func (i *AddNoteInput) Run() (err error) {
 			syncToken:      syncToken,
 			session:        i.Session,
 			newTags:        i.Tags,
+			replace:        i.Replace,
 		}
 		err = tagNotes(tni)
 	}
@@ -41,6 +42,7 @@ type addNoteInput struct {
 	noteTitle string
 	noteText  string
 	tagTitles []string
+	replace   bool
 }
 
 func addNote(i addNoteInput) (noteUUID string, err error) {

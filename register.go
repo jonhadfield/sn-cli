@@ -16,6 +16,7 @@ func (i *RegisterConfig) Run() error {
 		Email:     i.Email,
 		Password:  i.Password,
 		APIServer: i.APIServer,
+		Debug:     i.Debug,
 	}
 
 	_, err := registerInput.Register()

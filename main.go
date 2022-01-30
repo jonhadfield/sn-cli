@@ -23,19 +23,25 @@ type ItemReferenceJSON struct {
 }
 
 type OrgStandardNotesSNDetailJSON struct {
-	ClientUpdatedAt string `json:"client_updated_at"`
+	ClientUpdatedAt    string `json:"client_updated_at"`
+	PrefersPlainEditor bool   `json:"prefersPlainEditor"`
+	Pinned             bool   `json:"pinned"`
 }
+
+type OrgStandardNotesSNComponentsDetailJSON map[string]interface{}
 
 type OrgStandardNotesSNDetailYAML struct {
 	ClientUpdatedAt string `yaml:"client_updated_at"`
 }
 
 type AppDataContentYAML struct {
-	OrgStandardNotesSN OrgStandardNotesSNDetailYAML `yaml:"org.standardnotes.sn"`
+	OrgStandardNotesSN           OrgStandardNotesSNDetailYAML            `yaml:"org.standardnotes.sn"`
+	OrgStandardNotesSNComponents gosn.OrgStandardNotesSNComponentsDetail `yaml:"org.standardnotes.sn.components,omitempty"`
 }
 
 type AppDataContentJSON struct {
-	OrgStandardNotesSN OrgStandardNotesSNDetailJSON `json:"org.standardnotes.sn"`
+	OrgStandardNotesSN           OrgStandardNotesSNDetailJSON            `json:"org.standardnotes.sn"`
+	OrgStandardNotesSNComponents gosn.OrgStandardNotesSNComponentsDetail `json:"org.standardnotes.sn.components,omitempty"`
 }
 
 type TagContentYAML struct {
@@ -139,6 +145,7 @@ type AddTagsInput struct {
 	Session *cache.Session
 	Tags    []string
 	Debug   bool
+	Replace bool
 }
 
 type AddTagsOutput struct {

@@ -15,6 +15,7 @@ type tagNotesInput struct {
 	matchNoteUUIDs []string
 	newTags        []string
 	syncToken      string
+	replace        bool
 }
 
 // create tags if they don't exist
@@ -24,6 +25,7 @@ func tagNotes(i tagNotesInput) (err error) {
 	ati := addTagsInput{
 		session:   i.session,
 		tagTitles: i.newTags,
+		replace:   i.replace,
 	}
 
 	_, err = addTags(ati)
@@ -181,6 +183,7 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	ati := addTagsInput{
 		tagTitles: i.Tags,
 		session:   i.Session,
+		replace:   i.Replace,
 	}
 
 	var ato addTagsOutput
@@ -345,6 +348,7 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 type addTagsInput struct {
 	session   *cache.Session
 	tagTitles []string
+	replace   bool
 }
 
 type addTagsOutput struct {
