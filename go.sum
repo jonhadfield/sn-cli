@@ -255,8 +255,6 @@ github.com/hashicorp/serf v0.9.6/go.mod h1:TXZNMjZQijwlDvp+r0b63xZ45H7JmCmgg4gpT
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
-github.com/jonhadfield/gosn-v2 v0.0.0-20220129162240-00ea4e0c71f4 h1:XnFD4MW3Z78iF/eMcfpdcEty3UGYWFeydIlJl3nsymQ=
-github.com/jonhadfield/gosn-v2 v0.0.0-20220129162240-00ea4e0c71f4/go.mod h1:4/gfMMCbLmRNxzYgERxC566UVMX6p8G3wzWk+C7fa8U=
 github.com/jonhadfield/gosn-v2 v0.0.0-20220130185746-3176ea994a6e h1:iq4y0N/Brx5t8R9J0kA26kV2UCNR5ZMOmotD5Id6Clg=
 github.com/jonhadfield/gosn-v2 v0.0.0-20220130185746-3176ea994a6e/go.mod h1:4/gfMMCbLmRNxzYgERxC566UVMX6p8G3wzWk+C7fa8U=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
