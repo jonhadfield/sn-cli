@@ -16,6 +16,7 @@ func (i *AddNoteInput) Run() (err error) {
 		noteText:  i.Text,
 		tagTitles: i.Tags,
 		session:   i.Session,
+		replace:   i.Replace,
 	}
 
 	newNoteUUID, err = addNote(ani)
@@ -24,14 +25,13 @@ func (i *AddNoteInput) Run() (err error) {
 	}
 
 	if len(ani.tagTitles) > 0 {
-		tni := tagNotesInput{
+		err = tagNotes(tagNotesInput{
 			matchNoteUUIDs: []string{newNoteUUID},
 			syncToken:      syncToken,
 			session:        i.Session,
 			newTags:        i.Tags,
 			replace:        i.Replace,
-		}
-		err = tagNotes(tni)
+		})
 	}
 
 	return
@@ -46,18 +46,11 @@ type addNoteInput struct {
 }
 
 func addNote(i addNoteInput) (noteUUID string, err error) {
-	// check if note exists
-	newNote := gosn.NewNote()
-	newNoteContent := gosn.NewNoteContent()
-	newNoteContent.Title = i.noteTitle
-	newNoteContent.Text = i.noteText
-	newNote.Content = *newNoteContent
-	newNote.UUID = gosn.GenUUID()
-	noteUUID = newNote.UUID
-	newNoteItems := gosn.Notes{newNote}
+	var noteToAdd gosn.Note
 
 	si := cache.SyncInput{
 		Session: i.session,
+		Close:   true,
 	}
 
 	var so cache.SyncOutput
@@ -66,14 +59,59 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	if err != nil {
 		return
 	}
-	// get items key
-	var allItemsKeys cache.Items
 
-	kquery := so.DB.Select(q.And(q.Eq("ContentType", "SN|ItemsKey"), q.Eq("Deleted", false)))
+	// if we're replacing, then retrieve note to update
+	if i.replace {
+		gnc := GetNoteConfig{
+			Session: i.session,
+			//Filters: gosn.ItemFilters{},
+			Filters: gosn.ItemFilters{
+				MatchAny: false,
+				Filters: []gosn.Filter{{
+					Type:       "Note",
+					Key:        "Title",
+					Comparison: "==",
+					Value:      i.noteTitle,
+				},
+				},
+			},
+		}
+		var gi gosn.Items
+		gi, err = gnc.Run()
+		if err != nil {
 
-	err = kquery.Find(&allItemsKeys)
+			return
+		}
+		switch len(gi) {
+		case 0:
+			err = fmt.Errorf("failed to find existing note to replace")
+
+			return
+		case 1:
+			noteToAdd = gi.Notes()[0]
+			noteToAdd.Content.SetText(i.noteText)
+		default:
+			err = fmt.Errorf("multiple notes found with that title")
+
+			return
+		}
+	} else {
+		noteToAdd = gosn.NewNote()
+		newNoteContent := gosn.NewNoteContent()
+		newNoteContent.Title = i.noteTitle
+		newNoteContent.Text = i.noteText
+		noteToAdd.Content = *newNoteContent
+		noteToAdd.UUID = gosn.GenUUID()
+		noteUUID = noteToAdd.UUID
+	}
+
+	si = cache.SyncInput{
+		Session: i.session,
+		Close:   false,
+	}
+
+	so, err = Sync(si, true)
 	if err != nil {
-		err = fmt.Errorf("no items keys were found")
 
 		return
 	}
@@ -85,10 +123,11 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	err = query.Find(&allEncTags)
 	// it's ok if there are no tags, so only error if something else went wrong
 	if err != nil && err.Error() != "not found" {
+
 		return
 	}
 
-	if err = cache.SaveNotes(i.session, so.DB, newNoteItems, false); err != nil {
+	if err = cache.SaveNotes(i.session, so.DB, gosn.Notes{noteToAdd}, false); err != nil {
 		return
 	}
 
@@ -111,7 +150,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 		_ = so.DB.Close()
 		tni := tagNotesInput{
 			session:        i.session,
-			matchNoteUUIDs: []string{newNote.UUID},
+			matchNoteUUIDs: []string{noteToAdd.UUID},
 			newTags:        i.tagTitles,
 		}
 

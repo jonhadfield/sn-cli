@@ -9,12 +9,12 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
-	github.com/jonhadfield/gosn-v2 v0.0.0-20220130185746-3176ea994a6e
+	github.com/jonhadfield/gosn-v2 v0.0.0-20220203210638-59dad4f9de1c
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.5
-	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed // indirect
+	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
 

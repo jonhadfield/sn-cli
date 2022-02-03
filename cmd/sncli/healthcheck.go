@@ -7,7 +7,6 @@ import (
 )
 
 func processItemKeysHealthcheck(c *cli.Context, opts configOptsOutput) (msg string, err error) {
-	fmt.Printf("opts: %+v\n", opts)
 	msg = sncli.Green(fmt.Sprintf("%s", "TEST"))
 
 	return msg, err

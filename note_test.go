@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"log"
 	"os"
 	"strconv"
@@ -79,6 +80,97 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(m.Run())
+}
+
+func TestReplaceNote(t *testing.T) {
+	testDelay()
+
+	defer cleanUp(*testSession)
+
+	// create note
+	addNoteConfig := AddNoteInput{
+		Session: testSession,
+		Title:   "TestNoteOne",
+		Text:    "TestNoteOneText",
+	}
+
+	require.NoError(t, addNoteConfig.Run())
+
+	// get new note
+	gnc := GetNoteConfig{
+		Session: testSession,
+		Filters: gosn.ItemFilters{
+			MatchAny: false,
+			Filters: []gosn.Filter{{
+				Type:       "Note",
+				Key:        "Title",
+				Comparison: "==",
+				Value:      "TestNoteOne",
+			}, {
+				Type:       "Note",
+				Key:        "Text",
+				Comparison: "==",
+				Value:      "TestNoteOneText",
+			}},
+		},
+	}
+
+	var preReplace, postReplace gosn.Items
+
+	preReplace, err := gnc.Run()
+	require.NoError(t, err, err)
+	require.Len(t, preReplace, 1)
+	//require.NoError(t, testSession.CacheDB.Close())
+
+	// replace note
+	replaceNoteConfig := AddNoteInput{
+		Session: testSession,
+		Title:   "TestNoteOne",
+		Text:    "TestNoteOneReplacementText",
+		Replace: true,
+	}
+	require.NoError(t, replaceNoteConfig.Run())
+
+	// get updated note
+	gnc = GetNoteConfig{
+		Session: testSession,
+		Filters: gosn.ItemFilters{
+			MatchAny: false,
+			Filters: []gosn.Filter{{
+				Type:       "Note",
+				Key:        "Title",
+				Comparison: "==",
+				Value:      "TestNoteOne",
+			}, {
+				Type:       "Note",
+				Key:        "Text",
+				Comparison: "==",
+				Value:      "TestNoteOneReplacementText",
+			}},
+		},
+	}
+
+	postReplace, err = gnc.Run()
+	require.NoError(t, err, err)
+	require.Len(t, postReplace, 1)
+
+	// check only one note with that title exists
+	gnc = GetNoteConfig{
+		Session: testSession,
+		Filters: gosn.ItemFilters{
+			MatchAny: false,
+			Filters: []gosn.Filter{{
+				Type:       "Note",
+				Key:        "Title",
+				Comparison: "==",
+				Value:      "TestNoteOne",
+			}},
+		},
+	}
+
+	highlander, err := gnc.Run()
+	require.NoError(t, err, err)
+	require.Len(t, highlander, 1)
 }
 
 func TestWipeWith50(t *testing.T) {

@@ -3,7 +3,6 @@ package sncli
 import (
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
@@ -347,7 +346,7 @@ func TestConflictResolution(t *testing.T) {
 	}
 
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// perform initial sync to load keys into session
 	pii := cache.SyncInput{
@@ -364,24 +363,24 @@ func TestConflictResolution(t *testing.T) {
 	require.Len(t, itemsToPut, 1)
 
 	for _, p := range pi {
-		assert.NoError(t, so.DB.Save(&p))
+		require.NoError(t, so.DB.Save(&p))
 	}
 
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, so.DB.Close())
 
 	// sync saved item in db to SN
 	so, err = Sync(pii, false)
-	assert.NoError(t, err)
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, err)
+	require.NoError(t, so.DB.Close())
 
 	// get db
 	pii.Close = false
 	so, err = Sync(pii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// Get items in DB to see what's in there
 	var encItems cache.Items
 	err = so.DB.All(&encItems)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// change initial originalNote and re-put
 	updatedNote := originalNote.Copy()
@@ -393,13 +392,13 @@ func TestConflictResolution(t *testing.T) {
 	}
 
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	pi = cache.ToCacheItems(encItemsToPut, false)
 	for _, i := range pi {
-		assert.NoError(t, so.DB.Save(&i))
+		require.NoError(t, so.DB.Save(&i))
 	}
 
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, so.DB.Close())
 	so, err = Sync(pii, false)
 	require.NoError(t, err)
 
@@ -441,7 +440,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 		&originalTag,
 	}
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// get db
 	pii := cache.SyncInput{
@@ -451,24 +450,24 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	var so cache.SyncOutput
 	so, err = Sync(pii, false)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// add item to db
 	ci := cache.ToCacheItems(encItemsToPut, false)
 	for _, i := range ci {
-		assert.NoError(t, so.DB.Save(&i))
+		require.NoError(t, so.DB.Save(&i))
 	}
 
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, so.DB.Close())
 
 	// sync db with SN
 	so, err = Sync(pii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// close db
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, so.DB.Close())
 
 	dir, err := ioutil.TempDir("", "test")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	defer func() {
 		if err = os.RemoveAll(dir); err != nil {
@@ -495,25 +494,25 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	}
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// get db
 	so, err = Sync(pii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// add items to db
 	ci = cache.ToCacheItems(encItemsToPut, false)
 	for _, i := range ci {
-		assert.NoError(t, so.DB.Save(&i))
+		require.NoError(t, so.DB.Save(&i))
 	}
 
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, so.DB.Close())
 
 	pii = cache.SyncInput{
 		Session: testSession,
 		Close:   true,
 	}
 	_, err = Sync(pii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// import original export
 	ic := ImportConfig{
@@ -523,7 +522,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	}
 
 	_, err = ic.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// get items again
 	gii := cache.SyncInput{
@@ -532,17 +531,16 @@ func TestExportChangeImportOneTag(t *testing.T) {
 
 	var gio cache.SyncOutput
 	gio, err = Sync(gii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var cItems cache.Items
-
-	assert.NoError(t, gio.DB.All(&cItems))
-	assert.NoError(t, gio.DB.Close())
+	require.NoError(t, gio.DB.All(&cItems))
+	require.NoError(t, gio.DB.Close())
 
 	var gItems gosn.Items
 	gItems, err = cItems.ToItems(testSession)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var found bool
 
@@ -554,7 +552,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 		}
 	}
 
-	assert.True(t, found)
+	require.True(t, found)
 }
 
 func TestExportDeleteImportOneTag(t *testing.T) {
@@ -568,7 +566,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 
 	// Get DB
 	so, err := Sync(pii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// create and put originalTag
 	originalTag := gosn.NewTag()
@@ -580,7 +578,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	}
 
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	if err = cache.SaveEncryptedItems(so.DB, encItemsToPut, true); err != nil {
 		return
@@ -589,12 +587,12 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	var cItems cache.Items
 
 	so, err = Sync(pii, false)
-	assert.NoError(t, err)
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, err)
+	require.NoError(t, so.DB.Close())
 
 	// Export existing content to a temporary directory
 	dir, err := ioutil.TempDir("", "test")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	defer func() {
 		if err = os.RemoveAll(dir); err != nil {
@@ -643,10 +641,10 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	}
 
 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	so, err = Sync(pii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	if err = cache.SaveEncryptedItems(so.DB, encItemsToPut, true); err != nil {
 		return
@@ -656,8 +654,8 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 		Session: testSession,
 	}
 	so, err = Sync(pii, false)
-	assert.NoError(t, err)
-	assert.NoError(t, so.DB.Close())
+	require.NoError(t, err)
+	require.NoError(t, so.DB.Close())
 
 	// import original export
 	ic := ImportConfig{
@@ -667,7 +665,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	}
 
 	_, err = ic.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// get items again
 	gii := cache.SyncInput{
@@ -676,16 +674,16 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 
 	var gio cache.SyncOutput
 	gio, err = Sync(gii, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.NoError(t, gio.DB.All(&cItems))
+	require.NoError(t, gio.DB.All(&cItems))
 
-	assert.NoError(t, gio.DB.Close())
+	require.NoError(t, gio.DB.Close())
 
 	var gItems gosn.Items
 	gItems, err = cItems.ToItems(testSession)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var found bool
 
@@ -697,5 +695,5 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 		}
 	}
 
-	assert.True(t, found)
+	require.True(t, found)
 }

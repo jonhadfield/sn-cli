@@ -512,7 +512,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 		Title:   title,
 		Text:    text,
 		Tags:    processedTags,
-		Replace: false,
+		Replace: c.Bool("replace"),
 		Debug:   opts.debug,
 	}
 
