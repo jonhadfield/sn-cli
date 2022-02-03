@@ -2,14 +2,17 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/briandowns/spinner"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"os"
+	"time"
 )
 
 type ExportConfig struct {
 	Session   *cache.Session
 	Decrypted bool
 	File      string
-	Debug     bool
+	UseStdOut bool
 }
 
 type ImportConfig struct {
@@ -21,6 +24,24 @@ type ImportConfig struct {
 
 // Run will retrieve all items from SN directly, re-encrypt them with a new ItemsKey and write them to a file.
 func (i ExportConfig) Run() error {
+	if !i.Session.Debug {
+		prefix := HiWhite("exporting ")
+
+		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stdout))
+		if i.UseStdOut {
+			s = spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
+		}
+
+		s.Prefix = prefix
+		s.Start()
+
+		err := i.Session.Export(i.File)
+
+		s.Stop()
+
+		return err
+	}
+
 	return i.Session.Export(i.File)
 }
 

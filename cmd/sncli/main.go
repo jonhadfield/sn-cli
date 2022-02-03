@@ -748,12 +748,13 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					return err
 				}
 
+				sess.Debug = opts.debug
+
 				sess.CacheDBPath = cacheDBPath
 				appExportConfig := sncli.ExportConfig{
 					Session:   &sess,
 					Decrypted: c.Bool("decrypted"),
 					File:      outputPath,
-					Debug:     opts.debug,
 				}
 				err = appExportConfig.Run()
 				if err == nil {
