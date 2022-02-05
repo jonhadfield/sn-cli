@@ -542,6 +542,8 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 
 	processedNotes := sncli.CommaSplit(title)
 
+	processedUUIDs := sncli.CommaSplit(uuid)
+
 	var cacheDBPath string
 	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 
@@ -553,6 +555,7 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 	DeleteNoteConfig := sncli.DeleteNoteConfig{
 		Session:    &sess,
 		NoteTitles: processedNotes,
+		NoteUUIDs:  processedUUIDs,
 		Debug:      opts.debug,
 	}
 
