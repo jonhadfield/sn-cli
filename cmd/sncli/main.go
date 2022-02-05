@@ -21,13 +21,13 @@ import (
 )
 
 const (
-	msgAddSuccess      = "Added"
-	msgAlreadyExisting = "Already existing"
-	msgDeleted         = "Deleted"
-	msgRegisterSuccess = "Registered"
-	msgTagSuccess      = "Tagged"
-	msgItemsDeleted    = "Items deleted"
-	msgNoMatches       = "No matches"
+	msgAddSuccess      = "added"
+	msgAlreadyExisting = "already existing"
+	msgDeleted         = "deleted"
+	msgRegisterSuccess = "registered"
+	msgTagSuccess      = "tagged"
+	msgItemsDeleted    = "items deleted"
+	msgNoMatches       = "no matches"
 	snAppName          = "sn-cli"
 )
 
