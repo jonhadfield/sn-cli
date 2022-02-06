@@ -96,12 +96,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 			return
 		}
 	} else {
-		noteToAdd = gosn.NewNote()
-		newNoteContent := gosn.NewNoteContent()
-		newNoteContent.Title = i.noteTitle
-		newNoteContent.Text = i.noteText
-		noteToAdd.Content = *newNoteContent
-		noteToAdd.UUID = gosn.GenUUID()
+		noteToAdd, _ = gosn.NewNote(i.noteTitle, i.noteText, nil)
 		noteUUID = noteToAdd.UUID
 	}
 
@@ -220,7 +215,6 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 			})
 		}
 	case noteText != "":
-
 		comparison := "=="
 		if regex {
 			comparison = "~"
@@ -233,7 +227,6 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 			Type:       "Note",
 		})
 	case len(noteUUIDs) > 0:
-
 		for _, uuid := range noteUUIDs {
 			getNotesFilters = append(getNotesFilters, gosn.Filter{
 				Key:        "UUID",
@@ -276,7 +269,6 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 	}
 
 	notes.Filter(itemFilter)
-
 	var notesToDelete gosn.Notes
 
 	for _, item := range notes {

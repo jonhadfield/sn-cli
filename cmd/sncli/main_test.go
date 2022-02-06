@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 	"time"
@@ -127,7 +128,7 @@ func TestDeleteNoteErrorMissingTitle(t *testing.T) {
 func TestTagNotesByTextWithNewTags(t *testing.T) {
 	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note", "--title", "TestNoteOne", "--text", "test note one"})
 	assert.Contains(t, msg, msgAddSuccess)
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 
 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note", "--title", "TestNoteTwo", "--text", "test note two"})
 	assert.NoError(t, err)
@@ -150,7 +151,7 @@ func TestTagNotesByTextWithNewTags(t *testing.T) {
 	assert.NotEmpty(t, msg)
 
 	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testTagOne,testTagTwo"})
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	time.Sleep(1 * time.Second)
 }
 
@@ -170,7 +171,7 @@ func TestAddOneNoteGetCount(t *testing.T) {
 	assert.Equal(t, "1", msg)
 
 	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "note", "--title", "testAddOneNoteGetCount Title"})
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	time.Sleep(1 * time.Second)
 }
 
@@ -183,7 +184,7 @@ func TestAddOneTagGetCount(t *testing.T) {
 	assert.Equal(t, "1", msg)
 
 	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount Title"})
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 
 	time.Sleep(1 * time.Second)
 }

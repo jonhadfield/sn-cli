@@ -78,12 +78,7 @@ func genRandomText(paragraphs int) string {
 
 func genNotes(num, textParas int) (notes gosn.Items) {
 	for i := 1; i <= num; i++ {
-		noteContent := gosn.NewNoteContent()
-		noteContent.Title = fmt.Sprintf("%d.%s", i, genRandomText(1))
-		noteContent.Text = genRandomText(textParas)
-		note := gosn.NewNote()
-		note.Content = *noteContent
-		note.ContentType = "Note"
+		note, _ := gosn.NewNote(fmt.Sprintf("%d.%s", i, genRandomText(1)), genRandomText(textParas), nil)
 		notes = append(notes, &note)
 	}
 

@@ -1,8 +1,11 @@
 package sncli
 
 import (
+	"github.com/briandowns/spinner"
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"os"
+	"time"
 )
 
 const (
@@ -205,9 +208,10 @@ type DeleteNoteConfig struct {
 }
 
 type WipeConfig struct {
-	Session  *cache.Session
-	Debug    bool
-	Settings bool
+	Session    *cache.Session
+	UseStdOut  bool
+	Debug      bool
+	Everything bool
 }
 
 type StatsConfig struct {
@@ -258,5 +262,23 @@ var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
 
 func (i *WipeConfig) Run() (int, error) {
 	i.Session.RemoveDB()
-	return gosn.DeleteContent(i.Session.Session)
+	if !i.Session.Debug && i.UseStdOut {
+		prefix := HiWhite("wiping ")
+
+		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stdout))
+		if i.UseStdOut {
+			s = spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
+		}
+
+		s.Prefix = prefix
+		s.Start()
+
+		deleted, err := gosn.DeleteContent(i.Session.Session, i.Everything)
+
+		s.Stop()
+
+		return deleted, err
+	}
+
+	return gosn.DeleteContent(i.Session.Session, i.Everything)
 }

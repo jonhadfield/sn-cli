@@ -921,7 +921,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					Usage: "ignore warning",
 				},
 				cli.BoolFlag{
-					Name:  "settings",
+					Name:  "everything",
 					Usage: "wipe settings also",
 				},
 			},
@@ -934,8 +934,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				useStdOut = opts.useStdOut
 
 				var session cache.Session
-				var email string
-				session, email, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 				if err != nil {
 					return err
 				}
@@ -948,9 +947,10 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 
 				session.CacheDBPath = cacheDBPath
 				wipeConfig := sncli.WipeConfig{
-					Session:  &session,
-					Settings: c.Bool("settings"),
-					Debug:    opts.debug,
+					Session:    &session,
+					UseStdOut:  useStdOut,
+					Everything: c.Bool("everything"),
+					Debug:      opts.debug,
 				}
 				var numWiped int
 
@@ -958,7 +958,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if c.Bool("yes") {
 					proceed = true
 				} else {
-					fmt.Printf("wipe all items for account %s? ", email)
+					fmt.Printf("wipe all items for account %s? ", session.Session.KeyParams.Identifier)
 					var input string
 					_, err = fmt.Scanln(&input)
 					if err == nil && sncli.StringInSlice(input, []string{"y", "yes"}, false) {

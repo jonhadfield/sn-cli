@@ -253,7 +253,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	}
 
 	err := addNoteConfig.Run()
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 
 	// get new note
 	filter := gosn.Filter{
@@ -275,7 +275,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 
 	preRes, err = gnc.Run()
 
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 
 	newItemUUID := preRes[0].GetUUID()
 	deleteNoteConfig := DeleteNoteConfig{
@@ -286,10 +286,10 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
 	assert.Equal(t, 1, noDeleted)
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 
 	postRes, err = gnc.Run()
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	assert.EqualValues(t, len(postRes), 0, "note was not deleted")
 }
 
@@ -303,7 +303,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 		Title:   "TestNoteOne",
 	}
 	err := addNoteConfig.Run()
-	assert.NoError(t, err, err)
+	assert.NoError(t, err)
 
 	deleteNoteConfig := DeleteNoteConfig{
 		Session:    testSession,
@@ -312,8 +312,8 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
-	assert.Equal(t, noDeleted, 1)
-	assert.NoError(t, err, err)
+	assert.Equal(t, 1, noDeleted)
+	require.NoError(t, err)
 
 	filter := gosn.Filter{
 		Type:       "Note",
@@ -332,7 +332,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 
 	var postRes gosn.Items
 	postRes, err = gnc.Run()
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	assert.EqualValues(t, len(postRes), 0, "note was not deleted")
 }
 
@@ -346,7 +346,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 		Title:   "TestNoteOne",
 	}
 	err := addNoteConfig.Run()
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 
 	// delete note
 	deleteNoteConfig := DeleteNoteConfig{
@@ -358,7 +358,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
 	assert.Equal(t, noDeleted, 1)
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 
 	// get same note again
 	filter := gosn.Filter{
@@ -378,7 +378,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 	var postRes gosn.Items
 	postRes, err = gnc.Run()
 
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	assert.EqualValues(t, len(postRes), 0, "note was not deleted")
 }
 
@@ -458,7 +458,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 
 func cleanUp(session cache.Session) {
 	session.RemoveDB()
-	_, err := gosn.DeleteContent(session.Session)
+	_, err := gosn.DeleteContent(session.Session, true)
 
 	if err != nil {
 		panic(err)

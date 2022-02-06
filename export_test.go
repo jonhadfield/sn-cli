@@ -21,13 +21,7 @@ func TestEncryptDecryptWithNewItemsKey(t *testing.T) {
 	require.NotEmpty(t, ik.CreatedAtTimestamp)
 	require.Empty(t, ik.UpdatedAtTimestamp)
 	require.Empty(t, ik.UpdatedAt)
-
-	n := gosn.NewNote()
-	nc := gosn.NewNoteContent()
-	nc.Title = "test title"
-	nc.Text = "test content"
-	n.Content = *nc
-
+	n, _ := gosn.NewNote("test title", "test content", nil)
 	eis := gosn.Items{&n}
 	encItems, err := eis.Encrypt(ik, testSession.MasterKey, testSession.Debug)
 	require.NoError(t, err)
@@ -113,11 +107,8 @@ func TestJSONExportImport(t *testing.T) {
 	allCacheItemsPreExport := len(existingItems)
 	allItemsKeysPreExport := len(testSession.ItemsKeys)
 
-	note := gosn.NewNote()
-	noteContent := gosn.NewNoteContent()
-	note.Content = *noteContent
-	note.Content.SetTitle("Example Title")
-	note.Content.SetText("Some example text")
+	note, _ := gosn.NewNote("Example Title", "Some example text", nil)
+
 	itemsToPut := gosn.Items{
 		&note,
 	}
@@ -218,12 +209,8 @@ func TestJSONExportWipeImportOneNote(t *testing.T) {
 	var existingItems []cache.Item
 	err = gio.DB.All(&existingItems)
 	require.NoError(t, err)
+	note, _ := gosn.NewNote("Example Title", "Some example text", nil)
 
-	note := gosn.NewNote()
-	noteContent := gosn.NewNoteContent()
-	note.Content = *noteContent
-	note.Content.SetTitle("Example Title")
-	note.Content.SetText("Some example text")
 	itemsToPut := gosn.Items{
 		&note,
 	}
@@ -332,15 +319,7 @@ func TestConflictResolution(t *testing.T) {
 	defer cleanUp(*testSession)
 
 	// create and put initial originalNote
-	originalNote := gosn.NewNote()
-	noteContent := gosn.NewNoteContent()
-	originalNote.Content = *noteContent
-	originalNoteTitle := "Example Title"
-	originalNoteText := "Some example text"
-
-	originalNote.Content.SetTitle(originalNoteTitle)
-	originalNote.Content.SetText(originalNoteText)
-
+	originalNote, _ := gosn.NewNote("Example Title", "Some example text", nil)
 	itemsToPut := gosn.Items{
 		&originalNote,
 	}

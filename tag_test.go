@@ -31,7 +31,7 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 	var noDeleted int
 	noDeleted, err = deleteTagConfig.Run()
 	assert.Equal(t, 2, noDeleted)
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 }
 
 func TestGetTag(t *testing.T) {
@@ -46,7 +46,7 @@ func TestGetTag(t *testing.T) {
 	}
 
 	ato, err := addTagInput.Run()
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	assert.NoError(t, err)
 	assert.Contains(t, ato.Added, "TestTagOne")
 	assert.Contains(t, ato.Added, "TestTagTwo")
@@ -73,7 +73,7 @@ func TestGetTag(t *testing.T) {
 
 	var output gosn.Items
 	output, err = getTagConfig.Run()
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	assert.EqualValues(t, len(output), 2, "expected two items but got: %+v", output)
 }
 
@@ -134,7 +134,7 @@ func TestTaggingOfNotes(t *testing.T) {
 	}
 
 	err := _addNotes(*testSession, notes)
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	// tag new notes with 'testTag'
 	tags := []string{"testTag"}
 	tni := TagItemsConfig{
@@ -143,7 +143,7 @@ func TestTaggingOfNotes(t *testing.T) {
 		NewTags:  tags,
 	}
 	err = tni.Run()
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 
 	filterNotesByTagName := gosn.Filter{
 		Type:       "Note",
@@ -162,7 +162,7 @@ func TestTaggingOfNotes(t *testing.T) {
 
 	var retNotes gosn.Items
 	retNotes, err = gnc.Run()
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 
 	if len(retNotes) != 2 {
 		t.Errorf("expected two notes but got: %d", len(retNotes))
@@ -170,11 +170,11 @@ func TestTaggingOfNotes(t *testing.T) {
 	require.NoError(t, testSession.CacheDB.Close())
 
 	nd, err := _deleteNotesByTitle(*testSession, notes)
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	require.Equal(t, 4, nd)
 
 	var deletedTags int
 	deletedTags, err = _deleteTagsByTitle(*testSession, tags)
-	assert.NoError(t, err, err)
+	require.NoError(t, err)
 	assert.Equal(t, 1, deletedTags)
 }
