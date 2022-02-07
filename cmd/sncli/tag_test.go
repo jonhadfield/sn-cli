@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"log"
 	"os"
 	"strconv"
@@ -12,7 +13,6 @@ import (
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	sncli "github.com/jonhadfield/sn-cli"
-	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -28,12 +28,11 @@ func localTestMain() {
 	testUserPassword = "secretsanta"
 
 	rInput := gosn.RegisterInput{
-		Password:   testUserPassword,
-		Email:      testUserEmail,
-		Identifier: testUserEmail,
-		APIServer:  localServer,
-		Version:    "004",
-		Debug:      true,
+		Password:  testUserPassword,
+		Email:     testUserEmail,
+		APIServer: localServer,
+		Version:   "004",
+		Debug:     true,
 	}
 
 	_, err := rInput.Register()
@@ -89,29 +88,29 @@ func TestGetTagsByTitleAndUUID(t *testing.T) {
 	}
 
 	ato, err := addTagConfig.Run()
-	assert.NoError(t, err)
-	assert.Contains(t, ato.Added, "TestTagOne")
-	assert.Contains(t, ato.Added, "TestTagTwo")
-	assert.Empty(t, ato.Existing)
+	require.NoError(t, err)
+	require.Contains(t, ato.Added, "TestTagOne")
+	require.Contains(t, ato.Added, "TestTagTwo")
+	require.Empty(t, ato.Existing)
 
 	var tags gosn.Tags
 	tags, err = getTagsByTitle(*testSession, "TestTagOne")
-	assert.NoError(t, err)
-	assert.Len(t, tags, 1)
-	assert.Equal(t, "TestTagOne", tags[0].Content.Title)
+	require.NoError(t, err)
+	require.Len(t, tags, 1)
+	require.Equal(t, "TestTagOne", tags[0].Content.Title)
 
 	tagUUID := tags[0].UUID
 
 	var tag gosn.Tag
 	tag, err = getTagByUUID(testSession, tagUUID)
-	assert.NoError(t, err)
-	assert.Equal(t, "TestTagOne", tag.Content.Title)
+	require.NoError(t, err)
+	require.Equal(t, "TestTagOne", tag.Content.Title)
 
 	tags, err = getTagsByTitle(*testSession, "MissingTagOne")
-	assert.NoError(t, err)
-	assert.Empty(t, tags)
+	require.NoError(t, err)
+	require.Empty(t, tags)
 
 	_, err = getTagByUUID(testSession, "123")
-	assert.Error(t, err)
-	assert.Equal(t, "could not find tag with UUID 123", err.Error())
+	require.Error(t, err)
+	require.Equal(t, "could not find tag with UUID 123", err.Error())
 }

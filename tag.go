@@ -319,7 +319,7 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 
 	var eTagsToDelete gosn.EncryptedItems
 
-	eTagsToDelete, err = tagsToDelete.Encrypt(session.Session.DefaultItemsKey, session.MasterKey, session.Debug)
+	eTagsToDelete, err = tagsToDelete.Encrypt(session.Session, session.DefaultItemsKey)
 	if err != nil {
 		return 0, err
 	}
@@ -419,11 +419,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 			continue
 		}
 
-		newTagContent := gosn.NewTagContent()
-		newTag := gosn.NewTag()
-		newTagContent.Title = tag
-		newTag.Content = *newTagContent
-		newTag.UUID = gosn.GenUUID()
+		newTag, _ := gosn.NewTag(tag, nil)
 
 		tagsToAdd = append(tagsToAdd, newTag)
 		ato.added = append(ato.added, tag)

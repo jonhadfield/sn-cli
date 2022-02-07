@@ -12,7 +12,6 @@ import (
 
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
-	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -28,12 +27,11 @@ func localTestMain() {
 	testUserPassword = "secretsanta"
 
 	rInput := gosn.RegisterInput{
-		Password:   testUserPassword,
-		Email:      testUserEmail,
-		Identifier: testUserEmail,
-		APIServer:  localServer,
-		Version:    "004",
-		Debug:      true,
+		Password:  testUserPassword,
+		Email:     testUserEmail,
+		APIServer: localServer,
+		Version:   "004",
+		Debug:     true,
 	}
 
 	_, err := rInput.Register()
@@ -184,7 +182,7 @@ func TestWipeWith50(t *testing.T) {
 	textParas := 3
 
 	err := createNotes(testSession, numNotes, textParas)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// check notes created
 	noteFilter := gosn.Filter{
@@ -200,14 +198,14 @@ func TestWipeWith50(t *testing.T) {
 	var gno cache.SyncOutput
 	gno, err = Sync(gni, false)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, gno.DB)
+	require.NoError(t, err)
+	require.NotNil(t, gno.DB)
 
 	// get items from db
 	var items cache.Items
 
-	assert.NoError(t, gno.DB.All(&items))
-	assert.NoError(t, gno.DB.Close())
+	require.NoError(t, gno.DB.All(&items))
+	require.NoError(t, gno.DB.Close())
 
 	var nonotes int
 
@@ -220,14 +218,14 @@ func TestWipeWith50(t *testing.T) {
 	var gItems gosn.Items
 	gItems, err = items.ToItems(testSession)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	gItems.DeDupe()
 	ei := gItems
 
 	ei.Filter(filters)
 
-	assert.Equal(t, 50, len(ei))
+	require.Equal(t, 50, len(ei))
 
 	wipeConfig := WipeConfig{
 		Session: testSession,
@@ -236,8 +234,8 @@ func TestWipeWith50(t *testing.T) {
 
 	var deleted int
 	deleted, err = wipeConfig.Run()
-	assert.NoError(t, err)
-	assert.True(t, deleted >= numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
+	require.NoError(t, err)
+	require.True(t, deleted >= numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
 }
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
@@ -285,12 +283,12 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
-	assert.Equal(t, 1, noDeleted)
+	require.Equal(t, 1, noDeleted)
 	require.NoError(t, err)
 
 	postRes, err = gnc.Run()
 	require.NoError(t, err)
-	assert.EqualValues(t, len(postRes), 0, "note was not deleted")
+	require.EqualValues(t, len(postRes), 0, "note was not deleted")
 }
 
 func TestAddDeleteNoteByTitle(t *testing.T) {
@@ -303,7 +301,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 		Title:   "TestNoteOne",
 	}
 	err := addNoteConfig.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	deleteNoteConfig := DeleteNoteConfig{
 		Session:    testSession,
@@ -312,7 +310,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
-	assert.Equal(t, 1, noDeleted)
+	require.Equal(t, 1, noDeleted)
 	require.NoError(t, err)
 
 	filter := gosn.Filter{
@@ -333,7 +331,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 	var postRes gosn.Items
 	postRes, err = gnc.Run()
 	require.NoError(t, err)
-	assert.EqualValues(t, len(postRes), 0, "note was not deleted")
+	require.EqualValues(t, len(postRes), 0, "note was not deleted")
 }
 
 func TestAddDeleteNoteByTitleRegex(t *testing.T) {
@@ -357,7 +355,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
-	assert.Equal(t, noDeleted, 1)
+	require.Equal(t, noDeleted, 1)
 	require.NoError(t, err)
 
 	// get same note again
@@ -379,7 +377,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 	postRes, err = gnc.Run()
 
 	require.NoError(t, err)
-	assert.EqualValues(t, len(postRes), 0, "note was not deleted")
+	require.EqualValues(t, len(postRes), 0, "note was not deleted")
 }
 
 func TestGetNote(t *testing.T) {
@@ -393,7 +391,7 @@ func TestGetNote(t *testing.T) {
 		Title:   "TestNoteOne",
 	}
 	err := addNoteConfig.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	noteFilter := gosn.Filter{
 		Type:       "Note",
@@ -413,8 +411,8 @@ func TestGetNote(t *testing.T) {
 
 	var output gosn.Items
 	output, err = getNoteConfig.Run()
-	assert.NoError(t, err)
-	assert.EqualValues(t, 1, len(output))
+	require.NoError(t, err)
+	require.EqualValues(t, 1, len(output))
 }
 
 func TestCreateOneHundredNotes(t *testing.T) {
@@ -426,7 +424,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	textParas := 10
 
 	err := createNotes(testSession, numNotes, textParas)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	noteFilter := gosn.Filter{
 		Type: "Note",
@@ -442,9 +440,9 @@ func TestCreateOneHundredNotes(t *testing.T) {
 
 	var res gosn.Items
 	res, err = gnc.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.True(t, len(res) >= numNotes)
+	require.True(t, len(res) >= numNotes)
 
 	wipeConfig := WipeConfig{
 		Session: testSession,
@@ -452,8 +450,8 @@ func TestCreateOneHundredNotes(t *testing.T) {
 
 	var deleted int
 	deleted, err = wipeConfig.Run()
-	assert.NoError(t, err)
-	assert.True(t, deleted >= numNotes)
+	require.NoError(t, err)
+	require.True(t, deleted >= numNotes)
 }
 
 func cleanUp(session cache.Session) {

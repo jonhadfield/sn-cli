@@ -6,7 +6,6 @@ import (
 
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAddDeleteTagByTitle(t *testing.T) {
@@ -18,10 +17,10 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 	}
 
 	ato, err := addTagConfig.Run()
-	assert.NoError(t, err)
-	assert.Contains(t, ato.Added, "TestTagOne")
-	assert.Contains(t, ato.Added, "TestTagTwo")
-	assert.Empty(t, ato.Existing)
+	require.NoError(t, err)
+	require.Contains(t, ato.Added, "TestTagOne")
+	require.Contains(t, ato.Added, "TestTagTwo")
+	require.Empty(t, ato.Existing)
 
 	deleteTagConfig := DeleteTagConfig{
 		Session:   testSession,
@@ -30,7 +29,7 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 
 	var noDeleted int
 	noDeleted, err = deleteTagConfig.Run()
-	assert.Equal(t, 2, noDeleted)
+	require.Equal(t, 2, noDeleted)
 	require.NoError(t, err)
 }
 
@@ -47,10 +46,10 @@ func TestGetTag(t *testing.T) {
 
 	ato, err := addTagInput.Run()
 	require.NoError(t, err)
-	assert.NoError(t, err)
-	assert.Contains(t, ato.Added, "TestTagOne")
-	assert.Contains(t, ato.Added, "TestTagTwo")
-	assert.Empty(t, ato.Existing)
+	require.NoError(t, err)
+	require.Contains(t, ato.Added, "TestTagOne")
+	require.Contains(t, ato.Added, "TestTagTwo")
+	require.Empty(t, ato.Existing)
 
 	// create filters
 	getTagFilters := gosn.ItemFilters{
@@ -74,7 +73,7 @@ func TestGetTag(t *testing.T) {
 	var output gosn.Items
 	output, err = getTagConfig.Run()
 	require.NoError(t, err)
-	assert.EqualValues(t, len(output), 2, "expected two items but got: %+v", output)
+	require.EqualValues(t, len(output), 2, "expected two items but got: %+v", output)
 }
 
 func _addNotes(session cache.Session, i map[string]string) error {
@@ -176,5 +175,5 @@ func TestTaggingOfNotes(t *testing.T) {
 	var deletedTags int
 	deletedTags, err = _deleteTagsByTitle(*testSession, tags)
 	require.NoError(t, err)
-	assert.Equal(t, 1, deletedTags)
+	require.Equal(t, 1, deletedTags)
 }

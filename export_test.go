@@ -23,7 +23,7 @@ func TestEncryptDecryptWithNewItemsKey(t *testing.T) {
 	require.Empty(t, ik.UpdatedAt)
 	n, _ := gosn.NewNote("test title", "test content", nil)
 	eis := gosn.Items{&n}
-	encItems, err := eis.Encrypt(ik, testSession.MasterKey, testSession.Debug)
+	encItems, err := eis.Encrypt(testSession.Session, ik)
 	require.NoError(t, err)
 	require.NotEmpty(t, encItems[0].UUID)
 	require.NotEmpty(t, encItems[0].CreatedAtTimestamp)
@@ -112,7 +112,7 @@ func TestJSONExportImport(t *testing.T) {
 	itemsToPut := gosn.Items{
 		&note,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
 	require.NoError(t, err)
 	require.Len(t, encItemsToPut, 1)
 
@@ -214,7 +214,7 @@ func TestJSONExportWipeImportOneNote(t *testing.T) {
 	itemsToPut := gosn.Items{
 		&note,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
 	require.NoError(t, err)
 
 	cItems := cache.ToCacheItems(encItemsToPut, false)
@@ -324,7 +324,7 @@ func TestConflictResolution(t *testing.T) {
 		&originalNote,
 	}
 
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
 	require.NoError(t, err)
 
 	// perform initial sync to load keys into session
@@ -370,7 +370,7 @@ func TestConflictResolution(t *testing.T) {
 		&updatedNote,
 	}
 
-	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
 	require.NoError(t, err)
 	pi = cache.ToCacheItems(encItemsToPut, false)
 	for _, i := range pi {
@@ -411,14 +411,12 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	defer cleanUp(*testSession)
 
 	// create and put initial originalTag
-	originalTag := gosn.NewTag()
-	tagContent := gosn.NewTagContent()
-	originalTag.Content = *tagContent
-	originalTag.Content.SetTitle("Example Title")
+	originalTag, err := gosn.NewTag("Example Title", nil)
+
 	itemsToPut := gosn.Items{
 		&originalTag,
 	}
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
 	require.NoError(t, err)
 
 	// get db
@@ -471,7 +469,7 @@ func TestExportChangeImportOneTag(t *testing.T) {
 	itemsToPut = gosn.Items{
 		&updatedTag,
 	}
-	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
 
 	require.NoError(t, err)
 
@@ -548,15 +546,12 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 	require.NoError(t, err)
 
 	// create and put originalTag
-	originalTag := gosn.NewTag()
-	tagContent := gosn.NewTagContent()
-	originalTag.Content = *tagContent
-	originalTag.Content.SetTitle("Example Title")
+	originalTag, _ := gosn.NewTag("Example Title", nil)
 	itemsToPut := gosn.Items{
 		&originalTag,
 	}
 
-	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
 	require.NoError(t, err)
 
 	if err = cache.SaveEncryptedItems(so.DB, encItemsToPut, true); err != nil {
@@ -619,7 +614,7 @@ func TestExportDeleteImportOneTag(t *testing.T) {
 		itd,
 	}
 
-	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session.DefaultItemsKey, testSession.Session.MasterKey, testSession.Session.Debug)
+	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
 	require.NoError(t, err)
 
 	so, err = Sync(pii, false)

@@ -87,11 +87,7 @@ func genNotes(num, textParas int) (notes gosn.Items) {
 
 func genTags(num int64) (tags gosn.Items) {
 	for i := int64(1); i <= num; i++ {
-		tag := gosn.NewTag()
-		tagContent := gosn.NewTagContent()
-		tagContent.Title = genRandomText(1)
-		tag.ContentType = "Tag"
-		tag.Content = *tagContent
+		tag, _ := gosn.NewTag(genRandomText(1), nil)
 		tags = append(tags, &tag)
 	}
 
@@ -107,7 +103,7 @@ func createNotes(session *cache.Session, num int, paras int) error {
 
 	var err error
 
-	eGendNotes, err = gendNotes.Encrypt(session.Session.DefaultItemsKey, session.MasterKey, session.Debug)
+	eGendNotes, err = gendNotes.Encrypt(session.Session, session.Session.DefaultItemsKey)
 	if err != nil {
 		return err
 	}
@@ -148,7 +144,7 @@ func createTags(session gosn.Session, num int64) error {
 	gendTags := genTags(num)
 
 	var eGendTags gosn.EncryptedItems
-	eGendTags, err := gendTags.Encrypt(session.DefaultItemsKey, session.MasterKey, session.Debug)
+	eGendTags, err := gendTags.Encrypt(&session, session.DefaultItemsKey)
 	if err != nil {
 		return err
 	}
