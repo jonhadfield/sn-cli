@@ -34,7 +34,7 @@ func TestEncryptDecryptWithNewItemsKey(t *testing.T) {
 	require.Empty(t, encItems[0].DuplicateOf)
 
 	testSession.ItemsKeys = append(testSession.Session.ItemsKeys, ik)
-	di, err := encItems.Decrypt(testSession.Session, gosn.ItemsKey{})
+	di, err := encItems.Decrypt(testSession.Session, gosn.ItemsKeys{})
 
 	require.NoError(t, err)
 	require.NotEmpty(t, di)
@@ -99,7 +99,7 @@ func TestJSONExportImport(t *testing.T) {
 
 	gio, err := Sync(gii, false)
 	require.NoError(t, err)
-	// DB now populated and open with pointer in session
+	// DB now populated and open with pointer in Session
 	var existingItems []cache.Item
 	err = gio.DB.All(&existingItems)
 	require.NoError(t, err)
@@ -205,7 +205,7 @@ func TestJSONExportWipeImportOneNote(t *testing.T) {
 
 	gio, err := Sync(gii, false)
 	require.NoError(t, err)
-	// DB now populated and open with pointer in session
+	// DB now populated and open with pointer in Session
 	var existingItems []cache.Item
 	err = gio.DB.All(&existingItems)
 	require.NoError(t, err)
@@ -327,7 +327,7 @@ func TestConflictResolution(t *testing.T) {
 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
 	require.NoError(t, err)
 
-	// perform initial sync to load keys into session
+	// perform initial sync to load keys into Session
 	pii := cache.SyncInput{
 		Session: testSession,
 	}

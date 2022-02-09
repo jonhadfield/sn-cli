@@ -3,6 +3,7 @@ package sncli
 import (
 	"fmt"
 	"github.com/briandowns/spinner"
+	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"os"
 	"time"
@@ -16,10 +17,11 @@ type ExportConfig struct {
 }
 
 type ImportConfig struct {
-	Session *cache.Session
-	File    string
-	Format  string
-	Debug   bool
+	Session   *cache.Session
+	File      string
+	Format    string
+	UseStdOut bool
+	Debug     bool
 }
 
 // Run will retrieve all items from SN directly, re-encrypt them with a new ItemsKey and write them to a file.
@@ -50,6 +52,7 @@ func (i *ImportConfig) Run() (imported int, err error) {
 	gii := cache.SyncInput{
 		Session: i.Session,
 	}
+
 	gio, err := Sync(gii, true)
 	if err != nil {
 		return imported, err
@@ -67,9 +70,13 @@ func (i *ImportConfig) Run() (imported int, err error) {
 		return imported, err
 	}
 
-	iItems, iItemsKey, err := i.Session.Session.Import(i.File, syncToken, "")
+	// request all items from SN
+	var iItemsKey gosn.ItemsKey
+	var iItems gosn.EncryptedItems
+
+	iItems, iItemsKey, err = i.Session.Session.Import(i.File, syncToken, "")
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	if iItemsKey.ItemsKey == "" {
