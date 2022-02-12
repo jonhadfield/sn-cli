@@ -769,11 +769,6 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			Usage: "import data",
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "format",
-					Usage: "choose from gob or json (default: json)",
-					Value: "json",
-				},
-				cli.StringFlag{
 					Name:  "file",
 					Usage: "path of file to import",
 				},
@@ -813,10 +808,11 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 
 				appImportConfig := sncli.ImportConfig{
-					Session: &session,
-					File:    inputPath,
-					Format:  c.String("format"),
-					Debug:   opts.debug,
+					Session:   &session,
+					File:      inputPath,
+					Format:    c.String("format"),
+					Debug:     opts.debug,
+					UseStdOut: opts.useStdOut,
 				}
 
 				var imported int
@@ -1002,7 +998,8 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			},
 			Hidden: false,
 			Action: func(c *cli.Context) error {
-				opts, err := getOpts(c)
+				var opts configOptsOutput
+				opts, err = getOpts(c)
 				if err != nil {
 					return err
 				}
@@ -1031,18 +1028,18 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					Name:  "keys",
 					Usage: "find issues relating to ItemsKeys",
 					BashComplete: func(c *cli.Context) {
-						addNoteOpts := []string{"--fix"}
+						hcKeysOpts := []string{"--delete-invalid"}
 						if c.NArg() > 0 {
 							return
 						}
-						for _, ano := range addNoteOpts {
+						for _, ano := range hcKeysOpts {
 							fmt.Println(ano)
 						}
 					},
 					Flags: []cli.Flag{
 						cli.BoolFlag{
-							Name:  "fix",
-							Usage: "apply fixes",
+							Name:  "delete-invalid",
+							Usage: "delete items that cannot be decrypted",
 						},
 					},
 					Action: func(c *cli.Context) error {
@@ -1054,11 +1051,130 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						useStdOut = opts.useStdOut
 
 						var session gosn.Session
+
+						session, _, err = gosn.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+
+						if err != nil {
+							return err
+						}
+						err = sncli.ItemKeysHealthcheck(sncli.ItemsKeysHealthcheckInput{
+							Session:       session,
+							UseStdOut:     useStdOut,
+							DeleteInvalid: c.Bool("delete-invalid"),
+						})
+
+						return err
+					},
+				},
+			},
+		},
+		{
+			Name:   "debug",
+			Usage:  "debug tools",
+			Hidden: true,
+			BashComplete: func(c *cli.Context) {
+				addTasks := []string{"decrypt-string"}
+				if c.NArg() > 0 {
+					return
+				}
+				for _, t := range addTasks {
+					fmt.Println(t)
+				}
+			},
+			Subcommands: []cli.Command{
+				{
+					Name:  "decrypt-string",
+					Usage: "accepts a string in the format: <version>:<ciphertext>:<auth-data>, decrypts it using the session key (or one specified with --key) and returns the decrypted ciphertext",
+					BashComplete: func(c *cli.Context) {
+						hcKeysOpts := []string{"--key"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, ano := range hcKeysOpts {
+							fmt.Println(ano)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "key",
+							Usage: "override session's master key",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						str := ""
+						if c.Args().Present() {
+							fmt.Printf("c.Args() %+v\n", c.Args())
+							fmt.Printf("c.Args() %+v\n", c.Args().First())
+							str = c.Args().First()
+						}
+
+						var opts configOptsOutput
+						opts, err = getOpts(c)
+						if err != nil {
+							return err
+						}
+						useStdOut = opts.useStdOut
+
+						var session gosn.Session
+
 						session, _, err = gosn.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 						if err != nil {
 							return err
 						}
-						err = sncli.ItemKeysHealthcheck(&session, c.Bool("fix"))
+						var res string
+						res, err = sncli.DecryptString(sncli.DecryptStringInput{
+							Session:   session,
+							UseStdOut: useStdOut,
+							Key:       c.String("key"),
+							In:        str,
+						})
+						if err != nil {
+							return err
+						}
+
+						msg = fmt.Sprintf("plaintext: %s", res)
+
+						return err
+					},
+				},
+				{
+					Name:  "output-session",
+					Usage: "returns specified session items",
+					BashComplete: func(c *cli.Context) {
+						hcKeysOpts := []string{"--master-key"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, ano := range hcKeysOpts {
+							fmt.Println(ano)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.BoolFlag{
+							Name:  "master-key",
+							Usage: "output master key",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						var opts configOptsOutput
+						opts, err = getOpts(c)
+						if err != nil {
+							return err
+						}
+						useStdOut = opts.useStdOut
+
+						var session gosn.Session
+
+						session, _, err = gosn.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+
+						if err != nil {
+							return err
+						}
+						err = sncli.OutputSession(sncli.OutputSessionInput{
+							Session:         session,
+							UseStdOut:       useStdOut,
+							OutputMasterKey: c.Bool("master-key"),
+						})
 
 						return err
 					},
@@ -1066,6 +1182,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			},
 		},
 	}
+
 	sort.Sort(cli.FlagsByName(app.Flags))
 
 	return msg, useStdOut, app.Run(args)
