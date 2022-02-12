@@ -96,7 +96,10 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 			return
 		}
 	} else {
-		noteToAdd, _ = gosn.NewNote(i.noteTitle, i.noteText, nil)
+		noteToAdd, err = gosn.NewNote(i.noteTitle, i.noteText, nil)
+		if err != nil {
+			return
+		}
 		noteUUID = noteToAdd.UUID
 	}
 
