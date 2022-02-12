@@ -1179,6 +1179,38 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						return err
 					},
 				},
+				{
+					Name:  "create-itemskey",
+					Usage: "creates and displays an items key without syncing",
+					BashComplete: func(c *cli.Context) {
+						hcKeysOpts := []string{"--master-key"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, ano := range hcKeysOpts {
+							fmt.Println(ano)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "master-key",
+							Usage: "master key to encrypt the encrypted item key with",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						var opts configOptsOutput
+						opts, err = getOpts(c)
+						if err != nil {
+							return err
+						}
+						useStdOut = opts.useStdOut
+
+						return sncli.CreateItemsKey(sncli.CreateItemsKeyInput{
+							Debug:     opts.debug,
+							MasterKey: c.String("master-key"),
+						})
+					},
+				},
 			},
 		},
 	}

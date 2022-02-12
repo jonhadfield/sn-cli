@@ -92,6 +92,18 @@ func OutputSession(input OutputSessionInput) error {
 	return nil
 }
 
+type CreateItemsKeyInput struct {
+	Debug     bool
+	MasterKey string
+}
+
+func CreateItemsKey(input CreateItemsKeyInput) error {
+	ik := gosn.NewItemsKey()
+	fmt.Printf("%+v\n", ik.ItemsKey)
+
+	return nil
+}
+
 func splitContent(in string) (version, nonce, cipherText, authenticatedData string) {
 	components := strings.Split(in, ":")
 	if len(components) < 3 {
