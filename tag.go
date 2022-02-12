@@ -121,11 +121,11 @@ func tagNotes(i tagNotesInput) (err error) {
 		}
 	}
 
-	if err = cache.SaveTags(so.DB, i.session, tagsToPush, true); err != nil {
-		return
-	}
-
 	if len(tagsToPush) > 0 {
+		if err = cache.SaveTags(so.DB, i.session, tagsToPush, true); err != nil {
+			return
+		}
+
 		pii := cache.SyncInput{
 			Session: i.session,
 		}
