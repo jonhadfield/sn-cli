@@ -54,4 +54,4 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 )
 
-replace github.com/jonhadfield/gosn-v2 => ../gosn-v2
+// replace github.com/jonhadfield/gosn-v2 => ../gosn-v2
