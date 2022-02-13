@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/term"
 	"os"
 	"sort"
 	"strconv"
@@ -16,7 +17,6 @@ import (
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
-	"golang.org/x/term"
 	"gopkg.in/yaml.v2"
 )
 
@@ -857,17 +857,12 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 
 					return errors.New("email required")
 				}
+
 				var password string
-				fmt.Print("password: ")
-				var bytePassword []byte
-				bytePassword, err = term.ReadPassword(int(syscall.Stdin))
-				fmt.Println()
-				if err == nil {
-					password = string(bytePassword)
+				if password, err = getPassword(); err != nil {
+					return err
 				}
-				if len(strings.TrimSpace(password)) == 0 {
-					return errors.New("password required")
-				}
+
 				registerConfig := sncli.RegisterConfig{
 					Email:     c.String("email"),
 					Password:  password,
@@ -1218,6 +1213,44 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 	sort.Sort(cli.FlagsByName(app.Flags))
 
 	return msg, useStdOut, app.Run(args)
+}
+
+func getPassword() (res string, err error) {
+	for {
+		fmt.Print("password: ")
+		var bytePassword []byte
+		if bytePassword, err = term.ReadPassword(int(syscall.Stdin)); err != nil {
+			return
+		}
+
+		if len(string(bytePassword)) < sncli.MinPasswordLength {
+			err = fmt.Errorf("\rpassword must be at least %d characters", sncli.MinPasswordLength)
+
+			return
+		}
+
+		var bytePassword2 []byte
+		fmt.Printf("\rconfirm password: ")
+		if bytePassword2, err = term.ReadPassword(int(syscall.Stdin)); err != nil {
+
+			return
+		}
+
+		if string(bytePassword) != string(bytePassword2) {
+			fmt.Printf("\rpasswords do not match")
+			fmt.Println()
+
+			return
+		}
+
+		fmt.Println()
+		if err == nil {
+			res = string(bytePassword)
+
+			return
+		}
+	}
+
 }
 
 func numTrue(in ...bool) (total int) {

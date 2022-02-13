@@ -9,10 +9,11 @@ import (
 )
 
 const (
-	timeLayout  = "2006-01-02T15:04:05.000Z"
-	SNServerURL = "https://api.standardnotes.com"
-	SNPageSize  = 600
-	SNAppName   = "sn-cli"
+	timeLayout        = "2006-01-02T15:04:05.000Z"
+	SNServerURL       = "https://api.standardnotes.com"
+	SNPageSize        = 600
+	SNAppName         = "sn-cli"
+	MinPasswordLength = 8
 )
 
 type ItemReferenceYAML struct {
