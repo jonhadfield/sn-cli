@@ -69,6 +69,7 @@ func (i *StatsConfig) Run() error {
 	tCounter.counts = make(map[string]int64)
 
 	for _, item := range items {
+		tCounter.update(item.GetContentType())
 		if item.GetItemsKeyID() == "" {
 			missingItemsKey = append(missingItemsKey, fmt.Sprintf("- type: %s uuid: %s %s", item.GetContentType(), item.GetUUID(), item.GetItemsKeyID()))
 		}
@@ -80,8 +81,6 @@ func (i *StatsConfig) Run() error {
 		refs := item.GetContent().References()
 		for _, ref := range refs {
 			if !StringInSlice(ref.UUID, allUUIDs, false) {
-				//fmt.Printf("item: %s %s has orphaned ref: %s\n", item.GetContentType(), item.GetUUID(), ref.UUID)
-				//fmt.Println("Appending:", item)
 				st.hasOrphanedRefs = append(st.hasOrphanedRefs, item)
 
 				break
@@ -236,8 +235,6 @@ func (in *typeCounter) present() {
 			lines = append(lines, fmt.Sprintf("%s ^ %d", name, count))
 		}
 	}
-
-	lines = append(lines, fmt.Sprintf("Deleted ^ %d", in.counts["Deleted"]))
 
 	config := columnize.DefaultConfig()
 	config.Delim = "^"
