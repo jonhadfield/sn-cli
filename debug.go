@@ -42,7 +42,7 @@ func DecryptString(input DecryptStringInput) (plaintext string, err error) {
 	}
 	fmt.Printf("Decoded Auth Data: %+v\n", string(bad))
 
-	pb, err := gosn.DecryptString(cipherText, key1, nonce, authData)
+	pb, err := gosn.DecryptCipherText(cipherText, key1, nonce, authData)
 	if err != nil {
 		return
 	}

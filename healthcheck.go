@@ -108,15 +108,12 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 		switch {
 		case so.Items[x].ContentType == "SN|ItemsKey":
 			var ik gosn.ItemsKey
-			fmt.Println("trying to decrypt key:", so.Items[x].UUID)
 			ik, err = so.Items[x].Decrypt(input.Session.MasterKey)
-			fmt.Println(ik, err)
-			if ik.ItemsKey == "" {
-				panic(ik)
+			if err != nil || ik.ItemsKey == "" {
+				itemsKeysNotEncryptedWithCurrentMasterKey = append(itemsKeysNotEncryptedWithCurrentMasterKey,
+					so.Items[x].UUID)
 			}
-			if err != nil {
-				itemsKeysNotEncryptedWithCurrentMasterKey = append(itemsKeysNotEncryptedWithCurrentMasterKey, so.Items[x].UUID)
-			}
+
 		case !isEncryptedWithMasterKey(so.Items[x].ContentType):
 			if so.Items[x].ItemsKeyID == nil {
 				fmt.Printf("%s %s has no ItemsKeyID\n", so.Items[x].ContentType, so.Items[x].UUID)
@@ -127,8 +124,15 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 			}
 			itemsKeysInUse = append(itemsKeysInUse, *so.Items[x].ItemsKeyID)
 			if !itemsKeyExists(*so.Items[x].ItemsKeyID, seenItemsKeys) {
-				fmt.Printf("no matching items key found for %s %s specifying key: %s\n", so.Items[x].ContentType, so.Items[x].UUID, *so.Items[x].ItemsKeyID)
-				itemsWithMissingKeys = append(itemsWithMissingKeys, fmt.Sprintf("Type: %s UUID: %s| ItemsKeyID: %s", so.Items[x].ContentType, so.Items[x].UUID, *so.Items[x].ItemsKeyID))
+				fmt.Printf("no matching items key found for %s %s specifying key: %s\n",
+					so.Items[x].ContentType,
+					so.Items[x].UUID,
+					*so.Items[x].ItemsKeyID)
+				itemsWithMissingKeys = append(itemsWithMissingKeys,
+					fmt.Sprintf("Type: %s UUID: %s| ItemsKeyID: %s",
+						so.Items[x].ContentType,
+						so.Items[x].UUID,
+						*so.Items[x].ItemsKeyID))
 			}
 		}
 	}
@@ -161,7 +165,8 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 	}
 
 	if len(itemsWithMissingKeys) > 0 && input.DeleteInvalid {
-		fmt.Printf("wipe all encrypted items without items keys (account: %s)? ", input.Session.KeyParams.Identifier)
+		fmt.Printf("wipe all encrypted items without items keys (account: %s)? ",
+			input.Session.KeyParams.Identifier)
 
 		var c string
 		_, err = fmt.Scanln(&c)
@@ -170,7 +175,6 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 			for x := range encitemsNotSpecifyingItemsKeyID {
 				itemToDelete := encitemsNotSpecifyingItemsKeyID[x]
 				itemToDelete.Deleted = true
-				itemToDelete.Content = ""
 				itemsToDelete = append(itemsToDelete, itemToDelete)
 			}
 

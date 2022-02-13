@@ -19,7 +19,13 @@ var (
 	HiWhite = color.New(color.FgHiWhite).SprintFunc()
 )
 
+type stats struct {
+	oldestNote, newestNote, lastUpdatedNote time.Time
+	hasOrphanedRefs                         []gosn.Item
+}
+
 func (i *StatsConfig) Run() error {
+	var st stats
 	var err error
 
 	var so cache.SyncOutput
@@ -45,8 +51,6 @@ func (i *StatsConfig) Run() error {
 
 	var notes gosn.Items
 
-	var oldestNote, newestNote, lastUpdatedNote time.Time
-
 	var missingItemsKey []string
 
 	var missingContentUUIDs []string
@@ -54,6 +58,9 @@ func (i *StatsConfig) Run() error {
 	var missingContentTypeUUIDs []string
 
 	allUUIDs := make([]string, len(allPersistedItems))
+	for x := range allPersistedItems {
+		allUUIDs = append(allUUIDs, allPersistedItems[x].UUID)
+	}
 
 	var duplicateUUIDs []string
 
@@ -62,30 +69,27 @@ func (i *StatsConfig) Run() error {
 	tCounter.counts = make(map[string]int64)
 
 	for _, item := range items {
-		if !item.IsDeleted() {
-			tCounter.update(item.GetContentType())
-		}
-
-		if StringInSlice(item.GetUUID(), allUUIDs, false) {
-			duplicateUUIDs = append(duplicateUUIDs, item.GetUUID())
-		}
-
-		allUUIDs = append(allUUIDs, item.GetUUID())
-
-		if item.IsDeleted() {
-			tCounter.update("Deleted")
-		}
-
-		if !item.IsDeleted() && item.GetItemsKeyID() == "" {
+		if item.GetItemsKeyID() == "" {
 			missingItemsKey = append(missingItemsKey, fmt.Sprintf("- type: %s uuid: %s %s", item.GetContentType(), item.GetUUID(), item.GetItemsKeyID()))
 		}
 
-		if !item.IsDeleted() && item.GetContentType() == "" {
+		if item.GetContentType() == "" {
 			missingContentTypeUUIDs = append(missingContentTypeUUIDs, item.GetUUID())
 		}
 
+		refs := item.GetContent().References()
+		for _, ref := range refs {
+			if !StringInSlice(ref.UUID, allUUIDs, false) {
+				//fmt.Printf("item: %s %s has orphaned ref: %s\n", item.GetContentType(), item.GetUUID(), ref.UUID)
+				//fmt.Println("Appending:", item)
+				st.hasOrphanedRefs = append(st.hasOrphanedRefs, item)
+
+				break
+			}
+		}
+
 		if item.GetContentType() == "Note" {
-			if !item.IsDeleted() && item.GetContent() == nil {
+			if item.GetContent() == nil {
 				missingContentUUIDs = append(missingContentUUIDs, item.GetUUID())
 			}
 
@@ -103,28 +107,28 @@ func (i *StatsConfig) Run() error {
 				return err
 			}
 
-			if !item.IsDeleted() && oldestNote.IsZero() || cTime.Before(oldestNote) {
-				oldestNote, err = time.Parse(timeLayout, item.GetCreatedAt())
+			if st.oldestNote.IsZero() || cTime.Before(st.oldestNote) {
+				st.oldestNote, err = time.Parse(timeLayout, item.GetCreatedAt())
 				if err != nil {
 					return err
 				}
 			}
 
-			if !item.IsDeleted() && newestNote.IsZero() || cTime.After(newestNote) {
-				newestNote, err = time.Parse(timeLayout, item.GetCreatedAt())
+			if st.newestNote.IsZero() || cTime.After(st.newestNote) {
+				st.newestNote, err = time.Parse(timeLayout, item.GetCreatedAt())
 				if err != nil {
 					return err
 				}
 			}
 
-			if !item.IsDeleted() && lastUpdatedNote.IsZero() || uTime.After(lastUpdatedNote) {
-				lastUpdatedNote, err = time.Parse(timeLayout, item.GetUpdatedAt())
+			if st.lastUpdatedNote.IsZero() || uTime.After(st.lastUpdatedNote) {
+				st.lastUpdatedNote, err = time.Parse(timeLayout, item.GetUpdatedAt())
 				if err != nil {
 					return err
 				}
 			}
 
-			if !item.IsDeleted() && item.GetContentSize() > 0 {
+			if item.GetContentSize() > 0 {
 				notes = append(notes, item)
 			}
 		}
@@ -141,9 +145,9 @@ func (i *StatsConfig) Run() error {
 	var statLines []string
 
 	if len(notes) > 0 {
-		statLines = append(statLines, fmt.Sprintf("Oldest | %v", timeSince(oldestNote.Local())))
-		statLines = append(statLines, fmt.Sprintf("Newest | %v", timeSince(newestNote.Local())))
-		statLines = append(statLines, fmt.Sprintf("Updated | %v", timeSince(lastUpdatedNote.Local())))
+		statLines = append(statLines, fmt.Sprintf("Oldest | %v", timeSince(st.oldestNote.Local())))
+		statLines = append(statLines, fmt.Sprintf("Newest | %v", timeSince(st.newestNote.Local())))
+		statLines = append(statLines, fmt.Sprintf("Updated | %v", timeSince(st.lastUpdatedNote.Local())))
 		fmt.Println(columnize.SimpleFormat(statLines))
 
 		fmt.Println("Largest:")
@@ -166,12 +170,16 @@ func (i *StatsConfig) Run() error {
 
 	fmt.Println(Green("\nISSUES"))
 
-	if allEmpty(duplicateUUIDs, missingContentUUIDs, missingContentTypeUUIDs, missingItemsKey) {
+	if allEmpty(duplicateUUIDs, missingContentUUIDs, missingContentTypeUUIDs, missingItemsKey) && len(st.hasOrphanedRefs) == 0 {
 		fmt.Println("None")
 	}
 
-	if len(duplicateUUIDs) > 0 {
-		fmt.Println("Duplicate note UUIDs: ", outList(duplicateUUIDs, ", "))
+	if len(st.hasOrphanedRefs) > 0 {
+		fmt.Println("items with dangling references")
+		for x := range st.hasOrphanedRefs {
+			o := st.hasOrphanedRefs[x]
+			fmt.Printf("- %s %s\n", o.GetContentType(), o.GetUUID())
+		}
 	}
 
 	if len(missingContentUUIDs) > 0 {
