@@ -684,6 +684,10 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 							Usage: "find by uuid",
 						},
 						cli.BoolFlag{
+							Name:  "include-trash",
+							Usage: "include notes in trash",
+						},
+						cli.BoolFlag{
 							Name:  "count",
 							Usage: "useStdOut countonly",
 						},
@@ -701,6 +705,49 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						useStdOut = opts.useStdOut
 
 						msg, err = processGetNotes(c, opts)
+
+						return err
+					},
+				},
+				{
+					Name:    "trash",
+					Aliases: []string{"trashed"},
+					Usage:   "get notes in trash",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "title",
+							Usage: "find by title",
+						},
+						cli.StringFlag{
+							Name:  "text",
+							Usage: "find by text",
+						},
+						cli.StringFlag{
+							Name:  "tag",
+							Usage: "find by tag",
+						},
+						cli.StringFlag{
+							Name:  "uuid",
+							Usage: "find by uuid",
+						},
+						cli.BoolFlag{
+							Name:  "count",
+							Usage: "useStdOut countonly",
+						},
+						cli.StringFlag{
+							Name:  "output",
+							Value: "json",
+							Usage: "output format",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
+						}
+						useStdOut = opts.useStdOut
+
+						msg, err = processGetTrash(c, opts)
 
 						return err
 					},

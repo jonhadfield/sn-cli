@@ -306,12 +306,23 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	text := c.String("text")
 	count := c.Bool("count")
 	output := c.String("output")
+
 	noteFilter := gosn.Filter{
 		Type: "Note",
 	}
 	getNotesIF := gosn.ItemFilters{
 		MatchAny: false,
 		Filters:  []gosn.Filter{noteFilter},
+	}
+
+	if !c.Bool("include-trash") {
+		includeTrashFilter := gosn.Filter{
+			Type:       "Note",
+			Key:        "Trash",
+			Comparison: "!=",
+			Value:      "true",
+		}
+		getNotesIF.Filters = append(getNotesIF.Filters, includeTrashFilter)
 	}
 
 	if uuid != "" {
@@ -378,6 +389,100 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 		Debug:   opts.debug,
 	}
 
+	return outputNotes(c, count, output, getNoteConfig)
+}
+
+func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+	uuid := c.String("uuid")
+	title := c.String("title")
+	text := c.String("text")
+	count := c.Bool("count")
+	output := c.String("output")
+
+	noteFilter := gosn.Filter{
+		Type: "Note",
+	}
+	getNotesIF := gosn.ItemFilters{
+		MatchAny: false,
+		Filters:  []gosn.Filter{noteFilter},
+	}
+
+	TrashFilter := gosn.Filter{
+		Type:       "Note",
+		Key:        "Trash",
+		Comparison: "==",
+		Value:      "true",
+	}
+	getNotesIF.Filters = append(getNotesIF.Filters, TrashFilter)
+
+	if uuid != "" {
+		titleFilter := gosn.Filter{
+			Type:       "Note",
+			Key:        "uuid",
+			Comparison: "==",
+			Value:      uuid,
+		}
+		getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
+	}
+
+	if title != "" {
+		titleFilter := gosn.Filter{
+			Type:       "Note",
+			Key:        "Title",
+			Comparison: "contains",
+			Value:      title,
+		}
+		getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
+	}
+
+	if text != "" {
+		titleFilter := gosn.Filter{
+			Type:       "Note",
+			Key:        "Text",
+			Comparison: "contains",
+			Value:      text,
+		}
+		getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
+	}
+
+	processedTags := sncli.CommaSplit(c.String("tag"))
+
+	if len(processedTags) > 0 {
+		for _, t := range processedTags {
+			titleFilter := gosn.Filter{
+				Type:       "Note",
+				Key:        "Tag",
+				Comparison: "contains",
+				Value:      t,
+			}
+			getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
+		}
+	}
+
+	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	if err != nil {
+		return "", err
+	}
+
+	var cacheDBPath string
+
+	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+	if err != nil {
+		return "", err
+	}
+
+	session.CacheDBPath = cacheDBPath
+
+	getNoteConfig := sncli.GetNoteConfig{
+		Session: &session,
+		Filters: getNotesIF,
+		Debug:   opts.debug,
+	}
+
+	return outputNotes(c, count, output, getNoteConfig)
+}
+
+func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.GetNoteConfig) (msg string, err error) {
 	var rawNotes gosn.Items
 
 	rawNotes, err = getNoteConfig.Run()

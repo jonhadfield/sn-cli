@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
-	github.com/jonhadfield/gosn-v2 v0.0.0-20220226213004-785a8d7e7681
+	github.com/jonhadfield/gosn-v2 v0.0.0-20220227094712-fc042d770662
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
@@ -55,4 +55,4 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 )
 
-// replace github.com/jonhadfield/gosn-v2 => ../gosn-v2
+//replace github.com/jonhadfield/gosn-v2 => ../gosn-v2
