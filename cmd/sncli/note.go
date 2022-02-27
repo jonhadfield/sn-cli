@@ -404,11 +404,18 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 				OrgStandardNotesSN:           noteContentOrgStandardNotesSNDetailYAML,
 				OrgStandardNotesSNComponents: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSNComponents,
 			}
+
+			var isTrashed *bool
+			if rt.(*gosn.Note).Content.Trashed != nil {
+				isTrashed = rt.(*gosn.Note).Content.Trashed
+			}
 			noteContentYAML := sncli.NoteContentYAML{
 				Title:          rt.(*gosn.Note).Content.GetTitle(),
 				Text:           rt.(*gosn.Note).Content.GetText(),
 				ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Note).Content.References()),
 				AppData:        noteContentAppDataContent,
+				PreviewPlain:   rt.(*gosn.Note).Content.PreviewPlain,
+				Trashed:        isTrashed,
 			}
 
 			notesYAML = append(notesYAML, sncli.NoteYAML{
@@ -431,11 +438,18 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 				OrgStandardNotesSN:           noteContentOrgStandardNotesSNDetailJSON,
 				OrgStandardNotesSNComponents: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSNComponents,
 			}
+			var isTrashed *bool
+			if rt.(*gosn.Note).Content.Trashed != nil {
+				isTrashed = rt.(*gosn.Note).Content.Trashed
+			}
+
 			noteContentJSON := sncli.NoteContentJSON{
 				Title:          rt.(*gosn.Note).Content.GetTitle(),
 				Text:           rt.(*gosn.Note).Content.GetText(),
 				ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Note).Content.References()),
 				AppData:        noteContentAppDataContent,
+				PreviewPlain:   rt.(*gosn.Note).Content.PreviewPlain,
+				Trashed:        isTrashed,
 			}
 
 			notesJSON = append(notesJSON, sncli.NoteJSON{

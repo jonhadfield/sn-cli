@@ -77,6 +77,8 @@ type NoteContentYAML struct {
 	Text           string              `json:"text"`
 	ItemReferences []ItemReferenceYAML `yaml:"references"`
 	AppData        AppDataContentYAML  `yaml:"appData"`
+	PreviewPlain   string              `yaml:"preview_plain"`
+	Trashed        *bool               `yaml:"trashed,omitempty"`
 }
 
 type NoteContentJSON struct {
@@ -84,6 +86,8 @@ type NoteContentJSON struct {
 	Text           string              `json:"text"`
 	ItemReferences []ItemReferenceJSON `json:"references"`
 	AppData        AppDataContentJSON  `json:"appData"`
+	PreviewPlain   string              `json:"preview_plain"`
+	Trashed        *bool               `json:"trashed,omitempty"`
 }
 
 type TagJSON struct {

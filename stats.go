@@ -69,7 +69,21 @@ func (i *StatsConfig) Run() error {
 	tCounter.counts = make(map[string]int64)
 
 	for _, item := range items {
-		tCounter.update(item.GetContentType())
+		// check if item is trashed note
+		var isTrashedNote bool
+		if item.GetContentType() == "Note" {
+			n := item.(*gosn.Note)
+			if n.Content.Trashed != nil && *n.Content.Trashed {
+				isTrashedNote = true
+			}
+		}
+
+		if isTrashedNote {
+			tCounter.update("Notes (In Trash)")
+		} else {
+			tCounter.update(item.GetContentType())
+		}
+
 		if item.GetItemsKeyID() == "" {
 			missingItemsKey = append(missingItemsKey, fmt.Sprintf("- type: %s uuid: %s %s", item.GetContentType(), item.GetUUID(), item.GetItemsKeyID()))
 		}
@@ -87,7 +101,7 @@ func (i *StatsConfig) Run() error {
 			}
 		}
 
-		if item.GetContentType() == "Note" {
+		if item.GetContentType() == "Note" && !isTrashedNote {
 			if item.GetContent() == nil {
 				missingContentUUIDs = append(missingContentUUIDs, item.GetUUID())
 			}
