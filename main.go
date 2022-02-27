@@ -195,12 +195,13 @@ type DeleteTagConfig struct {
 }
 
 type AddNoteInput struct {
-	Session *cache.Session
-	Title   string
-	Text    string
-	Tags    []string
-	Replace bool
-	Debug   bool
+	Session  *cache.Session
+	Title    string
+	Text     string
+	FilePath string
+	Tags     []string
+	Replace  bool
+	Debug    bool
 }
 
 type DeleteNoteConfig struct {

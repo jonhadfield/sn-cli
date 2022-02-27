@@ -596,10 +596,11 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 
 func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	// get input
-	title := c.String("title")
-	text := c.String("text")
+	title := strings.TrimSpace(c.String("title"))
+	text := strings.TrimSpace(c.String("text"))
+	filePath := strings.TrimSpace(c.String("file"))
 
-	if strings.TrimSpace(title) == "" {
+	if filePath == "" && title == "" {
 		if cErr := cli.ShowSubcommandHelp(c); cErr != nil {
 			panic(cErr)
 		}
@@ -607,7 +608,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 		return "", errors.New("note title not defined")
 	}
 
-	if strings.TrimSpace(text) == "" {
+	if filePath == "" && text == "" {
 		_ = cli.ShowSubcommandHelp(c)
 
 		return "", errors.New("note text not defined")
@@ -627,12 +628,13 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	AddNoteInput := sncli.AddNoteInput{
-		Session: &session,
-		Title:   title,
-		Text:    text,
-		Tags:    processedTags,
-		Replace: c.Bool("replace"),
-		Debug:   opts.debug,
+		Session:  &session,
+		Title:    title,
+		Text:     text,
+		FilePath: filePath,
+		Tags:     processedTags,
+		Replace:  c.Bool("replace"),
+		Debug:    opts.debug,
 	}
 
 	if err = AddNoteInput.Run(); err != nil {

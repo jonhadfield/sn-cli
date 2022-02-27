@@ -5,6 +5,9 @@ import (
 	"github.com/asdine/storm/v3/q"
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 func (i *AddNoteInput) Run() (err error) {
@@ -15,6 +18,7 @@ func (i *AddNoteInput) Run() (err error) {
 		noteTitle: i.Title,
 		noteText:  i.Text,
 		tagTitles: i.Tags,
+		filePath:  i.FilePath,
 		session:   i.Session,
 		replace:   i.Replace,
 	}
@@ -41,11 +45,38 @@ type addNoteInput struct {
 	session   *cache.Session
 	noteTitle string
 	noteText  string
+	filePath  string
 	tagTitles []string
 	replace   bool
 }
 
+func loadNoteContentFromFile(filePath string) (content string, err error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		err = fmt.Errorf("%w failed to open: %s", err, filePath)
+		return
+	}
+
+	b, err := ioutil.ReadAll(file)
+	if err != nil {
+		return
+	}
+
+	return string(b), nil
+}
+
 func addNote(i addNoteInput) (noteUUID string, err error) {
+	// if file path provided, try loading content as note text
+	if i.filePath != "" {
+		if i.noteText, err = loadNoteContentFromFile(i.filePath); err != nil {
+			return
+		}
+
+		if i.noteTitle == "" {
+			i.noteTitle = filepath.Base(i.filePath)
+		}
+	}
+
 	var noteToAdd gosn.Note
 
 	si := cache.SyncInput{

@@ -304,6 +304,10 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 							Usage: "new note text",
 						},
 						cli.StringFlag{
+							Name:  "file",
+							Usage: "path to file with note content (specify --title or leave blank to use filename)",
+						},
+						cli.StringFlag{
 							Name:  "tag",
 							Usage: "associate with tag (separate multiple with commas)",
 						},
