@@ -267,9 +267,18 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "title",
-							Usage: "new tag title (separate multiple with commas)",
+							Usage: "new tag title",
+						},
+						cli.StringFlag{
+							Name:  "tag",
+							Usage: "tag this tag with another tag (separate multiple with commas)",
+						},
+						cli.BoolFlag{
+							Name:  "replace",
+							Usage: "replace tag (removing existing references)",
 						},
 					},
+
 					Action: func(c *cli.Context) error {
 						var opts configOptsOutput
 						opts, err = getOpts(c)

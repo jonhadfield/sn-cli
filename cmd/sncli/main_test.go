@@ -14,6 +14,20 @@ func TestWipe(t *testing.T) {
 	time.Sleep(1 * time.Second)
 }
 
+func TestAddTagWithTagCreatesNewTag(t *testing.T) {
+	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
+	require.NoError(t, err)
+	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount", "--tag", "newTag"})
+	require.NoError(t, err)
+	require.Contains(t, msg, msgAddSuccess)
+	//msg, _, err = startCLI([]string{"sncli", "get", "tag", "--title", "testAddOneTagGetCount"})
+	//require.NoError(t, err)
+	//require.Contains(t, msg, "newTag")
+	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--title", "newTag", "--count"})
+	require.Equal(t, "1", msg)
+	require.NoError(t, err)
+}
+
 func TestAddTag(t *testing.T) {
 	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
 	require.NoError(t, err)

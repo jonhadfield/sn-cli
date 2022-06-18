@@ -1,11 +1,171 @@
 package sncli
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
 )
+
+type TagItemsInput struct {
+	Session        *cache.Session
+	ItemType       string
+	MatchTitle     string
+	MatchText      string
+	MatchTags      []string
+	MatchNoteUUIDs []string
+	NewTags        []string
+	Referers       []string
+	Replace        bool
+}
+
+// create tags if they don't exist
+// get all notes and tags.
+func TagItems(i TagItemsInput) (err error) {
+	fmt.Printf("IN TAGITEMS WITH: %+v\n", i)
+	// create tags, including referers, if they don't exist
+	//fmt.Printf("TAG Titles Combined: %+v\n", tt)
+	_, err = addTags(addTagsInput{
+		session:   i.Session,
+		tagTitles: i.NewTags,
+		referers:  i.Referers,
+		replace:   i.Replace,
+	})
+	if err != nil {
+		return
+	}
+
+	_, err = addTags(addTagsInput{
+		session:   i.Session,
+		tagTitles: i.Referers,
+		//referers:  i.Referers,
+		replace: i.Replace,
+	})
+	if err != nil {
+		return
+	}
+
+	// get notes and tags
+	filters := []gosn.Filter{{
+		Type: "Tag",
+	}}
+	if i.ItemType == "Note" {
+		filters = append(filters, gosn.Filter{
+			Type: "Note",
+		})
+	}
+
+	itemFilter := gosn.ItemFilters{
+		MatchAny: true,
+		Filters:  filters,
+	}
+
+	// get all notes and tags from db
+	so, err := Sync(cache.SyncInput{
+		Session: i.Session,
+	}, true)
+	if err != nil {
+		return
+	}
+
+	var allPersistedItems cache.Items
+	if err = so.DB.All(&allPersistedItems); err != nil {
+		return
+	}
+
+	items, err := allPersistedItems.ToItems(i.Session)
+	if err != nil {
+		return
+	}
+
+	items.Filter(itemFilter)
+
+	var allTags []*gosn.Tag
+	var allNotes []*gosn.Note
+	// create slices of notes and tags
+
+	for _, item := range items {
+		if item.IsDeleted() {
+			continue
+		}
+
+		if item.GetContentType() == "Tag" {
+			allTags = append(allTags, item.(*gosn.Tag))
+		}
+
+		if item.GetContentType() == "Note" {
+			allNotes = append(allNotes, item.(*gosn.Note))
+		}
+	}
+
+	noteTypeUUIDs := make(map[string][]string)
+	// loop through all notes and create a list of those that
+	// match the note title or exist in note text
+	for _, note := range allNotes {
+		switch {
+		case StringInSlice(note.UUID, i.MatchNoteUUIDs, false):
+			noteTypeUUIDs["Note"] = append(noteTypeUUIDs["Note"], note.UUID)
+		case strings.TrimSpace(i.MatchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(i.MatchTitle)):
+			noteTypeUUIDs["Note"] = append(noteTypeUUIDs["Note"], note.UUID)
+		case strings.TrimSpace(i.MatchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(i.MatchText)):
+			noteTypeUUIDs["Note"] = append(noteTypeUUIDs["Note"], note.UUID)
+		}
+	}
+
+	tagTypeUUIDs := make(map[string][]string)
+	// loop through all tags and create a list of those that
+	// match the tag title
+	for _, tag := range allTags {
+		switch {
+		case StringInSlice(tag.UUID, i.MatchNoteUUIDs, false):
+			noteTypeUUIDs["Tag"] = append(noteTypeUUIDs["Tag"], tag.UUID)
+		case strings.TrimSpace(i.MatchTitle) != "" && strings.Contains(strings.ToLower(tag.Content.GetTitle()), strings.ToLower(i.MatchTitle)):
+			noteTypeUUIDs["Tag"] = append(noteTypeUUIDs["Tag"], tag.UUID)
+		}
+	}
+
+	// update existing (and just created) tags to reference matching uuids
+	// determine which tags need updating and create list to sync back to server
+	var tagsToPush gosn.Tags
+
+	for _, t := range allTags {
+		fmt.Printf("t: %+v\n", t)
+		// if tag title is in ones to add then update tag with new references
+		if StringInSlice(t.Content.GetTitle(), i.NewTags, true) {
+			fmt.Printf("t: %+v is in %+v\n", t, i.NewTags)
+
+			var updatedTag gosn.Tag
+			var changed bool
+			if i.ItemType == "Note" {
+				updatedTag, changed = upsertTagReferences(*t, noteTypeUUIDs)
+			} else if i.ItemType == "Tag" {
+				updatedTag, changed = upsertTagReferences(*t, tagTypeUUIDs)
+			}
+			if changed {
+				tagsToPush = append(tagsToPush, updatedTag)
+			}
+		}
+	}
+
+	if len(tagsToPush) > 0 {
+		fmt.Printf("tagsToPush: %+v\n", tagsToPush)
+		if err = cache.SaveTags(so.DB, i.Session, tagsToPush, true); err != nil {
+			return
+		}
+
+		so, err = Sync(cache.SyncInput{
+			Session: i.Session,
+		}, true)
+		if err != nil {
+			return
+		}
+
+		return so.DB.Close()
+	}
+
+	return nil
+}
 
 type tagNotesInput struct {
 	session        *cache.Session
@@ -182,6 +342,7 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 
 	ati := addTagsInput{
 		tagTitles: i.Tags,
+		referers:  i.ReferringTags,
 		session:   i.Session,
 		replace:   i.Replace,
 	}
@@ -348,15 +509,19 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 type addTagsInput struct {
 	session   *cache.Session
 	tagTitles []string
+	referers  []string
 	replace   bool
 }
 
 type addTagsOutput struct {
 	added    []string
 	existing []string
+	tags     gosn.Tags
 }
 
 func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
+	fmt.Printf("in addTags with: %+v\n", ati.tagTitles)
+
 	// get all tags
 	addTagsFilter := gosn.Filter{
 		Type: "Tag",
@@ -426,6 +591,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	}
 
 	if len(tagsToAdd) > 0 {
+		fmt.Printf("GOT TAGS TO ADD: %+v\n", tagsToAdd)
 		so, err = Sync(putItemsInput, true)
 		if err != nil {
 			return

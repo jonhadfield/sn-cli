@@ -382,6 +382,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 		return "", errors.New("tag title not defined")
 	}
+	fmt.Println("FFFFF:", c.String("tag"))
 
 	// get session
 	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
@@ -397,17 +398,26 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	// prepare input
 	tags := sncli.CommaSplit(tagInput)
 	addTagInput := sncli.AddTagsInput{
-		Session: &session,
-		Tags:    tags,
-		Debug:   opts.debug,
+		Session:       &session,
+		Tags:          tags,
+		ReferringTags: sncli.CommaSplit(c.String("tag")),
+		Debug:         opts.debug,
 	}
 
 	// attempt to add tags
-	var ato sncli.AddTagsOutput
-
-	ato, err = addTagInput.Run()
+	ato, err := addTagInput.Run()
 	if err != nil {
 		return "", fmt.Errorf(sncli.Red(err))
+	}
+
+	if len(addTagInput.ReferringTags) > 0 {
+		fmt.Println("GOT REFERRING TAGS:", addTagInput.ReferringTags)
+		err = sncli.TagItems(sncli.TagItemsInput{
+			Session:  addTagInput.Session,
+			NewTags:  addTagInput.Tags,
+			Referers: sncli.CommaSplit(c.String("tag")),
+			Replace:  addTagInput.Replace,
+		})
 	}
 
 	// present results
