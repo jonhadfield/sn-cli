@@ -759,8 +759,9 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			},
 		},
 		{
-			Name:  "export",
-			Usage: "export data",
+			Name:   "export",
+			Usage:  "export data",
+			Hidden: true,
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "path",
@@ -816,8 +817,9 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			},
 		},
 		{
-			Name:  "import",
-			Usage: "import data",
+			Name:   "import",
+			Usage:  "import data",
+			Hidden: true,
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "file",
@@ -1084,8 +1086,9 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					},
 					Flags: []cli.Flag{
 						cli.BoolFlag{
-							Name:  "delete-invalid",
-							Usage: "delete items that cannot be decrypted",
+							Hidden: true,
+							Name:   "delete-invalid",
+							Usage:  "delete items that cannot be decrypted",
 						},
 					},
 					Action: func(c *cli.Context) error {

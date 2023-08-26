@@ -95,7 +95,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	if i.replace {
 		gnc := GetNoteConfig{
 			Session: i.session,
-			//Filters: gosn.ItemFilters{},
+			// Filters: gosn.ItemFilters{},
 			Filters: gosn.ItemFilters{
 				MatchAny: false,
 				Filters: []gosn.Filter{{

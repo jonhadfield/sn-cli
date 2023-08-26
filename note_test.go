@@ -52,7 +52,8 @@ func signIn(server, email, password string) {
 }
 
 func TestMain(m *testing.M) {
-	if os.Getenv("SN_SERVER") == "" || strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
+	// if os.Getenv("SN_SERVER") == "" || strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
+	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
 		localTestMain()
 	} else {
 		signIn(os.Getenv("SN_SERVER"), os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"))
@@ -78,6 +79,59 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(m.Run())
+}
+
+func TestAddDeleteNoteByUUID(t *testing.T) {
+	testDelay()
+
+	defer cleanUp(*testSession)
+
+	// create note
+	addNoteConfig := AddNoteInput{
+		Session: testSession,
+		Title:   "TestNoteOne",
+		Text:    "TestNoteOneText",
+	}
+
+	err := addNoteConfig.Run()
+	require.NoError(t, err)
+
+	// get new note
+	filter := gosn.Filter{
+		Type:       "Note",
+		Key:        "Title",
+		Comparison: "==",
+		Value:      "TestNoteOne",
+	}
+
+	iFilter := gosn.ItemFilters{
+		Filters: []gosn.Filter{filter},
+	}
+	gnc := GetNoteConfig{
+		Session: testSession,
+		Filters: iFilter,
+	}
+
+	var preRes, postRes gosn.Items
+
+	preRes, err = gnc.Run()
+
+	require.NoError(t, err)
+
+	newItemUUID := preRes[0].GetUUID()
+	deleteNoteConfig := DeleteNoteConfig{
+		Session:   testSession,
+		NoteUUIDs: []string{newItemUUID},
+	}
+
+	var noDeleted int
+	noDeleted, err = deleteNoteConfig.Run()
+	require.Equal(t, 1, noDeleted)
+	require.NoError(t, err)
+
+	postRes, err = gnc.Run()
+	require.NoError(t, err)
+	require.EqualValues(t, len(postRes), 0, "note was not deleted")
 }
 
 func TestReplaceNote(t *testing.T) {
@@ -118,7 +172,7 @@ func TestReplaceNote(t *testing.T) {
 	preReplace, err := gnc.Run()
 	require.NoError(t, err, err)
 	require.Len(t, preReplace, 1)
-	//require.NoError(t, testSession.CacheDB.Close())
+	// require.NoError(t, testSession.CacheDB.Close())
 
 	// replace note
 	replaceNoteConfig := AddNoteInput{
@@ -236,59 +290,6 @@ func TestWipeWith50(t *testing.T) {
 	deleted, err = wipeConfig.Run()
 	require.NoError(t, err)
 	require.True(t, deleted >= numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
-}
-
-func TestAddDeleteNoteByUUID(t *testing.T) {
-	testDelay()
-
-	defer cleanUp(*testSession)
-
-	// create note
-	addNoteConfig := AddNoteInput{
-		Session: testSession,
-		Title:   "TestNoteOne",
-		Text:    "TestNoteOneText",
-	}
-
-	err := addNoteConfig.Run()
-	require.NoError(t, err)
-
-	// get new note
-	filter := gosn.Filter{
-		Type:       "Note",
-		Key:        "Title",
-		Comparison: "==",
-		Value:      "TestNoteOne",
-	}
-
-	iFilter := gosn.ItemFilters{
-		Filters: []gosn.Filter{filter},
-	}
-	gnc := GetNoteConfig{
-		Session: testSession,
-		Filters: iFilter,
-	}
-
-	var preRes, postRes gosn.Items
-
-	preRes, err = gnc.Run()
-
-	require.NoError(t, err)
-
-	newItemUUID := preRes[0].GetUUID()
-	deleteNoteConfig := DeleteNoteConfig{
-		Session:   testSession,
-		NoteUUIDs: []string{newItemUUID},
-	}
-
-	var noDeleted int
-	noDeleted, err = deleteNoteConfig.Run()
-	require.Equal(t, 1, noDeleted)
-	require.NoError(t, err)
-
-	postRes, err = gnc.Run()
-	require.NoError(t, err)
-	require.EqualValues(t, len(postRes), 0, "note was not deleted")
 }
 
 func TestAddDeleteNoteByTitle(t *testing.T) {

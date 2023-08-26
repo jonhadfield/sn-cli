@@ -50,11 +50,11 @@ func writeGob(filePath string, object interface{}) error {
 }
 
 type EncryptedItemExport struct {
-	UUID        string  `json:"uuid"`
-	ItemsKeyID  *string `json:"items_key_id,omitempty"`
-	Content     string  `json:"content"`
-	ContentType string  `json:"content_type"`
-	//Deleted            bool    `json:"deleted"`
+	UUID        string `json:"uuid"`
+	ItemsKeyID  string `json:"items_key_id,omitempty"`
+	Content     string `json:"content"`
+	ContentType string `json:"content_type"`
+	// Deleted            bool    `json:"deleted"`
 	EncItemKey         string  `json:"enc_item_key"`
 	CreatedAt          string  `json:"created_at"`
 	UpdatedAt          string  `json:"updated_at"`
@@ -71,7 +71,7 @@ func writeJSON(i ExportConfig, items gosn.EncryptedItems) error {
 			UUID:       items[x].UUID,
 			ItemsKeyID: items[x].ItemsKeyID,
 			Content:    items[x].Content,
-			//Deleted:            items[x].Deleted,
+			// Deleted:            items[x].Deleted,
 			ContentType:        items[x].ContentType,
 			EncItemKey:         items[x].EncItemKey,
 			CreatedAt:          items[x].CreatedAt,

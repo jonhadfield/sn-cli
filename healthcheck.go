@@ -70,10 +70,10 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 			}
 
 		default:
-			if so.Items[x].ItemsKeyID != nil {
+			if so.Items[x].ItemsKeyID != "" {
 				// if an item has an items key id specified, then increment the count of how many
 				// items the items key references
-				referencedItemsKeys[*so.Items[x].ItemsKeyID]++
+				referencedItemsKeys[so.Items[x].ItemsKeyID]++
 			}
 		}
 	}
@@ -115,24 +115,24 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 			}
 
 		case !isEncryptedWithMasterKey(so.Items[x].ContentType):
-			if so.Items[x].ItemsKeyID == nil {
+			if so.Items[x].ItemsKeyID == "" {
 				fmt.Printf("%s %s has no ItemsKeyID\n", so.Items[x].ContentType, so.Items[x].UUID)
 				encitemsNotSpecifyingItemsKeyID = append(encitemsNotSpecifyingItemsKeyID, so.Items[x])
 
 				continue
 
 			}
-			itemsKeysInUse = append(itemsKeysInUse, *so.Items[x].ItemsKeyID)
-			if !itemsKeyExists(*so.Items[x].ItemsKeyID, seenItemsKeys) {
+			itemsKeysInUse = append(itemsKeysInUse, so.Items[x].ItemsKeyID)
+			if !itemsKeyExists(so.Items[x].ItemsKeyID, seenItemsKeys) {
 				fmt.Printf("no matching items key found for %s %s specifying key: %s\n",
 					so.Items[x].ContentType,
 					so.Items[x].UUID,
-					*so.Items[x].ItemsKeyID)
+					so.Items[x].ItemsKeyID)
 				itemsWithMissingKeys = append(itemsWithMissingKeys,
 					fmt.Sprintf("Type: %s UUID: %s| ItemsKeyID: %s",
 						so.Items[x].ContentType,
 						so.Items[x].UUID,
-						*so.Items[x].ItemsKeyID))
+						so.Items[x].ItemsKeyID))
 			}
 		}
 	}
@@ -211,5 +211,5 @@ func isEncryptedWithMasterKey(t string) bool {
 
 func isUnsupportedType(t string) bool {
 	return false
-	//return strings.HasPrefix(t, "SF|")
+	// return strings.HasPrefix(t, "SF|")
 }
