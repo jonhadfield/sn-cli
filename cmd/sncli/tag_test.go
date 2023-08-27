@@ -53,7 +53,7 @@ func signIn(server, email, password string) {
 }
 
 func TestMain(m *testing.M) {
-	if os.Getenv("SN_SERVER") == "" || strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
+	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
 		localTestMain()
 	} else {
 		signIn(os.Getenv("SN_SERVER"), os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"))
