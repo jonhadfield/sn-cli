@@ -717,6 +717,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					Name:    "trash",
 					Aliases: []string{"trashed"},
 					Usage:   "get notes in trash",
+					Hidden:  true,
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "title",

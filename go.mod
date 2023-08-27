@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/jonhadfield/gosn-v2 v0.0.0-20230826163119-502c670129dd
+	github.com/jonhadfield/gosn-v2 v0.0.0-20230826211116-d931c744fa1c
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
@@ -37,7 +37,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/zalando/go-keyring v0.2.3 // indirect
-	go.etcd.io/bbolt v1.3.5 // indirect
+	go.etcd.io/bbolt v1.3.7 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/term v0.11.0
 	golang.org/x/text v0.12.0 // indirect
