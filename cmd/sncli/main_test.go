@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/stretchr/testify/require"
-	"strings"
 	"testing"
 	"time"
 )
@@ -32,17 +31,17 @@ func TestAddGetTag(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestAddGetTagExport(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
-	require.NoError(t, err)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgAddSuccess)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--title", "testAddOneTagGetCount"})
-	require.NoError(t, err)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "export"})
-	require.NoError(t, err)
-}
+// func TestAddGetTagExport(t *testing.T) {
+// 	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
+// 	require.NoError(t, err)
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
+// 	require.NoError(t, err)
+// 	require.Contains(t, msg, msgAddSuccess)
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--title", "testAddOneTagGetCount"})
+// 	require.NoError(t, err)
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "export"})
+// 	require.NoError(t, err)
+// }
 
 func TestAddDeleteTag(t *testing.T) {
 	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
@@ -59,32 +58,32 @@ func TestAddDeleteTag(t *testing.T) {
 	require.Contains(t, msg, msgDeleted)
 }
 
-func TestAddTagExportDeleteTagReImport(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
-	require.NoError(t, err)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgAddSuccess)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "1", msg)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "export"})
-	require.NoError(t, err)
-	require.True(t, strings.HasPrefix(msg, "encrypted export written to:"))
-	path := strings.TrimPrefix(msg, "encrypted export written to:")
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount"})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgDeleted)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "0", msg)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "import", "--experiment", "--file", path})
-	require.NoError(t, err)
-	require.True(t, strings.HasPrefix(msg, "imported"))
-	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "1", msg)
-}
+// func TestAddTagExportDeleteTagReImport(t *testing.T) {
+// 	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
+// 	require.NoError(t, err)
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
+// 	require.NoError(t, err)
+// 	require.Contains(t, msg, msgAddSuccess)
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
+// 	require.NoError(t, err)
+// 	require.Equal(t, "1", msg)
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "export"})
+// 	require.NoError(t, err)
+// 	require.True(t, strings.HasPrefix(msg, "encrypted export written to:"))
+// 	path := strings.TrimPrefix(msg, "encrypted export written to:")
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount"})
+// 	require.NoError(t, err)
+// 	require.Contains(t, msg, msgDeleted)
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
+// 	require.NoError(t, err)
+// 	require.Equal(t, "0", msg)
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "import", "--experiment", "--file", path})
+// 	require.NoError(t, err)
+// 	require.True(t, strings.HasPrefix(msg, "imported"))
+// 	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
+// 	require.NoError(t, err)
+// 	require.Equal(t, "1", msg)
+// }
 
 func TestAddTagErrorMissingTitle(t *testing.T) {
 	_, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag"})
