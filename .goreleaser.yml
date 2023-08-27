@@ -26,7 +26,7 @@ builds:
       post: |
         sh -c '
         cat > /tmp/sn-cli-gon-amd64.hcl << EOF
-        source = ["./dist/sn-macos_darwin_amd64/sn"]
+        source = ["./dist/sn-macos_darwin_amd64_v1/sn"]
         bundle_id = "uk.co.lessknown.sn-cli"
         apple_id {
           username = "jon@lessknown.co.uk"
@@ -90,8 +90,15 @@ builds:
       - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
 
 archives:
-  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    replacements:
+  - name_template: >-
+      {{ .ProjectName }}_
+      {{- if eq .Os "linux" }}Linux_
+      {{- else if eq .Os "windows" }}Windows_
+      {{- else }}{{- tolower .Os }}_{{ end }}
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{ if .Arm }}v{{ .Arm }}{{ end }}
       linux: Linux
       windows: Windows
       386: i386
