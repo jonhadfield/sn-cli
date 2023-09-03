@@ -29,10 +29,11 @@ BUILD_SHA := $(shell git rev-parse --short HEAD)
 BUILD_DATE := $(shell date -u '+%Y/%m/%d:%H:%M:%S')
 
 build:
-	GOOS=darwin CGO_ENABLED=0 GOARCH=amd64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_darwin_amd64" cmd/sncli/*.go
+	CGO_ENABLED=0 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli" cmd/sncli/*.go
 
 build-all:
 	GOOS=darwin  CGO_ENABLED=0 GOARCH=amd64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_darwin_amd64"  cmd/sncli/*.go
+	GOOS=darwin  CGO_ENABLED=0 GOARCH=arm64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_darwin_arm64"  cmd/sncli/*.go
 	GOOS=linux   CGO_ENABLED=0 GOARCH=amd64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_linux_amd64"   cmd/sncli/*.go
 	GOOS=linux   CGO_ENABLED=0 GOARCH=arm   go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_linux_arm"     cmd/sncli/*.go
 	GOOS=linux   CGO_ENABLED=0 GOARCH=arm64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_linux_arm64"   cmd/sncli/*.go
@@ -48,10 +49,10 @@ build-linux:
 	GOOS=linux   CGO_ENABLED=0 GOARCH=amd64 go build -ldflags '-s -w -X "main.version=[$(BUILD_TAG)-$(BUILD_SHA)] $(BUILD_DATE) UTC"' -o ".local_dist/sncli_linux_amd64"   cmd/sncli/*.go
 
 mac-install: build
-	install .local_dist/sncli_darwin_amd64 /usr/local/bin/sn
+	install .local_dist/sncli /usr/local/bin/sn
 
 linux-install: build-linux
-	sudo install .local_dist/sncli_linux_amd64 /usr/local/bin/sn
+	sudo install .local_dist/sncli /usr/local/bin/sn
 
 find-updates:
 	go list -u -m -json all | go-mod-outdated -update -direct
