@@ -5,6 +5,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/jonhadfield/gosn-v2"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -98,10 +99,18 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 	var encitemsNotSpecifyingItemsKeyID gosn.EncryptedItems
 	var itemsKeysNotEncryptedWithCurrentMasterKey []string
 	var itemsKeysInUse []string
+	var version003Items int64
 	// check for unused ItemsKeys
 	for x := range so.Items {
 		// skip deleted items
 		if so.Items[x].Deleted {
+			continue
+		}
+
+		// skip version 003 items as unsupported
+		if strings.HasPrefix(so.Items[x].Content, "003") {
+			version003Items++
+
 			continue
 		}
 
@@ -137,6 +146,10 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 		}
 	}
 
+	if version003Items > 0 {
+		fmt.Printf("items created using Standard Notes version 003 found: %d (export and import items to update to 004)\n", version003Items)
+	}
+
 	fmt.Println("unused Items Keys:")
 	var numUnusedItemsKeys int64
 	for x := range seenItemsKeys {
@@ -164,7 +177,7 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 		}
 	}
 
-	if len(itemsWithMissingKeys) > 0 && input.DeleteInvalid {
+	if len(encitemsNotSpecifyingItemsKeyID) > 0 && input.DeleteInvalid {
 		fmt.Printf("wipe all encrypted items without items keys (account: %s)? ",
 			input.Session.KeyParams.Identifier)
 
