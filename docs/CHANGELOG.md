@@ -1,4 +1,5 @@
 ## changelog
+0.2.7 - fix archive names, combine MacOS builds into universal binary
 0.0.13 - enable storing of session in MacOS and Linux with optional encryption  
 0.0.12 - fix Register bug on Windows  
 0.0.11 - fix ReadPassword bug on Windows  
