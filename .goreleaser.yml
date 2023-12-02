@@ -12,9 +12,9 @@ before:
 
 # join mac binaries into one
 universal_binaries:
-  - id: sn-macos-universal
+  - id: sn-macos
     ids:
-      - sn-macos
+      - sn-macos-amd64
       - sn-macos-arm
     name_template: "sn"
     replace: true
@@ -23,7 +23,7 @@ universal_binaries:
       post: |
         sh -c '
         cat > /tmp/sn-cli-gon-universal.hcl << EOF
-        source = ["./dist/sn-macos_darwin_universal/sn"]
+        source = ["./dist/sn-macos_darwin_all/sn"]
         bundle_id = "uk.co.lessknown.sn-cli"
         apple_id {
           username = "jon@lessknown.co.uk"
@@ -33,14 +33,14 @@ universal_binaries:
           application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
         }
         zip {
-          output_path = "./dist/sn-cli_Darwin_universal.zip"
+          output_path = "./dist/sn-cli_Darwin_all.zip"
         }
         EOF
         gon /tmp/sn-cli-gon-universal.hcl
         '
 
 builds:
-  - id: sn-macos
+  - id: sn-macos-amd64
     main: ./cmd/sncli/
     binary: sn
     goos:
@@ -124,4 +124,6 @@ changelog:
     - ignore
 
 checksum:
+  extra_files:
+    - glob: ./dist/sn-cli_Darwin*.zip
   name_template: 'checksums.txt'
