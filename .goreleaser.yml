@@ -10,6 +10,35 @@ before:
     - make clean
     - go mod tidy
 
+# join mac binaries into one
+universal_binaries:
+  - id: sn-macos-universal
+    ids:
+      - sn-macos
+      - sn-macos-arm
+    name_template: "sn"
+    replace: true
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    hooks:
+      post: |
+        sh -c '
+        cat > /tmp/sn-cli-gon-universal.hcl << EOF
+        source = ["./dist/sn-macos_darwin_universal/sn"]
+        bundle_id = "uk.co.lessknown.sn-cli"
+        apple_id {
+          username = "jon@lessknown.co.uk"
+          password = "@env:AC_PASSWORD"
+        }
+        sign {
+          application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
+        }
+        zip {
+          output_path = "./dist/sn-cli_Darwin_universal.zip"
+        }
+        EOF
+        gon /tmp/sn-cli-gon-universal.hcl
+        '
+
 builds:
   - id: sn-macos
     main: ./cmd/sncli/
@@ -22,25 +51,6 @@ builds:
       - -trimpath
     ldflags:
       - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
-    hooks:
-      post: |
-        sh -c '
-        cat > /tmp/sn-cli-gon-amd64.hcl << EOF
-        source = ["./dist/sn-macos_darwin_amd64_v1/sn"]
-        bundle_id = "uk.co.lessknown.sn-cli"
-        apple_id {
-          username = "jon@lessknown.co.uk"
-          password = "@env:AC_PASSWORD"
-        }
-        sign {
-          application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
-        }
-        zip {
-          output_path = "./dist/sn-cli_Darwin_amd64.zip"
-        }
-        EOF
-        gon /tmp/sn-cli-gon-amd64.hcl
-        '
 
   - id: sn-macos-arm
     main: ./cmd/sncli/
@@ -53,25 +63,7 @@ builds:
       - -trimpath
     ldflags:
       - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
-    hooks:
-      post: |
-        sh -c '
-        cat > /tmp/sn-cli-gon-arm64.hcl << EOF
-        source = ["./dist/sn-macos-arm_darwin_arm64/sn"]
-        bundle_id = "uk.co.lessknown.sn-cli"
-        apple_id {
-          username = "jon@lessknown.co.uk"
-          password = "@env:AC_PASSWORD"
-        }
-        sign {
-          application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
-        }
-        zip {
-          output_path = "./dist/sn-cli_Darwin_arm64.zip"
-        }
-        EOF
-        gon /tmp/sn-cli-gon-arm64.hcl
-        '
+
   - id: sn
     main: ./cmd/sncli/
     binary: sn
@@ -94,15 +86,11 @@ archives:
       {{ .ProjectName }}_
       {{- if eq .Os "linux" }}Linux_
       {{- else if eq .Os "windows" }}Windows_
-      {{- else }}{{- tolower .Os }}_{{ end }}
+      {{- else }}{{- tolower .Os }}_{{ end -}}
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{ if .Arm }}v{{ .Arm }}{{ end }}
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
+      {{- else }}{{ .Arch }}{{ end -}}
+      {{ if .Arm }}v{{ .Arm }}{{ end -}}
     builds:
       - sn
     format: tar.gz
