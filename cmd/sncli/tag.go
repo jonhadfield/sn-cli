@@ -397,9 +397,11 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	// prepare input
 	tags := sncli.CommaSplit(tagInput)
 	addTagInput := sncli.AddTagsInput{
-		Session: &session,
-		Tags:    tags,
-		Debug:   opts.debug,
+		Session:    &session,
+		Tags:       tags,
+		Parent:     c.String("parent"),
+		ParentUUID: c.String("parent-uuid"),
+		Debug:      opts.debug,
 	}
 
 	// attempt to add tags

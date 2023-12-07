@@ -151,10 +151,12 @@ type TagItemsConfig struct {
 }
 
 type AddTagsInput struct {
-	Session *cache.Session
-	Tags    []string
-	Debug   bool
-	Replace bool
+	Session    *cache.Session
+	Tags       []string
+	Parent     string
+	ParentUUID string
+	Debug      bool
+	Replace    bool
 }
 
 type AddTagsOutput struct {
