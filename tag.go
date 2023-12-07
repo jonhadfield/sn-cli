@@ -346,9 +346,11 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 }
 
 type addTagsInput struct {
-	session   *cache.Session
-	tagTitles []string
-	replace   bool
+	session    *cache.Session
+	tagTitles  []string
+	parent     string
+	parentUUID string
+	replace    bool
 }
 
 type addTagsOutput struct {
@@ -399,6 +401,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	gItems.Filter(addFilter)
 
 	var allTags items.Tags
+	var parentRef items.ItemReferences
 
 	for _, item := range gItems {
 		if item.IsDeleted() {
@@ -408,6 +411,13 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		if item.GetContentType() == "Tag" {
 			tag := item.(*items.Tag)
 			allTags = append(allTags, *tag)
+			if tag.Content.GetTitle() == ati.parent || tag.GetUUID() == ati.parentUUID {
+				itemRef := gosn.ItemReference{
+					UUID:        tag.GetUUID(),
+					ContentType: "Tag",
+				}
+				parentRef = gosn.ItemReferences{itemRef}
+			}
 		}
 	}
 
@@ -419,7 +429,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 			continue
 		}
 
-		newTag, _ := items.NewTag(tag, nil)
+		newTag, _ := items.NewTag(tag, parentRef)
 
 		tagsToAdd = append(tagsToAdd, newTag)
 		ato.added = append(ato.added, tag)

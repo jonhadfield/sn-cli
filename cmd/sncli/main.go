@@ -263,12 +263,20 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						if c.NArg() > 0 {
 							return
 						}
-						fmt.Println("--title")
+						fmt.Println("--title", "--parent", "--parent-uuid")
 					},
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "title",
 							Usage: "new tag title (separate multiple with commas)",
+						},
+						cli.StringFlag{
+							Name:  "parent",
+							Usage: "parent tag title to make a sub-tag of",
+						},
+						cli.StringFlag{
+							Name:  "parent-uuid",
+							Usage: "parent tag uuid to make a sub-tag of",
 						},
 					},
 					Action: func(c *cli.Context) error {
