@@ -373,7 +373,6 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	if err != nil {
 		return "", err
 	}
-
 	var cacheDBPath string
 
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)

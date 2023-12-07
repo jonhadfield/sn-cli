@@ -933,6 +933,24 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 			},
 		},
 		{
+			Name:  "resync",
+			Usage: "purge cache and resync content",
+			Action: func(c *cli.Context) error {
+				var opts configOptsOutput
+				opts, err = getOpts(c)
+				if err != nil {
+					return err
+				}
+				var session cache.Session
+				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+				if err != nil {
+					return err
+				}
+
+				return sncli.Resync(&session, opts.cacheDBDir, snAppName)
+			},
+		},
+		{
 			Name:  "stats",
 			Usage: "show statistics",
 			Action: func(c *cli.Context) error {

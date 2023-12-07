@@ -108,7 +108,7 @@ func createNotes(session *cache.Session, num int, paras int) error {
 		return err
 	}
 
-	err = gendNotes.Validate()
+	err = gendNotes.Validate(session.Session)
 	if err != nil {
 		panic(err)
 	}
