@@ -7,6 +7,18 @@ a command-line interface for [Standard Notes](https://standardnotes.org/).
 There have been significant updates to the StandardNotes API that I've attempted to address in this version.  Please ensure you have a backup in case of any issues caused by this app.  
 Thanks 
 
+## latest updates
+
+### version 0.2.8 - 2023-12-07
+
+- stored sessions are now auto-renewed when expired, or nearing expiry
+
+### version 0.2.7 - 2023-12-06
+
+- various release packaging updates - thanks: [@clayrosenthal](https://github.com/clayrosenthal)
+
+
+
 ## current features
 
 ```
