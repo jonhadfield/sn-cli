@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/jonhadfield/gosn-v2/cache"
@@ -181,9 +182,11 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}()
 
 	ati := addTagsInput{
-		tagTitles: i.Tags,
-		session:   i.Session,
-		replace:   i.Replace,
+		tagTitles:  i.Tags,
+		parent:     i.Parent,
+		parentUUID: i.ParentUUID,
+		session:    i.Session,
+		replace:    i.Replace,
 	}
 
 	var ato addTagsOutput
@@ -419,6 +422,14 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 				parentRef = gosn.ItemReferences{itemRef}
 			}
 		}
+	}
+
+	if ati.parent != "" && len(parentRef) == 0 {
+		return ato, errors.New("parent tag not found by title")
+	}
+
+	if ati.parentUUID != "" && len(parentRef) == 0 {
+		return ato, errors.New("parent tag not found by UUID")
 	}
 
 	var tagsToAdd items.Tags

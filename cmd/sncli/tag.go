@@ -377,11 +377,16 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	// validate input
 	tagInput := c.String("title")
+	// parentTitle := c.String("parent")
 	if strings.TrimSpace(tagInput) == "" {
 		_ = cli.ShowSubcommandHelp(c)
 
 		return "", errors.New("tag title not defined")
 	}
+
+	// getParent := gosn.ItemFilters{
+	// 	MatchAny: true,
+	// }
 
 	// get session
 	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
