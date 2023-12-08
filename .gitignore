@@ -22,6 +22,9 @@ coverage.txt
 
 # local build
 .local_dist
+bin/*
+!bin/.gitkeep
+
 # github release build
 dist
 
