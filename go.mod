@@ -11,7 +11,7 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/jonhadfield/gosn-v2 v0.0.0-20231207170939-dd07972e746d
 	github.com/ryanuber/columnize v2.1.2+incompatible
-	github.com/spf13/viper v1.18.0
+	github.com/spf13/viper v1.18.1
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli v1.22.14
 	golang.org/x/crypto v0.16.0 // indirect
