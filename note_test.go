@@ -2,7 +2,6 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"log"
 	"os"
 	"strconv"
@@ -10,13 +9,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/auth"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
+	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/jonhadfield/gosn-v2/session"
+	"github.com/stretchr/testify/require"
 )
 
 var (
 	testSession      *cache.Session
-	gTtestSession    *gosn.Session
+	gTtestSession    *session.Session
 	testUserEmail    string
 	testUserPassword string
 )
@@ -26,7 +29,7 @@ func localTestMain() {
 	testUserEmail = fmt.Sprintf("ramea-%s", strconv.FormatInt(time.Now().UnixNano(), 16))
 	testUserPassword = "secretsanta"
 
-	rInput := gosn.RegisterInput{
+	rInput := auth.RegisterInput{
 		Password:  testUserPassword,
 		Email:     testUserEmail,
 		APIServer: localServer,
@@ -43,12 +46,40 @@ func localTestMain() {
 }
 
 func signIn(server, email, password string) {
-	ts, err := gosn.CliSignIn(email, password, server, true)
+	ts, err := auth.CliSignIn(email, password, server, true)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	gTtestSession = &ts
+	if server == "" {
+		server = SNServerURL
+	}
+
+	gTtestSession = &session.Session{
+		Debug:             true,
+		HTTPClient:        common.NewHTTPClient(),
+		SchemaValidation:  false,
+		Server:            server,
+		FilesServerUrl:    ts.FilesServerUrl,
+		Token:             "",
+		MasterKey:         ts.MasterKey,
+		ItemsKeys:         nil,
+		DefaultItemsKey:   session.SessionItemsKey{},
+		KeyParams:         auth.KeyParams{},
+		AccessToken:       ts.AccessToken,
+		RefreshToken:      ts.RefreshToken,
+		AccessExpiration:  ts.AccessExpiration,
+		RefreshExpiration: ts.RefreshExpiration,
+		ReadOnlyAccess:    ts.ReadOnlyAccess,
+		PasswordNonce:     ts.PasswordNonce,
+		Schemas:           nil,
+	}
+
+	testSession = &cache.Session{
+		Session:     gTtestSession,
+		CacheDB:     nil,
+		CacheDBPath: "",
+	}
 }
 
 func TestMain(m *testing.M) {
@@ -56,24 +87,42 @@ func TestMain(m *testing.M) {
 	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
 		localTestMain()
 	} else {
-		signIn(os.Getenv("SN_SERVER"), os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"))
+		signIn(SNServerURL, os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"))
 	}
 
-	if _, err := gosn.Sync(gosn.SyncInput{Session: gTtestSession}); err != nil {
+	if _, err := items.Sync(items.SyncInput{Session: gTtestSession}); err != nil {
 		log.Fatal(err)
 	}
 
 	if gTtestSession.DefaultItemsKey.ItemsKey == "" {
 		panic("failed in TestMain due to empty default items key")
 	}
+	if strings.TrimSpace(gTtestSession.Server) == "" {
+		panic("failed in TestMain due to empty server")
+	}
 
 	var err error
-	testSession, err = cache.ImportSession(gTtestSession, "")
+	testSession, err = cache.ImportSession(&auth.SignInResponseDataSession{
+		Debug:             gTtestSession.Debug,
+		HTTPClient:        gTtestSession.HTTPClient,
+		SchemaValidation:  false,
+		Server:            gTtestSession.Server,
+		FilesServerUrl:    gTtestSession.FilesServerUrl,
+		Token:             "",
+		MasterKey:         gTtestSession.MasterKey,
+		KeyParams:         gTtestSession.KeyParams,
+		AccessToken:       gTtestSession.AccessToken,
+		RefreshToken:      gTtestSession.RefreshToken,
+		AccessExpiration:  gTtestSession.AccessExpiration,
+		RefreshExpiration: gTtestSession.RefreshExpiration,
+		ReadOnlyAccess:    gTtestSession.ReadOnlyAccess,
+		PasswordNonce:     gTtestSession.PasswordNonce,
+	}, "")
 	if err != nil {
 		return
 	}
 
-	testSession.CacheDBPath, err = cache.GenCacheDBPath(*testSession, "", gosn.LibName)
+	testSession.CacheDBPath, err = cache.GenCacheDBPath(*testSession, "", common.LibName)
 	if err != nil {
 		panic(err)
 	}
@@ -97,22 +146,22 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 	require.NoError(t, err)
 
 	// get new note
-	filter := gosn.Filter{
+	filter := items.Filter{
 		Type:       "Note",
 		Key:        "Title",
 		Comparison: "==",
 		Value:      "TestNoteOne",
 	}
 
-	iFilter := gosn.ItemFilters{
-		Filters: []gosn.Filter{filter},
+	iFilter := items.ItemFilters{
+		Filters: []items.Filter{filter},
 	}
 	gnc := GetNoteConfig{
 		Session: testSession,
 		Filters: iFilter,
 	}
 
-	var preRes, postRes gosn.Items
+	var preRes, postRes items.Items
 
 	preRes, err = gnc.Run()
 
@@ -151,9 +200,9 @@ func TestReplaceNote(t *testing.T) {
 	// get new note
 	gnc := GetNoteConfig{
 		Session: testSession,
-		Filters: gosn.ItemFilters{
+		Filters: items.ItemFilters{
 			MatchAny: false,
-			Filters: []gosn.Filter{{
+			Filters: []items.Filter{{
 				Type:       "Note",
 				Key:        "Title",
 				Comparison: "==",
@@ -167,7 +216,7 @@ func TestReplaceNote(t *testing.T) {
 		},
 	}
 
-	var preReplace, postReplace gosn.Items
+	var preReplace, postReplace items.Items
 
 	preReplace, err := gnc.Run()
 	require.NoError(t, err, err)
@@ -186,9 +235,9 @@ func TestReplaceNote(t *testing.T) {
 	// get updated note
 	gnc = GetNoteConfig{
 		Session: testSession,
-		Filters: gosn.ItemFilters{
+		Filters: items.ItemFilters{
 			MatchAny: false,
-			Filters: []gosn.Filter{{
+			Filters: []items.Filter{{
 				Type:       "Note",
 				Key:        "Title",
 				Comparison: "==",
@@ -209,9 +258,9 @@ func TestReplaceNote(t *testing.T) {
 	// check only one note with that title exists
 	gnc = GetNoteConfig{
 		Session: testSession,
-		Filters: gosn.ItemFilters{
+		Filters: items.ItemFilters{
 			MatchAny: false,
-			Filters: []gosn.Filter{{
+			Filters: []items.Filter{{
 				Type:       "Note",
 				Key:        "Title",
 				Comparison: "==",
@@ -221,7 +270,7 @@ func TestReplaceNote(t *testing.T) {
 	}
 
 	highlander, err := gnc.Run()
-	require.NoError(t, err, err)
+	require.NoError(t, err)
 	require.Len(t, highlander, 1)
 }
 
@@ -239,11 +288,11 @@ func TestWipeWith50(t *testing.T) {
 	require.NoError(t, err)
 
 	// check notes created
-	noteFilter := gosn.Filter{
+	noteFilter := items.Filter{
 		Type: "Note",
 	}
-	filters := gosn.ItemFilters{
-		Filters: []gosn.Filter{noteFilter},
+	filters := items.ItemFilters{
+		Filters: []items.Filter{noteFilter},
 	}
 	gni := cache.SyncInput{
 		Session: testSession,
@@ -256,21 +305,21 @@ func TestWipeWith50(t *testing.T) {
 	require.NotNil(t, gno.DB)
 
 	// get items from db
-	var items cache.Items
+	var cItems cache.Items
 
-	require.NoError(t, gno.DB.All(&items))
+	require.NoError(t, gno.DB.All(&cItems))
 	require.NoError(t, gno.DB.Close())
 
 	var nonotes int
 
-	for _, i := range items {
+	for _, i := range cItems {
 		if i.ContentType == "Note" {
 			nonotes++
 		}
 	}
 
-	var gItems gosn.Items
-	gItems, err = items.ToItems(testSession)
+	var gItems items.Items
+	gItems, err = cItems.ToItems(testSession)
 
 	require.NoError(t, err)
 
@@ -314,22 +363,22 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 	require.Equal(t, 1, noDeleted)
 	require.NoError(t, err)
 
-	filter := gosn.Filter{
+	filter := items.Filter{
 		Type:       "Note",
 		Key:        "Title",
 		Comparison: "==",
 		Value:      "TestNoteOne",
 	}
 
-	iFilter := gosn.ItemFilters{
-		Filters: []gosn.Filter{filter},
+	iFilter := items.ItemFilters{
+		Filters: []items.Filter{filter},
 	}
 	gnc := GetNoteConfig{
 		Session: testSession,
 		Filters: iFilter,
 	}
 
-	var postRes gosn.Items
+	var postRes items.Items
 	postRes, err = gnc.Run()
 	require.NoError(t, err)
 	require.EqualValues(t, len(postRes), 0, "note was not deleted")
@@ -360,21 +409,21 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 	require.NoError(t, err)
 
 	// get same note again
-	filter := gosn.Filter{
+	filter := items.Filter{
 		Type:       "Note",
 		Key:        "Title",
 		Comparison: "==",
 		Value:      "TestNoteOne",
 	}
-	iFilter := gosn.ItemFilters{
-		Filters: []gosn.Filter{filter},
+	iFilter := items.ItemFilters{
+		Filters: []items.Filter{filter},
 	}
 	gnc := GetNoteConfig{
 		Session: testSession,
 		Filters: iFilter,
 	}
 
-	var postRes gosn.Items
+	var postRes items.Items
 	postRes, err = gnc.Run()
 
 	require.NoError(t, err)
@@ -394,23 +443,23 @@ func TestGetNote(t *testing.T) {
 	err := addNoteConfig.Run()
 	require.NoError(t, err)
 
-	noteFilter := gosn.Filter{
+	noteFilter := items.Filter{
 		Type:       "Note",
 		Key:        "Title",
 		Comparison: "==",
 		Value:      "TestNoteOne",
 	}
 	// retrieve one note
-	itemFilters := gosn.ItemFilters{
+	itemFilters := items.ItemFilters{
 		MatchAny: false,
-		Filters:  []gosn.Filter{noteFilter},
+		Filters:  []items.Filter{noteFilter},
 	}
 	getNoteConfig := GetNoteConfig{
 		Session: testSession,
 		Filters: itemFilters,
 	}
 
-	var output gosn.Items
+	var output items.Items
 	output, err = getNoteConfig.Run()
 	require.NoError(t, err)
 	require.EqualValues(t, 1, len(output))
@@ -427,11 +476,11 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	err := createNotes(testSession, numNotes, textParas)
 	require.NoError(t, err)
 
-	noteFilter := gosn.Filter{
+	noteFilter := items.Filter{
 		Type: "Note",
 	}
-	filter := gosn.ItemFilters{
-		Filters: []gosn.Filter{noteFilter},
+	filter := items.ItemFilters{
+		Filters: []items.Filter{noteFilter},
 	}
 
 	gnc := GetNoteConfig{
@@ -439,11 +488,11 @@ func TestCreateOneHundredNotes(t *testing.T) {
 		Filters: filter,
 	}
 
-	var res gosn.Items
+	var res items.Items
 	res, err = gnc.Run()
 	require.NoError(t, err)
 
-	require.True(t, len(res) >= numNotes)
+	require.GreaterOrEqual(t, len(res), numNotes)
 
 	wipeConfig := WipeConfig{
 		Session: testSession,
@@ -452,13 +501,12 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	var deleted int
 	deleted, err = wipeConfig.Run()
 	require.NoError(t, err)
-	require.True(t, deleted >= numNotes)
+	require.GreaterOrEqual(t, deleted, numNotes)
 }
 
 func cleanUp(session cache.Session) {
 	session.RemoveDB()
-	_, err := gosn.DeleteContent(session.Session, true)
-
+	_, err := items.DeleteContent(session.Session, true)
 	if err != nil {
 		panic(err)
 	}

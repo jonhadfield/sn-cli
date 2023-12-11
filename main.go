@@ -1,11 +1,12 @@
 package sncli
 
 import (
-	"github.com/briandowns/spinner"
-	"github.com/jonhadfield/gosn-v2"
-	"github.com/jonhadfield/gosn-v2/cache"
 	"os"
 	"time"
+
+	"github.com/briandowns/spinner"
+	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/items"
 )
 
 const (
@@ -39,13 +40,13 @@ type OrgStandardNotesSNDetailYAML struct {
 }
 
 type AppDataContentYAML struct {
-	OrgStandardNotesSN           OrgStandardNotesSNDetailYAML            `yaml:"org.standardnotes.sn"`
-	OrgStandardNotesSNComponents gosn.OrgStandardNotesSNComponentsDetail `yaml:"org.standardnotes.sn.components,omitempty"`
+	OrgStandardNotesSN           OrgStandardNotesSNDetailYAML             `yaml:"org.standardnotes.sn"`
+	OrgStandardNotesSNComponents items.OrgStandardNotesSNComponentsDetail `yaml:"org.standardnotes.sn.components,omitempty"`
 }
 
 type AppDataContentJSON struct {
-	OrgStandardNotesSN           OrgStandardNotesSNDetailJSON            `json:"org.standardnotes.sn"`
-	OrgStandardNotesSNComponents gosn.OrgStandardNotesSNComponentsDetail `json:"org.standardnotes.sn.components,omitempty"`
+	OrgStandardNotesSN           OrgStandardNotesSNDetailJSON             `json:"org.standardnotes.sn"`
+	OrgStandardNotesSNComponents items.OrgStandardNotesSNComponentsDetail `json:"org.standardnotes.sn.components,omitempty"`
 }
 
 type TagContentYAML struct {
@@ -162,21 +163,21 @@ type AddTagsOutput struct {
 
 type GetTagConfig struct {
 	Session *cache.Session
-	Filters gosn.ItemFilters
+	Filters items.ItemFilters
 	Output  string
 	Debug   bool
 }
 
 type GetSettingsConfig struct {
 	Session *cache.Session
-	Filters gosn.ItemFilters
+	Filters items.ItemFilters
 	Output  string
 	Debug   bool
 }
 
 type GetNoteConfig struct {
 	Session    *cache.Session
-	Filters    gosn.ItemFilters
+	Filters    items.ItemFilters
 	NoteTitles []string
 	TagTitles  []string
 	TagUUIDs   []string
@@ -204,6 +205,15 @@ type AddNoteInput struct {
 	Debug    bool
 }
 
+type DeleteItemConfig struct {
+	Session    *cache.Session
+	NoteTitles []string
+	NoteText   string
+	ItemsUUIDs []string
+	Regex      bool
+	Debug      bool
+}
+
 type DeleteNoteConfig struct {
 	Session    *cache.Session
 	NoteTitles []string
@@ -224,7 +234,7 @@ type StatsConfig struct {
 	Session cache.Session
 }
 
-func referenceExists(tag gosn.Tag, refID string) bool {
+func referenceExists(tag items.Tag, refID string) bool {
 	for _, ref := range tag.Content.References() {
 		if ref.UUID == refID {
 			return true
@@ -234,7 +244,7 @@ func referenceExists(tag gosn.Tag, refID string) bool {
 	return false
 }
 
-func filterEncryptedItemsByTypes(ei gosn.EncryptedItems, types []string) (o gosn.EncryptedItems) {
+func filterEncryptedItemsByTypes(ei items.EncryptedItems, types []string) (o items.EncryptedItems) {
 	for _, i := range ei {
 		if StringInSlice(i.ContentType, types, true) {
 			o = append(o, i)
@@ -244,7 +254,7 @@ func filterEncryptedItemsByTypes(ei gosn.EncryptedItems, types []string) (o gosn
 	return o
 }
 
-func filterItemsByTypes(ei gosn.Items, types []string) (o gosn.Items) {
+func filterItemsByTypes(ei items.Items, types []string) (o items.Items) {
 	for _, i := range ei {
 		if StringInSlice(i.GetContentType(), types, true) {
 			o = append(o, i)
@@ -279,12 +289,12 @@ func (i *WipeConfig) Run() (int, error) {
 		s.Prefix = prefix
 		s.Start()
 
-		deleted, err := gosn.DeleteContent(i.Session.Session, i.Everything)
+		deleted, err := items.DeleteContent(i.Session.Session, i.Everything)
 
 		s.Stop()
 
 		return deleted, err
 	}
 
-	return gosn.DeleteContent(i.Session.Session, i.Everything)
+	return items.DeleteContent(i.Session.Session, i.Everything)
 }

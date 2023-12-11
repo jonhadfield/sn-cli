@@ -2,21 +2,23 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/briandowns/spinner"
-	"github.com/jonhadfield/gosn-v2"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/briandowns/spinner"
+	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/jonhadfield/gosn-v2/session"
 )
 
 type ItemsKeysHealthcheckInput struct {
-	Session       gosn.Session
+	Session       session.Session
 	UseStdOut     bool
 	DeleteInvalid bool
 }
 
 func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
-	var so gosn.SyncOutput
+	var so items.SyncOutput
 	var err error
 	var syncToken string
 
@@ -33,13 +35,13 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 		s.Prefix = prefix
 		s.Start()
 
-		so, err = gosn.Sync(gosn.SyncInput{
+		so, err = items.Sync(items.SyncInput{
 			Session: &input.Session,
 		})
 
 		s.Stop()
 	} else {
-		so, err = gosn.Sync(gosn.SyncInput{
+		so, err = items.Sync(items.SyncInput{
 			Session: &input.Session,
 		})
 	}
@@ -96,7 +98,7 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 	fmt.Println()
 
 	var itemsWithMissingKeys []string
-	var encitemsNotSpecifyingItemsKeyID gosn.EncryptedItems
+	var encitemsNotSpecifyingItemsKeyID items.EncryptedItems
 	var itemsKeysNotEncryptedWithCurrentMasterKey []string
 	var itemsKeysInUse []string
 	var version003Items int64
@@ -116,7 +118,7 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 
 		switch {
 		case so.Items[x].ContentType == "SN|ItemsKey":
-			var ik gosn.ItemsKey
+			var ik items.ItemsKey
 			ik, err = so.Items[x].Decrypt(input.Session.MasterKey)
 			if err != nil || ik.ItemsKey == "" {
 				itemsKeysNotEncryptedWithCurrentMasterKey = append(itemsKeysNotEncryptedWithCurrentMasterKey,
@@ -129,7 +131,6 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 				encitemsNotSpecifyingItemsKeyID = append(encitemsNotSpecifyingItemsKeyID, so.Items[x])
 
 				continue
-
 			}
 			itemsKeysInUse = append(itemsKeysInUse, so.Items[x].ItemsKeyID)
 			if !itemsKeyExists(so.Items[x].ItemsKeyID, seenItemsKeys) {
@@ -184,14 +185,14 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 		var c string
 		_, err = fmt.Scanln(&c)
 		if err == nil && StringInSlice(c, []string{"y", "yes"}, false) {
-			var itemsToDelete gosn.EncryptedItems
+			var itemsToDelete items.EncryptedItems
 			for x := range encitemsNotSpecifyingItemsKeyID {
 				itemToDelete := encitemsNotSpecifyingItemsKeyID[x]
 				itemToDelete.Deleted = true
 				itemsToDelete = append(itemsToDelete, itemToDelete)
 			}
 
-			so, err = gosn.Sync(gosn.SyncInput{
+			so, err = items.Sync(items.SyncInput{
 				SyncToken: syncToken,
 				Session:   &input.Session,
 				Items:     itemsToDelete,

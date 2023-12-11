@@ -17,7 +17,7 @@ cover: test
 	go tool cover -html=coverage.txt
 
 fmt:
-	find . -name '*.go' | while read -r file; do gofumpt -w -s "$$file"; gofumports -w "$$file"; done
+	find . -name '*.go' | while read -r file; do gofumpt -w "$$file"; gofumports -w "$$file"; done
 
 lint:
 	golangci-lint run

@@ -3,12 +3,15 @@ package sncli
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/jonhadfield/gosn-v2"
 	"strings"
+
+	"github.com/jonhadfield/gosn-v2/crypto"
+	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/jonhadfield/gosn-v2/session"
 )
 
 type DecryptStringInput struct {
-	Session   gosn.Session
+	Session   session.Session
 	In        string
 	UseStdOut bool
 	Key       string
@@ -18,7 +21,6 @@ func DecryptString(input DecryptStringInput) (plaintext string, err error) {
 	key1 := input.Session.MasterKey
 	if input.Key != "" {
 		key1 = input.Key
-
 	}
 
 	// trim noise
@@ -42,7 +44,7 @@ func DecryptString(input DecryptStringInput) (plaintext string, err error) {
 	}
 	fmt.Printf("Decoded Auth Data: %+v\n", string(bad))
 
-	pb, err := gosn.DecryptCipherText(cipherText, key1, nonce, authData)
+	pb, err := crypto.DecryptCipherText(cipherText, key1, nonce, authData)
 	if err != nil {
 		return
 	}
@@ -51,7 +53,7 @@ func DecryptString(input DecryptStringInput) (plaintext string, err error) {
 }
 
 type OutputSessionInput struct {
-	Session         gosn.Session
+	Session         session.Session
 	In              string
 	UseStdOut       bool
 	OutputMasterKey bool
@@ -72,7 +74,7 @@ func OutputSession(input OutputSessionInput) error {
 		fmt.Println()
 	}
 
-	_, err := gosn.Sync(gosn.SyncInput{Session: &input.Session})
+	_, err := items.Sync(items.SyncInput{Session: &input.Session})
 	if err != nil {
 		return err
 	}
@@ -97,12 +99,12 @@ type CreateItemsKeyInput struct {
 	MasterKey string
 }
 
-func CreateItemsKey(input CreateItemsKeyInput) error {
-	ik := gosn.NewItemsKey()
-	fmt.Printf("%+v\n", ik.ItemsKey)
-
-	return nil
-}
+// func CreateItemsKey(input CreateItemsKeyInput) error {
+// 	ik := items.NewItemsKey()
+// 	fmt.Printf("%+v\n", ik.ItemsKey)
+//
+// 	return nil
+// }
 
 func splitContent(in string) (version, nonce, cipherText, authenticatedData string) {
 	components := strings.Split(in, ":")

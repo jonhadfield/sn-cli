@@ -1,11 +1,11 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/items"
 )
 
-func (i *GetSettingsConfig) Run() (settings gosn.Items, err error) {
+func (i *GetSettingsConfig) Run() (settings items.Items, err error) {
 	getItemsInput := cache.SyncInput{
 		Session: i.Session,
 	}
@@ -24,7 +24,7 @@ func (i *GetSettingsConfig) Run() (settings gosn.Items, err error) {
 		return
 	}
 
-	var items gosn.Items
+	var items items.Items
 
 	items, err = allPersistedItems.ToItems(i.Session)
 	if err != nil {

@@ -1,11 +1,11 @@
 package sncli
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 
-	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddDeleteTagByTitle(t *testing.T) {
@@ -52,12 +52,12 @@ func TestGetTag(t *testing.T) {
 	require.Empty(t, ato.Existing)
 
 	// create filters
-	getTagFilters := gosn.ItemFilters{
+	getTagFilters := items.ItemFilters{
 		MatchAny: true,
 	}
 
 	for _, testTagTitle := range testTagTitles {
-		getTagFilters.Filters = append(getTagFilters.Filters, gosn.Filter{
+		getTagFilters.Filters = append(getTagFilters.Filters, items.Filter{
 			Key:        "Title",
 			Value:      testTagTitle,
 			Type:       "Tag",
@@ -70,7 +70,7 @@ func TestGetTag(t *testing.T) {
 		Filters: getTagFilters,
 	}
 
-	var output gosn.Items
+	var output items.Items
 	output, err = getTagConfig.Run()
 	require.NoError(t, err)
 	require.EqualValues(t, len(output), 2, "expected two items but got: %+v", output)
@@ -144,14 +144,14 @@ func TestTaggingOfNotes(t *testing.T) {
 	err = tni.Run()
 	require.NoError(t, err)
 
-	filterNotesByTagName := gosn.Filter{
+	filterNotesByTagName := items.Filter{
 		Type:       "Note",
 		Key:        "TagTitle",
 		Comparison: "==",
 		Value:      "testTag",
 	}
-	itemFilters := gosn.ItemFilters{
-		Filters:  []gosn.Filter{filterNotesByTagName},
+	itemFilters := items.ItemFilters{
+		Filters:  []items.Filter{filterNotesByTagName},
 		MatchAny: true,
 	}
 	gnc := GetNoteConfig{
@@ -159,7 +159,7 @@ func TestTaggingOfNotes(t *testing.T) {
 		Filters: itemFilters,
 	}
 
-	var retNotes gosn.Items
+	var retNotes items.Items
 	retNotes, err = gnc.Run()
 	require.NoError(t, err)
 

@@ -3,8 +3,8 @@ package sncli
 import (
 	"strings"
 
-	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/items"
 )
 
 type tagNotesInput struct {
@@ -35,14 +35,14 @@ func tagNotes(i tagNotesInput) (err error) {
 	}
 
 	// get notes and tags
-	getNotesFilter := gosn.Filter{
+	getNotesFilter := items.Filter{
 		Type: "Note",
 	}
-	getTagsFilter := gosn.Filter{
+	getTagsFilter := items.Filter{
 		Type: "Tag",
 	}
-	filters := []gosn.Filter{getNotesFilter, getTagsFilter}
-	itemFilter := gosn.ItemFilters{
+	filters := []items.Filter{getNotesFilter, getTagsFilter}
+	itemFilter := items.ItemFilters{
 		MatchAny: true,
 		Filters:  filters,
 	}
@@ -64,31 +64,31 @@ func tagNotes(i tagNotesInput) (err error) {
 		return
 	}
 
-	var items gosn.Items
+	var gItems items.Items
 
-	items, err = allPersistedItems.ToItems(i.session)
+	gItems, err = allPersistedItems.ToItems(i.session)
 	if err != nil {
 		return
 	}
 
-	items.Filter(itemFilter)
+	gItems.Filter(itemFilter)
 
-	var allTags []*gosn.Tag
+	var allTags []*items.Tag
 
-	var allNotes []*gosn.Note
+	var allNotes []*items.Note
 	// create slices of notes and tags
 
-	for _, item := range items {
+	for _, item := range gItems {
 		if item.IsDeleted() {
 			continue
 		}
 
 		if item.GetContentType() == "Tag" {
-			allTags = append(allTags, item.(*gosn.Tag))
+			allTags = append(allTags, item.(*items.Tag))
 		}
 
 		if item.GetContentType() == "Note" {
-			allNotes = append(allNotes, item.(*gosn.Note))
+			allNotes = append(allNotes, item.(*items.Note))
 		}
 	}
 
@@ -108,7 +108,7 @@ func tagNotes(i tagNotesInput) (err error) {
 
 	// update existing (and just created) tags to reference matching uuids
 	// determine which TAGS need updating and create list to sync back to server
-	var tagsToPush gosn.Tags
+	var tagsToPush items.Tags
 
 	for _, t := range allTags {
 		// if tag title is in ones to add then update tag with new references
@@ -189,7 +189,7 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	var ato addTagsOutput
 	ato, err = addTags(ati)
 	if err != nil {
-		return
+		return AddTagsOutput{}, err
 	}
 
 	output.Added = ato.added
@@ -211,7 +211,7 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	return output, err
 }
 
-func (i *GetTagConfig) Run() (items gosn.Items, err error) {
+func (i *GetTagConfig) Run() (items items.Items, err error) {
 	var so cache.SyncOutput
 
 	si := cache.SyncInput{
@@ -220,7 +220,7 @@ func (i *GetTagConfig) Run() (items gosn.Items, err error) {
 
 	so, err = Sync(si, true)
 	if err != nil {
-		return
+		return items, err
 	}
 
 	var allPersistedItems cache.Items
@@ -251,11 +251,11 @@ func (i *DeleteTagConfig) Run() (noDeleted int, err error) {
 }
 
 func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (noDeleted int, err error) {
-	deleteTagsFilter := gosn.Filter{
+	deleteTagsFilter := items.Filter{
 		Type: "Tag",
 	}
-	filters := []gosn.Filter{deleteTagsFilter}
-	deleteFilter := gosn.ItemFilters{
+	filters := []items.Filter{deleteTagsFilter}
+	deleteFilter := items.ItemFilters{
 		MatchAny: true,
 		Filters:  filters,
 	}
@@ -276,7 +276,7 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 		_ = so.DB.Close()
 	}()
 
-	var tags gosn.Items
+	var tags items.Items
 
 	// get items from db
 	var allPersistedItems cache.Items
@@ -286,26 +286,26 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 		return
 	}
 
-	var items gosn.Items
+	var gItems items.Items
 
-	items, err = allPersistedItems.ToItems(session)
+	gItems, err = allPersistedItems.ToItems(session)
 	if err != nil {
 		return
 	}
 
-	tags = items
+	tags = gItems
 	tags.Filter(deleteFilter)
 
-	var tagsToDelete gosn.Items
+	var tagsToDelete items.Items
 
 	for _, tag := range tags {
 		if tag.IsDeleted() {
 			continue
 		}
 
-		var gTag *gosn.Tag
+		var gTag *items.Tag
 		if tag.GetContentType() == "Tag" {
-			gTag = tag.(*gosn.Tag)
+			gTag = tag.(*items.Tag)
 		} else {
 			continue
 		}
@@ -317,7 +317,7 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 		}
 	}
 
-	var eTagsToDelete gosn.EncryptedItems
+	var eTagsToDelete items.EncryptedItems
 
 	eTagsToDelete, err = tagsToDelete.Encrypt(session.Session, session.DefaultItemsKey)
 	if err != nil {
@@ -358,13 +358,13 @@ type addTagsOutput struct {
 
 func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	// get all tags
-	addTagsFilter := gosn.Filter{
+	addTagsFilter := items.Filter{
 		Type: "Tag",
 	}
 
-	filters := []gosn.Filter{addTagsFilter}
+	filters := []items.Filter{addTagsFilter}
 
-	addFilter := gosn.ItemFilters{
+	addFilter := items.ItemFilters{
 		MatchAny: true,
 		Filters:  filters,
 	}
@@ -386,8 +386,8 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		return
 	}
 
-	var items gosn.Items
-	items, err = allPersistedItems.ToItems(ati.session)
+	var gItems items.Items
+	gItems, err = allPersistedItems.ToItems(ati.session)
 	if err != nil {
 		return
 	}
@@ -396,22 +396,22 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		return
 	}
 
-	items.Filter(addFilter)
+	gItems.Filter(addFilter)
 
-	var allTags gosn.Tags
+	var allTags items.Tags
 
-	for _, item := range items {
+	for _, item := range gItems {
 		if item.IsDeleted() {
 			continue
 		}
 
 		if item.GetContentType() == "Tag" {
-			tag := item.(*gosn.Tag)
+			tag := item.(*items.Tag)
 			allTags = append(allTags, *tag)
 		}
 	}
 
-	var tagsToAdd gosn.Tags
+	var tagsToAdd items.Tags
 
 	for _, tag := range ati.tagTitles {
 		if tagExists(allTags, tag) {
@@ -419,7 +419,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 			continue
 		}
 
-		newTag, _ := gosn.NewTag(tag, nil)
+		newTag, _ := items.NewTag(tag, nil)
 
 		tagsToAdd = append(tagsToAdd, newTag)
 		ato.added = append(ato.added, tag)
@@ -431,7 +431,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 			return
 		}
 
-		var eTagsToAdd gosn.EncryptedItems
+		var eTagsToAdd items.EncryptedItems
 
 		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Gosn())
 		if err != nil {
@@ -457,16 +457,16 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	return ato, err
 }
 
-func upsertTagReferences(tag gosn.Tag, typeUUIDs map[string][]string) (gosn.Tag, bool) {
+func upsertTagReferences(tag items.Tag, typeUUIDs map[string][]string) (items.Tag, bool) {
 	// create item reference
-	var newReferences []gosn.ItemReference
+	var newReferences []items.ItemReference
 
 	var changed bool
 
 	for k, v := range typeUUIDs {
 		for _, ref := range v {
 			if !referenceExists(tag, ref) {
-				newReferences = append(newReferences, gosn.ItemReference{
+				newReferences = append(newReferences, items.ItemReference{
 					ContentType: k,
 					UUID:        ref,
 				})
@@ -484,7 +484,7 @@ func upsertTagReferences(tag gosn.Tag, typeUUIDs map[string][]string) (gosn.Tag,
 	return tag, changed
 }
 
-func tagExists(existing []gosn.Tag, find string) bool {
+func tagExists(existing []items.Tag, find string) bool {
 	for _, tag := range existing {
 		if tag.Content.GetTitle() == find {
 			return true

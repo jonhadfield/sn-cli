@@ -12,8 +12,8 @@ package sncli
 // 	require.NotEmpty(t, ik.CreatedAtTimestamp)
 // 	require.Empty(t, ik.UpdatedAtTimestamp)
 // 	require.Empty(t, ik.UpdatedAt)
-// 	n, _ := gosn.NewNote("test title", "test content", nil)
-// 	eis := gosn.Items{&n}
+// 	n, _ := items.NewNote("test title", "test content", nil)
+// 	eis := items.Items{&n}
 // 	encItems, err := eis.Encrypt(testSession.Session, ik)
 // 	require.NoError(t, err)
 // 	require.NotEmpty(t, encItems[0].UUID)
@@ -25,8 +25,8 @@ package sncli
 // 	require.Empty(t, encItems[0].DuplicateOf)
 //
 // 	testSession.ItemsKeys = append(testSession.Session.ItemsKeys, ik)
-// 	di, err := gosn.DecryptItems(testSession.Session, encItems, gosn.ItemsKeys{})
-// 	// di, err := encItems.Decrypt(testSession.Session, gosn.ItemsKeys{})
+// 	di, err := gosn.DecryptItems(testSession.Session, encItems, items.ItemsKeys{})
+// 	// di, err := encItems.Decrypt(testSession.Session, items.ItemsKeys{})
 //
 // 	require.NoError(t, err)
 // 	require.NotEmpty(t, di)
@@ -36,11 +36,11 @@ package sncli
 // 	require.NoError(t, err)
 // 	require.Greater(t, len(pi), 0)
 //
-// 	var dn gosn.Note
+// 	var dn items.Note
 //
 // 	for x := range pi {
 // 		if pi[x].GetContentType() == "Note" {
-// 			dn = *pi[x].(*gosn.Note)
+// 			dn = *pi[x].(*items.Note)
 //
 // 		}
 // 	}
@@ -99,9 +99,9 @@ package sncli
 // 	allCacheItemsPreExport := len(existingItems)
 // 	allItemsKeysPreExport := len(testSession.ItemsKeys)
 //
-// 	note, _ := gosn.NewNote("Example Title", "Some example text", nil)
+// 	note, _ := items.NewNote("Example Title", "Some example text", nil)
 //
-// 	itemsToPut := gosn.Items{
+// 	itemsToPut := items.Items{
 // 		&note,
 // 	}
 // 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
@@ -201,9 +201,9 @@ package sncli
 // 	var existingItems []cache.Item
 // 	err = gio.DB.All(&existingItems)
 // 	require.NoError(t, err)
-// 	note, _ := gosn.NewNote("Example Title", "Some example text", nil)
+// 	note, _ := items.NewNote("Example Title", "Some example text", nil)
 //
-// 	itemsToPut := gosn.Items{
+// 	itemsToPut := items.Items{
 // 		&note,
 // 	}
 // 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
@@ -299,7 +299,7 @@ package sncli
 // 	itd, err := citd.ToItems(testSession)
 // 	require.NoError(t, err)
 // 	require.Len(t, itd, 1)
-// 	dn := itd[0].(*gosn.Note)
+// 	dn := itd[0].(*items.Note)
 // 	require.Equal(t, dn.Content.Title, note.Content.Title)
 // 	require.Equal(t, dn.Content.Text, note.Content.Text)
 // }
@@ -311,8 +311,8 @@ package sncli
 // 	defer cleanUp(*testSession)
 //
 // 	// create and put initial originalNote
-// 	originalNote, _ := gosn.NewNote("Example Title", "Some example text", nil)
-// 	itemsToPut := gosn.Items{
+// 	originalNote, _ := items.NewNote("Example Title", "Some example text", nil)
+// 	itemsToPut := items.Items{
 // 		&originalNote,
 // 	}
 //
@@ -358,7 +358,7 @@ package sncli
 // 	updatedNote.Content.SetTitle("Example Title UPDATED")
 // 	updatedNote.Content.SetText("Some example text UPDATED")
 //
-// 	itemsToPut = gosn.Items{
+// 	itemsToPut = items.Items{
 // 		&updatedNote,
 // 	}
 //
@@ -403,9 +403,9 @@ package sncli
 // 	defer cleanUp(*testSession)
 //
 // 	// create and put initial originalTag
-// 	originalTag, err := gosn.NewTag("Example Title", nil)
+// 	originalTag, err := items.NewTag("Example Title", nil)
 //
-// 	itemsToPut := gosn.Items{
+// 	itemsToPut := items.Items{
 // 		&originalTag,
 // 	}
 // 	encItemsToPut, err := itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
@@ -458,7 +458,7 @@ package sncli
 // 	// change initial originalTag and re-put
 // 	updatedTag := originalTag.Copy()
 // 	updatedTag.Content.SetTitle("Example Title UPDATED")
-// 	itemsToPut = gosn.Items{
+// 	itemsToPut = items.Items{
 // 		&updatedTag,
 // 	}
 // 	encItemsToPut, err = itemsToPut.Encrypt(testSession.Session, testSession.DefaultItemsKey)
@@ -506,7 +506,7 @@ package sncli
 // 	require.NoError(t, gio.DB.All(&cItems))
 // 	require.NoError(t, gio.DB.Close())
 //
-// 	var gItems gosn.Items
+// 	var gItems items.Items
 // 	gItems, err = cItems.ToItems(testSession)
 //
 // 	require.NoError(t, err)
@@ -515,7 +515,7 @@ package sncli
 //
 // 	for _, i := range gItems {
 // 		if i.GetContentType() == "Tag" {
-// 			if i.(*gosn.Tag).Equals(originalTag) {
+// 			if i.(*items.Tag).Equals(originalTag) {
 // 				found = true
 // 			}
 // 		}
@@ -538,8 +538,8 @@ package sncli
 // 	require.NoError(t, err)
 //
 // 	// create and put originalTag
-// 	originalTag, _ := gosn.NewTag("Example Title", nil)
-// 	itemsToPut := gosn.Items{
+// 	originalTag, _ := items.NewTag("Example Title", nil)
+// 	itemsToPut := items.Items{
 // 		&originalTag,
 // 	}
 //
@@ -602,7 +602,7 @@ package sncli
 // 	itd := dItems[0]
 // 	itd.SetDeleted(true)
 //
-// 	itemsToPut = gosn.Items{
+// 	itemsToPut = items.Items{
 // 		itd,
 // 	}
 //
@@ -646,7 +646,7 @@ package sncli
 //
 // 	require.NoError(t, gio.DB.Close())
 //
-// 	var gItems gosn.Items
+// 	var gItems items.Items
 // 	gItems, err = cItems.ToItems(testSession)
 //
 // 	require.NoError(t, err)

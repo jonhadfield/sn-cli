@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/jonhadfield/gosn-v2 v0.0.0-20231207170939-dd07972e746d
+	github.com/jonhadfield/gosn-v2 v0.0.0-20231211221432-ebc6ca6dee6e
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/viper v1.18.0
 	github.com/stretchr/testify v1.8.4
@@ -48,6 +48,8 @@ require (
 require (
 	github.com/alessio/shellescape v1.4.2 // indirect
 	github.com/google/uuid v1.4.0 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect

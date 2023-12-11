@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/term"
 	"os"
 	"sort"
 	"strconv"
@@ -12,11 +12,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/jonhadfield/gosn-v2/session"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
+	"golang.org/x/term"
 	"gopkg.in/yaml.v2"
 )
 
@@ -76,7 +78,6 @@ func getOpts(c *cli.Context) (out configOptsOutput, err error) {
 
 	if viper.GetString("server") != "" {
 		out.server = viper.GetString("server")
-
 	}
 
 	out.cacheDBDir = viper.GetString("cachedb_dir")
@@ -413,6 +414,37 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						return err
 					},
 				},
+				{
+					Name:  "item",
+					Usage: "delete any standard notes item",
+					BashComplete: func(c *cli.Context) {
+						delNoteOpts := []string{"--uuid"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, t := range delNoteOpts {
+							fmt.Println(t)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "uuid",
+							Usage: "unique id of item to delete (separate multiple with commas)",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
+						}
+
+						useStdOut = opts.useStdOut
+
+						msg, err = processDeleteItems(c, opts)
+
+						return err
+					},
+				},
 			},
 		},
 		{
@@ -504,43 +536,43 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 
 						count := c.Bool("count")
 
-						getSettingssIF := gosn.ItemFilters{
+						getSettingssIF := items.ItemFilters{
 							MatchAny: matchAny,
-							Filters: []gosn.Filter{
+							Filters: []items.Filter{
 								{Type: "Setting"},
 							},
 						}
 
-						session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+						sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 						if err != nil {
 							return err
 						}
-						ss := session.Gosn()
+						ss := sess.Gosn()
 						// sync to get keys
-						gsi := gosn.SyncInput{
+						gsi := items.SyncInput{
 							Session: &ss,
 						}
-						_, err = gosn.Sync(gsi)
+						_, err = items.Sync(gsi)
 						if err != nil {
 							return err
 						}
 						var cacheDBPath string
-						cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+						cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 						if err != nil {
 							return err
 						}
 
-						session.CacheDBPath = cacheDBPath
+						sess.CacheDBPath = cacheDBPath
 
 						// TODO: validate output
 						output := c.String("output")
 						appGetSettingsConfig := sncli.GetSettingsConfig{
-							Session: &session,
+							Session: &sess,
 							Filters: getSettingssIF,
 							Output:  output,
 							Debug:   opts.debug,
 						}
-						var rawSettings gosn.Items
+						var rawSettings items.Items
 						rawSettings, err = appGetSettingsConfig.Run()
 						if err != nil {
 							return err
@@ -552,46 +584,46 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 							numResults++
 							if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 								tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
-									ClientUpdatedAt: rt.(*gosn.Component).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*items.Component).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								tagContentAppDataContent := sncli.AppDataContentYAML{
 									OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailYAML,
 								}
 
 								settingContentYAML := sncli.SettingContentYAML{
-									Title:          rt.(*gosn.Component).Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Component).Content.References()),
+									Title:          rt.(*items.Component).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToYaml(rt.(*items.Component).Content.References()),
 									AppData:        tagContentAppDataContent,
 								}
 
 								settingsYAML = append(settingsYAML, sncli.SettingYAML{
-									UUID:        rt.(*gosn.Component).UUID,
-									ContentType: rt.(*gosn.Component).ContentType,
+									UUID:        rt.(*items.Component).UUID,
+									ContentType: rt.(*items.Component).ContentType,
 									Content:     settingContentYAML,
-									UpdatedAt:   rt.(*gosn.Component).UpdatedAt,
-									CreatedAt:   rt.(*gosn.Component).CreatedAt,
+									UpdatedAt:   rt.(*items.Component).UpdatedAt,
+									CreatedAt:   rt.(*items.Component).CreatedAt,
 								})
 							}
 							if !count && strings.ToLower(output) == "json" {
 								settingContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-									ClientUpdatedAt: rt.(*gosn.Component).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+									ClientUpdatedAt: rt.(*items.Component).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 								}
 								settingContentAppDataContent := sncli.AppDataContentJSON{
 									OrgStandardNotesSN: settingContentOrgStandardNotesSNDetailJSON,
 								}
 
 								settingContentJSON := sncli.SettingContentJSON{
-									Title:          rt.(*gosn.Component).Content.GetTitle(),
-									ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Component).Content.References()),
+									Title:          rt.(*items.Component).Content.GetTitle(),
+									ItemReferences: sncli.ItemRefsToJSON(rt.(*items.Component).Content.References()),
 									AppData:        settingContentAppDataContent,
 								}
 
 								settingsJSON = append(settingsJSON, sncli.SettingJSON{
-									UUID:        rt.(*gosn.Component).UUID,
-									ContentType: rt.(*gosn.Component).ContentType,
+									UUID:        rt.(*items.Component).UUID,
+									ContentType: rt.(*items.Component).ContentType,
 									Content:     settingContentJSON,
-									UpdatedAt:   rt.(*gosn.Component).UpdatedAt,
-									CreatedAt:   rt.(*gosn.Component).CreatedAt,
+									UpdatedAt:   rt.(*items.Component).UpdatedAt,
+									CreatedAt:   rt.(*items.Component).CreatedAt,
 								})
 							}
 						}
@@ -759,127 +791,127 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				},
 			},
 		},
-		{
-			Name:   "export",
-			Usage:  "export data",
-			Hidden: true,
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "path",
-					Usage: "choose directory to place export in (default: current directory)",
-				},
-			},
-			Action: func(c *cli.Context) error {
-				var opts configOptsOutput
-				opts, err = getOpts(c)
-				if err != nil {
-					return err
-				}
-				useStdOut = opts.useStdOut
-
-				outputPath := strings.TrimSpace(c.String("output"))
-				if outputPath == "" {
-					outputPath, err = os.Getwd()
-					if err != nil {
-						return err
-					}
-				}
-
-				timeStamp := time.Now().UTC().Format("20060102150405")
-				filePath := fmt.Sprintf("standard_notes_export_%s.json", timeStamp)
-				outputPath += string(os.PathSeparator) + filePath
-
-				var sess cache.Session
-				sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
-				if err != nil {
-					return err
-				}
-
-				var cacheDBPath string
-				cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
-				if err != nil {
-					return err
-				}
-
-				sess.Debug = opts.debug
-
-				sess.CacheDBPath = cacheDBPath
-				appExportConfig := sncli.ExportConfig{
-					Session:   &sess,
-					Decrypted: c.Bool("decrypted"),
-					File:      outputPath,
-				}
-				err = appExportConfig.Run()
-				if err == nil {
-					msg = fmt.Sprintf("encrypted export written to: %s", outputPath)
-				}
-
-				return err
-			},
-		},
-		{
-			Name:   "import",
-			Usage:  "import data",
-			Hidden: true,
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "file",
-					Usage: "path of file to import",
-				},
-				cli.BoolFlag{
-					Name:  "experiment",
-					Usage: "test import functionality - only use after taking backup as this is experimental",
-				},
-			},
-			Action: func(c *cli.Context) error {
-				var opts configOptsOutput
-				opts, err = getOpts(c)
-				if err != nil {
-					return err
-				}
-
-				useStdOut = opts.useStdOut
-
-				inputPath := strings.TrimSpace(c.String("file"))
-				if inputPath == "" {
-					return errors.New("please specify path using --file")
-				}
-
-				if !c.Bool("experiment") {
-					fmt.Printf("\nWARNING: The import functionality is currently for testing only\nDo not use unless you have a backup of your data and intend to restore after testing\nTo proceed run the command with flag --experiment\n")
-					return nil
-				}
-
-				var session cache.Session
-				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
-				if err != nil {
-					return err
-				}
-
-				session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
-				if err != nil {
-					return err
-				}
-
-				appImportConfig := sncli.ImportConfig{
-					Session:   &session,
-					File:      inputPath,
-					Format:    c.String("format"),
-					Debug:     opts.debug,
-					UseStdOut: opts.useStdOut,
-				}
-
-				var imported int
-				imported, err = appImportConfig.Run()
-				if err == nil {
-					msg = fmt.Sprintf("imported %d items", imported)
-				} else {
-					msg = "import failed"
-				}
-
-				return err
-			},
-		},
+		// {
+		// 	Name:   "export",
+		// 	Usage:  "export data",
+		// 	Hidden: true,
+		// 	Flags: []cli.Flag{
+		// 		cli.StringFlag{
+		// 			Name:  "path",
+		// 			Usage: "choose directory to place export in (default: current directory)",
+		// 		},
+		// 	},
+		// 	Action: func(c *cli.Context) error {
+		// 		var opts configOptsOutput
+		// 		opts, err = getOpts(c)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		// 		useStdOut = opts.useStdOut
+		//
+		// 		outputPath := strings.TrimSpace(c.String("output"))
+		// 		if outputPath == "" {
+		// 			outputPath, err = os.Getwd()
+		// 			if err != nil {
+		// 				return err
+		// 			}
+		// 		}
+		//
+		// 		timeStamp := time.Now().UTC().Format("20060102150405")
+		// 		filePath := fmt.Sprintf("standard_notes_export_%s.json", timeStamp)
+		// 		outputPath += string(os.PathSeparator) + filePath
+		//
+		// 		var sess cache.Session
+		// 		sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		//
+		// 		var cacheDBPath string
+		// 		cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		//
+		// 		sess.Debug = opts.debug
+		//
+		// 		sess.CacheDBPath = cacheDBPath
+		// 		appExportConfig := sncli.ExportConfig{
+		// 			Session:   &sess,
+		// 			Decrypted: c.Bool("decrypted"),
+		// 			File:      outputPath,
+		// 		}
+		// 		err = appExportConfig.Run()
+		// 		if err == nil {
+		// 			msg = fmt.Sprintf("encrypted export written to: %s", outputPath)
+		// 		}
+		//
+		// 		return err
+		// 	},
+		// },
+		// {
+		// 	Name:   "import",
+		// 	Usage:  "import data",
+		// 	Hidden: true,
+		// 	Flags: []cli.Flag{
+		// 		cli.StringFlag{
+		// 			Name:  "file",
+		// 			Usage: "path of file to import",
+		// 		},
+		// 		cli.BoolFlag{
+		// 			Name:  "experiment",
+		// 			Usage: "test import functionality - only use after taking backup as this is experimental",
+		// 		},
+		// 	},
+		// 	Action: func(c *cli.Context) error {
+		// 		var opts configOptsOutput
+		// 		opts, err = getOpts(c)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		//
+		// 		useStdOut = opts.useStdOut
+		//
+		// 		inputPath := strings.TrimSpace(c.String("file"))
+		// 		if inputPath == "" {
+		// 			return errors.New("please specify path using --file")
+		// 		}
+		//
+		// 		if !c.Bool("experiment") {
+		// 			fmt.Printf("\nWARNING: The import functionality is currently for testing only\nDo not use unless you have a backup of your data and intend to restore after testing\nTo proceed run the command with flag --experiment\n")
+		// 			return nil
+		// 		}
+		//
+		// 		var session cache.Session
+		// 		session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		//
+		// 		session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		//
+		// 		appImportConfig := sncli.ImportConfig{
+		// 			Session:   &session,
+		// 			File:      inputPath,
+		// 			Format:    c.String("format"),
+		// 			Debug:     opts.debug,
+		// 			UseStdOut: opts.useStdOut,
+		// 		}
+		//
+		// 		var imported int
+		// 		imported, err = appImportConfig.Run()
+		// 		if err == nil {
+		// 			msg = fmt.Sprintf("imported %d items", imported)
+		// 		} else {
+		// 			msg = "import failed"
+		// 		}
+		//
+		// 		return err
+		// 	},
+		// },
 		{
 			Name:  "register",
 			Usage: "register a new user",
@@ -959,17 +991,17 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if err != nil {
 					return err
 				}
-				var session cache.Session
-				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+				var sess cache.Session
+				sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 				if err != nil {
 					return err
 				}
-				session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+				sess.CacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
 				statsConfig := sncli.StatsConfig{
-					Session: session,
+					Session: sess,
 				}
 
 				return statsConfig.Run()
@@ -996,21 +1028,21 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				}
 				useStdOut = opts.useStdOut
 
-				var session cache.Session
-				session, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+				var cacheSession cache.Session
+				cacheSession, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 				if err != nil {
 					return err
 				}
 
 				var cacheDBPath string
-				cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
+				cacheDBPath, err = cache.GenCacheDBPath(cacheSession, opts.cacheDBDir, snAppName)
 				if err != nil {
 					return err
 				}
 
-				session.CacheDBPath = cacheDBPath
+				cacheSession.CacheDBPath = cacheDBPath
 				wipeConfig := sncli.WipeConfig{
-					Session:    &session,
+					Session:    &cacheSession,
 					UseStdOut:  useStdOut,
 					Everything: c.Bool("everything"),
 					Debug:      opts.debug,
@@ -1021,7 +1053,7 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 				if c.Bool("yes") {
 					proceed = true
 				} else {
-					fmt.Printf("wipe all items for account %s? ", session.Session.KeyParams.Identifier)
+					fmt.Printf("wipe all items for account %s? ", cacheSession.Session.KeyParams.Identifier)
 					var input string
 					_, err = fmt.Scanln(&input)
 					if err == nil && sncli.StringInSlice(input, []string{"y", "yes"}, false) {
@@ -1118,15 +1150,15 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						}
 						useStdOut = opts.useStdOut
 
-						var session gosn.Session
+						var sess session.Session
 
-						session, _, err = gosn.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+						sess, _, err = session.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 
 						if err != nil {
 							return err
 						}
 						err = sncli.ItemKeysHealthcheck(sncli.ItemsKeysHealthcheckInput{
-							Session:       session,
+							Session:       sess,
 							UseStdOut:     useStdOut,
 							DeleteInvalid: c.Bool("delete-invalid"),
 						})
@@ -1183,15 +1215,15 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						}
 						useStdOut = opts.useStdOut
 
-						var session gosn.Session
+						var sess session.Session
 
-						session, _, err = gosn.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+						sess, _, err = session.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 						if err != nil {
 							return err
 						}
 						var res string
 						res, err = sncli.DecryptString(sncli.DecryptStringInput{
-							Session:   session,
+							Session:   sess,
 							UseStdOut: useStdOut,
 							Key:       c.String("key"),
 							In:        str,
@@ -1231,15 +1263,15 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						}
 						useStdOut = opts.useStdOut
 
-						var session gosn.Session
+						var sess session.Session
 
-						session, _, err = gosn.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+						sess, _, err = session.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 
 						if err != nil {
 							return err
 						}
 						err = sncli.OutputSession(sncli.OutputSessionInput{
-							Session:         session,
+							Session:         sess,
 							UseStdOut:       useStdOut,
 							OutputMasterKey: c.Bool("master-key"),
 						})
@@ -1247,38 +1279,38 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 						return err
 					},
 				},
-				{
-					Name:  "create-itemskey",
-					Usage: "creates and displays an items key without syncing",
-					BashComplete: func(c *cli.Context) {
-						hcKeysOpts := []string{"--master-key"}
-						if c.NArg() > 0 {
-							return
-						}
-						for _, ano := range hcKeysOpts {
-							fmt.Println(ano)
-						}
-					},
-					Flags: []cli.Flag{
-						cli.StringFlag{
-							Name:  "master-key",
-							Usage: "master key to encrypt the encrypted item key with",
-						},
-					},
-					Action: func(c *cli.Context) error {
-						var opts configOptsOutput
-						opts, err = getOpts(c)
-						if err != nil {
-							return err
-						}
-						useStdOut = opts.useStdOut
-
-						return sncli.CreateItemsKey(sncli.CreateItemsKeyInput{
-							Debug:     opts.debug,
-							MasterKey: c.String("master-key"),
-						})
-					},
-				},
+				// {
+				// 	Name:  "create-itemskey",
+				// 	Usage: "creates and displays an items key without syncing",
+				// 	BashComplete: func(c *cli.Context) {
+				// 		hcKeysOpts := []string{"--master-key"}
+				// 		if c.NArg() > 0 {
+				// 			return
+				// 		}
+				// 		for _, ano := range hcKeysOpts {
+				// 			fmt.Println(ano)
+				// 		}
+				// 	},
+				// 	Flags: []cli.Flag{
+				// 		cli.StringFlag{
+				// 			Name:  "master-key",
+				// 			Usage: "master key to encrypt the encrypted item key with",
+				// 		},
+				// 	},
+				// 	Action: func(c *cli.Context) error {
+				// 		var opts configOptsOutput
+				// 		opts, err = getOpts(c)
+				// 		if err != nil {
+				// 			return err
+				// 		}
+				// 		useStdOut = opts.useStdOut
+				//
+				// 		return sncli.CreateItemsKey(sncli.CreateItemsKeyInput{
+				// 			Debug:     opts.debug,
+				// 			MasterKey: c.String("master-key"),
+				// 		})
+				// 	},
+				// },
 			},
 		},
 	}
@@ -1296,7 +1328,7 @@ func getPassword() (res string, err error) {
 			return
 		}
 
-		if len(string(bytePassword)) < sncli.MinPasswordLength {
+		if len(bytePassword) < sncli.MinPasswordLength {
 			err = fmt.Errorf("\rpassword must be at least %d characters", sncli.MinPasswordLength)
 
 			return
@@ -1305,11 +1337,10 @@ func getPassword() (res string, err error) {
 		var bytePassword2 []byte
 		fmt.Printf("\rconfirm password: ")
 		if bytePassword2, err = term.ReadPassword(int(syscall.Stdin)); err != nil {
-
 			return
 		}
 
-		if string(bytePassword) != string(bytePassword2) {
+		if !bytes.Equal(bytePassword, bytePassword2) {
 			fmt.Printf("\rpasswords do not match")
 			fmt.Println()
 
@@ -1323,7 +1354,6 @@ func getPassword() (res string, err error) {
 			return
 		}
 	}
-
 }
 
 func numTrue(in ...bool) (total int) {

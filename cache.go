@@ -3,8 +3,9 @@ package sncli
 import (
 	"errors"
 	"fmt"
-	"github.com/jonhadfield/gosn-v2/cache"
 	"os"
+
+	"github.com/jonhadfield/gosn-v2/cache"
 )
 
 func Resync(s *cache.Session, cacheDBDir, appName string) error {

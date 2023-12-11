@@ -1,8 +1,6 @@
 package sncli
 
-import (
-	"github.com/jonhadfield/gosn-v2"
-)
+import "github.com/jonhadfield/gosn-v2/auth"
 
 type RegisterConfig struct {
 	Email     string
@@ -12,7 +10,7 @@ type RegisterConfig struct {
 }
 
 func (i *RegisterConfig) Run() error {
-	registerInput := gosn.RegisterInput{
+	registerInput := auth.RegisterInput{
 		Email:     i.Email,
 		Password:  i.Password,
 		APIServer: i.APIServer,

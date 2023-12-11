@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/items"
 )
 
 func StringInSlice(inStr string, inSlice []string, matchCase bool) bool {
@@ -63,7 +63,7 @@ type EncryptedItemExport struct {
 	DuplicateOf        *string `json:"duplicate_of"`
 }
 
-func writeJSON(i ExportConfig, items gosn.EncryptedItems) error {
+func writeJSON(i ExportConfig, items items.EncryptedItems) error {
 	// prepare for export
 	var itemsExport []EncryptedItemExport
 	for x := range items {
@@ -80,7 +80,6 @@ func writeJSON(i ExportConfig, items gosn.EncryptedItems) error {
 			UpdatedAtTimestamp: items[x].UpdatedAtTimestamp,
 			DuplicateOf:        items[x].DuplicateOf,
 		})
-
 	}
 
 	file, err := os.Create(i.File)
@@ -98,7 +97,7 @@ func writeJSON(i ExportConfig, items gosn.EncryptedItems) error {
 	content := strings.Builder{}
 	content.WriteString("{\n  \"version\": \"004\",")
 	content.WriteString("\n  \"items\": ")
-	content.WriteString(string(jsonExport))
+	content.Write(jsonExport)
 	content.WriteString(",")
 
 	// add keyParams
@@ -129,10 +128,10 @@ func readGob(filePath string, object interface{}) error {
 }
 
 type EncryptedItemsFile struct {
-	Items gosn.EncryptedItems `json:"items"`
+	Items items.EncryptedItems `json:"items"`
 }
 
-func readJSON(filePath string) (items gosn.EncryptedItems, err error) {
+func readJSON(filePath string) (items items.EncryptedItems, err error) {
 	file, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		err = fmt.Errorf("%w failed to open: %s", err, filePath)
@@ -150,7 +149,7 @@ func readJSON(filePath string) (items gosn.EncryptedItems, err error) {
 	return eif.Items, err
 }
 
-func ItemRefsToYaml(irs []gosn.ItemReference) []ItemReferenceYAML {
+func ItemRefsToYaml(irs []items.ItemReference) []ItemReferenceYAML {
 	var iRefs []ItemReferenceYAML
 
 	for _, ref := range irs {
@@ -164,7 +163,7 @@ func ItemRefsToYaml(irs []gosn.ItemReference) []ItemReferenceYAML {
 	return iRefs
 }
 
-func ItemRefsToJSON(irs []gosn.ItemReference) []ItemReferenceJSON {
+func ItemRefsToJSON(irs []items.ItemReference) []ItemReferenceJSON {
 	var iRefs []ItemReferenceJSON
 
 	for _, ref := range irs {
@@ -198,7 +197,7 @@ func CommaSplit(i string) []string {
 	return s
 }
 
-func RemoveDeleted(in gosn.Items) (out gosn.Items) {
+func RemoveDeleted(in items.Items) (out items.Items) {
 	for _, i := range in {
 		if !i.IsDeleted() {
 			out = append(out, i)

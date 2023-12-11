@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/jonhadfield/gosn-v2/session"
 )
 
 var testParas = []string{
@@ -76,18 +77,18 @@ func genRandomText(paragraphs int) string {
 	return strBuilder.String()
 }
 
-func genNotes(num, textParas int) (notes gosn.Items) {
+func genNotes(num, textParas int) (notes items.Items) {
 	for i := 1; i <= num; i++ {
-		note, _ := gosn.NewNote(fmt.Sprintf("%d.%s", i, genRandomText(1)), genRandomText(textParas), nil)
+		note, _ := items.NewNote(fmt.Sprintf("%d.%s", i, genRandomText(1)), genRandomText(textParas), nil)
 		notes = append(notes, &note)
 	}
 
 	return notes
 }
 
-func genTags(num int64) (tags gosn.Items) {
+func genTags(num int64) (tags items.Items) {
 	for i := int64(1); i <= num; i++ {
-		tag, _ := gosn.NewTag(genRandomText(1), nil)
+		tag, _ := items.NewTag(genRandomText(1), nil)
 		tags = append(tags, &tag)
 	}
 
@@ -99,7 +100,7 @@ func createNotes(session *cache.Session, num int, paras int) error {
 	pii.Session = session
 	gendNotes := genNotes(num, paras)
 
-	var eGendNotes gosn.EncryptedItems
+	var eGendNotes items.EncryptedItems
 
 	var err error
 
@@ -138,19 +139,19 @@ func createNotes(session *cache.Session, num int, paras int) error {
 	return err
 }
 
-func createTags(session gosn.Session, num int64) error {
-	var pii gosn.SyncInput
+func createTags(session session.Session, num int64) error {
+	var pii items.SyncInput
 	pii.Session = &session
 	gendTags := genTags(num)
 
-	var eGendTags gosn.EncryptedItems
+	var eGendTags items.EncryptedItems
 	eGendTags, err := gendTags.Encrypt(&session, session.DefaultItemsKey)
 	if err != nil {
 		return err
 	}
 
 	pii.Items = eGendTags
-	_, err = gosn.Sync(pii)
+	_, err = items.Sync(pii)
 
 	return err
 }
@@ -163,7 +164,7 @@ type TestDataCreateNotesConfig struct {
 }
 
 type TestDataCreateTagsConfig struct {
-	Session gosn.Session
+	Session session.Session
 	NumTags int64
 	Debug   bool
 }

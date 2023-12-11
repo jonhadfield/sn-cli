@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/ryanuber/columnize"
 )
 
@@ -21,7 +21,7 @@ var (
 
 type stats struct {
 	oldestNote, newestNote, lastUpdatedNote time.Time
-	hasOrphanedRefs                         []gosn.Item
+	hasOrphanedRefs                         []items.Item
 }
 
 func (i *StatsConfig) Run() error {
@@ -43,13 +43,13 @@ func (i *StatsConfig) Run() error {
 		return err
 	}
 
-	var items gosn.Items
-	items, err = allPersistedItems.ToItems(&i.Session)
+	var gitems items.Items
+	gitems, err = allPersistedItems.ToItems(&i.Session)
 	if err != nil {
 		return err
 	}
 
-	var notes gosn.Items
+	var notes items.Items
 
 	var missingItemsKey []string
 
@@ -68,11 +68,11 @@ func (i *StatsConfig) Run() error {
 
 	tCounter.counts = make(map[string]int64)
 
-	for _, item := range items {
+	for _, item := range gitems {
 		// check if item is trashed note
 		var isTrashedNote bool
 		if item.GetContentType() == "Note" {
-			n := item.(*gosn.Note)
+			n := item.(*items.Note)
 			if n.Content.Trashed != nil && *n.Content.Trashed {
 				isTrashedNote = true
 			}
@@ -174,7 +174,7 @@ func (i *StatsConfig) Run() error {
 		}
 
 		for x := 0; x < finalItem; x++ {
-			note := notes[x].(*gosn.Note)
+			note := notes[x].(*items.Note)
 			fmt.Printf(" - %d bytes: \"%s\"\n", note.GetContentSize(), note.Content.Title)
 		}
 	} else {

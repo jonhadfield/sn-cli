@@ -10,14 +10,14 @@ import (
 	"strings"
 
 	"github.com/asdine/storm/v3/q"
-	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/items"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
 
-func getTagByUUID(sess *cache.Session, uuid string) (tag gosn.Tag, err error) {
+func getTagByUUID(sess *cache.Session, uuid string) (tag items.Tag, err error) {
 	if sess.CacheDBPath == "" {
 		return tag, errors.New("CacheDBPath missing from sess")
 	}
@@ -53,13 +53,13 @@ func getTagByUUID(sess *cache.Session, uuid string) (tag gosn.Tag, err error) {
 		return
 	}
 
-	var rawEncItems gosn.Items
+	var rawEncItems items.Items
 	rawEncItems, err = encTags.ToItems(sess)
 
-	return *rawEncItems[0].(*gosn.Tag), err
+	return *rawEncItems[0].(*items.Tag), err
 }
 
-func getTagsByTitle(sess cache.Session, title string) (tags gosn.Tags, err error) {
+func getTagsByTitle(sess cache.Session, title string) (tags items.Tags, err error) {
 	var so cache.SyncOutput
 
 	si := cache.SyncInput{
@@ -90,13 +90,13 @@ func getTagsByTitle(sess cache.Session, title string) (tags gosn.Tags, err error
 	}
 
 	// decrypt all tags
-	var allRawTags gosn.Items
+	var allRawTags items.Items
 	allRawTags, err = allEncTags.ToItems(&sess)
 
-	var matchingRawTags gosn.Tags
+	var matchingRawTags items.Tags
 
 	for _, rt := range allRawTags {
-		t := rt.(*gosn.Tag)
+		t := rt.(*items.Tag)
 		if t.Content.Title == title {
 			matchingRawTags = append(matchingRawTags, *t)
 		}
@@ -131,9 +131,9 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	sess.CacheDBPath = cacheDBPath
 
-	var tag gosn.Tag
+	var tag items.Tag
 
-	var tags gosn.Tags
+	var tags items.Tags
 
 	// if uuid was passed then retrieve tag from db using uuid
 	if inUUID != "" {
@@ -189,7 +189,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 		return
 	}
 
-	tags = gosn.Tags{tag}
+	tags = items.Tags{tag}
 
 	if err = cache.SaveTags(so.DB, &sess, tags, false); err != nil {
 		return
@@ -214,14 +214,14 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	regex := c.Bool("regex")
 	count := c.Bool("count")
 
-	getTagsIF := gosn.ItemFilters{
+	getTagsIF := items.ItemFilters{
 		MatchAny: matchAny,
 	}
 
 	// add uuid filters
 	if inUUID != "" {
 		for _, uuid := range sncli.CommaSplit(inUUID) {
-			titleFilter := gosn.Filter{
+			titleFilter := items.Filter{
 				Type:       "Tag",
 				Key:        "uuid",
 				Comparison: "==",
@@ -238,7 +238,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	if inTitle != "" {
 		for _, title := range sncli.CommaSplit(inTitle) {
-			titleFilter := gosn.Filter{
+			titleFilter := items.Filter{
 				Type:       "Tag",
 				Key:        "Title",
 				Comparison: comparison,
@@ -249,7 +249,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	if inTitle == "" && inUUID == "" {
-		getTagsIF.Filters = append(getTagsIF.Filters, gosn.Filter{
+		getTagsIF.Filters = append(getTagsIF.Filters, items.Filter{
 			Type: "Tag",
 		})
 	}
@@ -280,7 +280,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 		Debug:   opts.debug,
 	}
 
-	var rawTags gosn.Items
+	var rawTags items.Items
 
 	rawTags, err = appGetTagConfig.Run()
 	if err != nil {
@@ -301,47 +301,47 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 		if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 			tagContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
-				ClientUpdatedAt: rt.(*gosn.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+				ClientUpdatedAt: rt.(*items.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 			}
 			tagContentAppDataContent := sncli.AppDataContentYAML{
 				OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailYAML,
 			}
 
 			tagContentYAML := sncli.TagContentYAML{
-				Title:          rt.(*gosn.Tag).Content.GetTitle(),
-				ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Tag).Content.References()),
+				Title:          rt.(*items.Tag).Content.GetTitle(),
+				ItemReferences: sncli.ItemRefsToYaml(rt.(*items.Tag).Content.References()),
 				AppData:        tagContentAppDataContent,
 			}
 
 			tagsYAML = append(tagsYAML, sncli.TagYAML{
-				UUID:        rt.(*gosn.Tag).UUID,
-				ContentType: rt.(*gosn.Tag).ContentType,
+				UUID:        rt.(*items.Tag).UUID,
+				ContentType: rt.(*items.Tag).ContentType,
 				Content:     tagContentYAML,
-				UpdatedAt:   rt.(*gosn.Tag).UpdatedAt,
-				CreatedAt:   rt.(*gosn.Tag).CreatedAt,
+				UpdatedAt:   rt.(*items.Tag).UpdatedAt,
+				CreatedAt:   rt.(*items.Tag).CreatedAt,
 			})
 		}
 
 		if !count && strings.ToLower(output) == "json" {
 			tagContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-				ClientUpdatedAt: rt.(*gosn.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+				ClientUpdatedAt: rt.(*items.Tag).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 			}
 			tagContentAppDataContent := sncli.AppDataContentJSON{
 				OrgStandardNotesSN: tagContentOrgStandardNotesSNDetailJSON,
 			}
 
 			tagContentJSON := sncli.TagContentJSON{
-				Title:          rt.(*gosn.Tag).Content.GetTitle(),
-				ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Tag).Content.References()),
+				Title:          rt.(*items.Tag).Content.GetTitle(),
+				ItemReferences: sncli.ItemRefsToJSON(rt.(*items.Tag).Content.References()),
 				AppData:        tagContentAppDataContent,
 			}
 
 			tagsJSON = append(tagsJSON, sncli.TagJSON{
-				UUID:        rt.(*gosn.Tag).UUID,
-				ContentType: rt.(*gosn.Tag).ContentType,
+				UUID:        rt.(*items.Tag).UUID,
+				ContentType: rt.(*items.Tag).ContentType,
 				Content:     tagContentJSON,
-				UpdatedAt:   rt.(*gosn.Tag).UpdatedAt,
-				CreatedAt:   rt.(*gosn.Tag).CreatedAt,
+				UpdatedAt:   rt.(*items.Tag).UpdatedAt,
+				CreatedAt:   rt.(*items.Tag).CreatedAt,
 			})
 		}
 	}

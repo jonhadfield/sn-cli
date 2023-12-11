@@ -14,14 +14,14 @@ import (
 
 	"github.com/asdine/storm/v3/q"
 	"github.com/divan/num2words"
-	"github.com/jonhadfield/gosn-v2"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/items"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
 
-func getNoteByUUID(sess cache.Session, uuid string) (tag gosn.Note, err error) {
+func getNoteByUUID(sess cache.Session, uuid string) (tag items.Note, err error) {
 	if sess.CacheDBPath == "" {
 		return tag, errors.New("CacheDBPath missing from sess")
 	}
@@ -57,13 +57,13 @@ func getNoteByUUID(sess cache.Session, uuid string) (tag gosn.Note, err error) {
 		return
 	}
 
-	var rawEncItems gosn.Items
+	var rawEncItems items.Items
 	rawEncItems, err = encNotes.ToItems(&sess)
 
-	return *rawEncItems[0].(*gosn.Note), err
+	return *rawEncItems[0].(*items.Note), err
 }
 
-func getNotesByTitle(sess cache.Session, title string, close bool) (notes gosn.Notes, err error) {
+func getNotesByTitle(sess cache.Session, title string, close bool) (notes items.Notes, err error) {
 	if sess.CacheDB == nil {
 		var so cache.SyncOutput
 
@@ -98,13 +98,13 @@ func getNotesByTitle(sess cache.Session, title string, close bool) (notes gosn.N
 	}
 
 	// decrypt all notes
-	var allRawNotes gosn.Items
+	var allRawNotes items.Items
 	allRawNotes, err = allEncNotes.ToItems(&sess)
 
-	var matchingRawNotes gosn.Notes
+	var matchingRawNotes items.Notes
 
 	for _, rt := range allRawNotes {
-		t := rt.(*gosn.Note)
+		t := rt.(*items.Note)
 		if t.Content.Title == title {
 			matchingRawNotes = append(matchingRawNotes, *t)
 		}
@@ -213,9 +213,9 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	cSession.CacheDB = cso.DB
 
-	var note gosn.Note
+	var note items.Note
 
-	var notes gosn.Notes
+	var notes items.Notes
 
 	// if uuid was passed then retrieve note from db using uuid
 	if inUUID != "" {
@@ -264,7 +264,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	note.Content.SetUpdateTime(time.Now().UTC())
 
 	// save note to db
-	notes = gosn.Notes{note}
+	notes = items.Notes{note}
 
 	if err = cache.SaveNotes(&cSession, cSession.CacheDB, notes, false); err != nil {
 		return
@@ -307,16 +307,16 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	count := c.Bool("count")
 	output := c.String("output")
 
-	noteFilter := gosn.Filter{
+	noteFilter := items.Filter{
 		Type: "Note",
 	}
-	getNotesIF := gosn.ItemFilters{
+	getNotesIF := items.ItemFilters{
 		MatchAny: false,
-		Filters:  []gosn.Filter{noteFilter},
+		Filters:  []items.Filter{noteFilter},
 	}
 
 	if !c.Bool("include-trash") {
-		includeTrashFilter := gosn.Filter{
+		includeTrashFilter := items.Filter{
 			Type:       "Note",
 			Key:        "Trash",
 			Comparison: "!=",
@@ -326,7 +326,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	if uuid != "" {
-		titleFilter := gosn.Filter{
+		titleFilter := items.Filter{
 			Type:       "Note",
 			Key:        "uuid",
 			Comparison: "==",
@@ -336,7 +336,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	if title != "" {
-		titleFilter := gosn.Filter{
+		titleFilter := items.Filter{
 			Type:       "Note",
 			Key:        "Title",
 			Comparison: "contains",
@@ -346,7 +346,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	if text != "" {
-		titleFilter := gosn.Filter{
+		titleFilter := items.Filter{
 			Type:       "Note",
 			Key:        "Text",
 			Comparison: "contains",
@@ -359,7 +359,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	if len(processedTags) > 0 {
 		for _, t := range processedTags {
-			titleFilter := gosn.Filter{
+			titleFilter := items.Filter{
 				Type:       "Note",
 				Key:        "Tag",
 				Comparison: "contains",
@@ -398,15 +398,15 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err err
 	count := c.Bool("count")
 	output := c.String("output")
 
-	noteFilter := gosn.Filter{
+	noteFilter := items.Filter{
 		Type: "Note",
 	}
-	getNotesIF := gosn.ItemFilters{
+	getNotesIF := items.ItemFilters{
 		MatchAny: false,
-		Filters:  []gosn.Filter{noteFilter},
+		Filters:  []items.Filter{noteFilter},
 	}
 
-	TrashFilter := gosn.Filter{
+	TrashFilter := items.Filter{
 		Type:       "Note",
 		Key:        "Trash",
 		Comparison: "==",
@@ -415,7 +415,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err err
 	getNotesIF.Filters = append(getNotesIF.Filters, TrashFilter)
 
 	if uuid != "" {
-		titleFilter := gosn.Filter{
+		titleFilter := items.Filter{
 			Type:       "Note",
 			Key:        "uuid",
 			Comparison: "==",
@@ -425,7 +425,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	if title != "" {
-		titleFilter := gosn.Filter{
+		titleFilter := items.Filter{
 			Type:       "Note",
 			Key:        "Title",
 			Comparison: "contains",
@@ -435,7 +435,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	if text != "" {
-		titleFilter := gosn.Filter{
+		titleFilter := items.Filter{
 			Type:       "Note",
 			Key:        "Text",
 			Comparison: "contains",
@@ -448,7 +448,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	if len(processedTags) > 0 {
 		for _, t := range processedTags {
-			titleFilter := gosn.Filter{
+			titleFilter := items.Filter{
 				Type:       "Note",
 				Key:        "Tag",
 				Comparison: "contains",
@@ -482,7 +482,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err err
 }
 
 func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.GetNoteConfig) (msg string, err error) {
-	var rawNotes gosn.Items
+	var rawNotes items.Items
 
 	rawNotes, err = getNoteConfig.Run()
 	if err != nil {
@@ -502,66 +502,66 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 
 		if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
 			noteContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
-				ClientUpdatedAt: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+				ClientUpdatedAt: rt.(*items.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 			}
 			noteContentAppDataContent := sncli.AppDataContentYAML{
 				OrgStandardNotesSN:           noteContentOrgStandardNotesSNDetailYAML,
-				OrgStandardNotesSNComponents: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSNComponents,
+				OrgStandardNotesSNComponents: rt.(*items.Note).Content.GetAppData().OrgStandardNotesSNComponents,
 			}
 
 			var isTrashed *bool
-			if rt.(*gosn.Note).Content.Trashed != nil {
-				isTrashed = rt.(*gosn.Note).Content.Trashed
+			if rt.(*items.Note).Content.Trashed != nil {
+				isTrashed = rt.(*items.Note).Content.Trashed
 			}
 			noteContentYAML := sncli.NoteContentYAML{
-				Title:          rt.(*gosn.Note).Content.GetTitle(),
-				Text:           rt.(*gosn.Note).Content.GetText(),
-				ItemReferences: sncli.ItemRefsToYaml(rt.(*gosn.Note).Content.References()),
+				Title:          rt.(*items.Note).Content.GetTitle(),
+				Text:           rt.(*items.Note).Content.GetText(),
+				ItemReferences: sncli.ItemRefsToYaml(rt.(*items.Note).Content.References()),
 				AppData:        noteContentAppDataContent,
-				PreviewPlain:   rt.(*gosn.Note).Content.PreviewPlain,
+				PreviewPlain:   rt.(*items.Note).Content.PreviewPlain,
 				Trashed:        isTrashed,
 			}
 
 			notesYAML = append(notesYAML, sncli.NoteYAML{
-				UUID:        rt.(*gosn.Note).UUID,
-				ContentType: rt.(*gosn.Note).ContentType,
+				UUID:        rt.(*items.Note).UUID,
+				ContentType: rt.(*items.Note).ContentType,
 				Content:     noteContentYAML,
-				UpdatedAt:   rt.(*gosn.Note).UpdatedAt,
-				CreatedAt:   rt.(*gosn.Note).CreatedAt,
+				UpdatedAt:   rt.(*items.Note).UpdatedAt,
+				CreatedAt:   rt.(*items.Note).CreatedAt,
 			})
 		}
 
 		if !count && strings.ToLower(output) == "json" {
 			noteContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
-				ClientUpdatedAt:    rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
-				Pinned:             rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.Pinned,
-				PrefersPlainEditor: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSN.PrefersPlainEditor,
+				ClientUpdatedAt:    rt.(*items.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
+				Pinned:             rt.(*items.Note).Content.GetAppData().OrgStandardNotesSN.Pinned,
+				PrefersPlainEditor: rt.(*items.Note).Content.GetAppData().OrgStandardNotesSN.PrefersPlainEditor,
 			}
 
 			noteContentAppDataContent := sncli.AppDataContentJSON{
 				OrgStandardNotesSN:           noteContentOrgStandardNotesSNDetailJSON,
-				OrgStandardNotesSNComponents: rt.(*gosn.Note).Content.GetAppData().OrgStandardNotesSNComponents,
+				OrgStandardNotesSNComponents: rt.(*items.Note).Content.GetAppData().OrgStandardNotesSNComponents,
 			}
 			var isTrashed *bool
-			if rt.(*gosn.Note).Content.Trashed != nil {
-				isTrashed = rt.(*gosn.Note).Content.Trashed
+			if rt.(*items.Note).Content.Trashed != nil {
+				isTrashed = rt.(*items.Note).Content.Trashed
 			}
 
 			noteContentJSON := sncli.NoteContentJSON{
-				Title:          rt.(*gosn.Note).Content.GetTitle(),
-				Text:           rt.(*gosn.Note).Content.GetText(),
-				ItemReferences: sncli.ItemRefsToJSON(rt.(*gosn.Note).Content.References()),
+				Title:          rt.(*items.Note).Content.GetTitle(),
+				Text:           rt.(*items.Note).Content.GetText(),
+				ItemReferences: sncli.ItemRefsToJSON(rt.(*items.Note).Content.References()),
 				AppData:        noteContentAppDataContent,
-				PreviewPlain:   rt.(*gosn.Note).Content.PreviewPlain,
+				PreviewPlain:   rt.(*items.Note).Content.PreviewPlain,
 				Trashed:        isTrashed,
 			}
 
 			notesJSON = append(notesJSON, sncli.NoteJSON{
-				UUID:        rt.(*gosn.Note).UUID,
-				ContentType: rt.(*gosn.Note).ContentType,
+				UUID:        rt.(*items.Note).UUID,
+				ContentType: rt.(*items.Note).ContentType,
 				Content:     noteContentJSON,
-				UpdatedAt:   rt.(*gosn.Note).UpdatedAt,
-				CreatedAt:   rt.(*gosn.Note).CreatedAt,
+				UpdatedAt:   rt.(*items.Note).UpdatedAt,
+				CreatedAt:   rt.(*items.Note).CreatedAt,
 			})
 		}
 	}
@@ -691,6 +691,46 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 	}
 
 	msg = sncli.Green(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strNote))
+
+	return msg, err
+}
+
+func processDeleteItems(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+	uuid := strings.TrimSpace(c.String("uuid"))
+
+	sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	if err != nil {
+		return msg, err
+	}
+
+	processedUUIDs := sncli.CommaSplit(uuid)
+
+	var cacheDBPath string
+	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
+
+	if err != nil {
+		return msg, err
+	}
+
+	sess.CacheDBPath = cacheDBPath
+	DeleteItemConfig := sncli.DeleteItemConfig{
+		Session:    &sess,
+		ItemsUUIDs: processedUUIDs,
+		Debug:      opts.debug,
+	}
+
+	var noDeleted int
+
+	if noDeleted, err = DeleteItemConfig.Run(); err != nil {
+		return msg, fmt.Errorf("failed to delete items. %+v", err)
+	}
+
+	strItem := "items"
+	if noDeleted == 1 {
+		strItem = "item"
+	}
+
+	msg = sncli.Green(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strItem))
 
 	return msg, err
 }

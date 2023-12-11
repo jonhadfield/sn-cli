@@ -1,14 +1,15 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn-v2"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/jonhadfield/gosn-v2/session"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDebugStringItemsKeyEncItemKey(t *testing.T) {
 	plaintext, err := DecryptString(DecryptStringInput{
-		Session:   gosn.Session{},
+		Session:   session.Session{},
 		In:        "004:966fb3ab4422f3b2a0ea20159d769cbee1d7f763d5aba425:xRmX5+LlNYk4bXI4OaeKNMI2LZE3QeLO5xFVwy+v3PY8hBUBOuDRa+n7m01gfA57fPL4JBrWhGJ9b8gaiOPFGC8ntlBL7+qhj/sQ/cbA4Po=:eyJrcCI6eyJjcmVhdGVkIjoiMTYwODQ3MzM4Nzc5OSIsImlkZW50aWZpZXIiOiJsZW1vbjIiLCJvcmlnaW5hdGlvbiI6InJlZ2lzdHJhdGlvbiIsInB3X25vbmNlIjoiNGZXc2RUOHJaY2NOTlR1aWVZcTF2bGJ6YkIzRmVkeE0iLCJ2ZXJzaW9uIjoiMDA0In0sInUiOiJhMWIxZDYwYy1mNjA1LTQ2MDQtOGE5ZS03NjE1NDkyODI4M2IiLCJ2IjoiMDA0In0=",
 		UseStdOut: false,
 		Key:       "9dbd97421d3981c433979fc8d86559734331f711372c4ad7a0a6830fff75af68",
@@ -19,7 +20,7 @@ func TestDebugStringItemsKeyEncItemKey(t *testing.T) {
 
 func TestDebugStringItemsKeyEncItemKeySession(t *testing.T) {
 	plaintext, err := DecryptString(DecryptStringInput{
-		Session: gosn.Session{
+		Session: session.Session{
 			MasterKey: "9dbd97421d3981c433979fc8d86559734331f711372c4ad7a0a6830fff75af68",
 		},
 		In:        "004:966fb3ab4422f3b2a0ea20159d769cbee1d7f763d5aba425:xRmX5+LlNYk4bXI4OaeKNMI2LZE3QeLO5xFVwy+v3PY8hBUBOuDRa+n7m01gfA57fPL4JBrWhGJ9b8gaiOPFGC8ntlBL7+qhj/sQ/cbA4Po=:eyJrcCI6eyJjcmVhdGVkIjoiMTYwODQ3MzM4Nzc5OSIsImlkZW50aWZpZXIiOiJsZW1vbjIiLCJvcmlnaW5hdGlvbiI6InJlZ2lzdHJhdGlvbiIsInB3X25vbmNlIjoiNGZXc2RUOHJaY2NOTlR1aWVZcTF2bGJ6YkIzRmVkeE0iLCJ2ZXJzaW9uIjoiMDA0In0sInUiOiJhMWIxZDYwYy1mNjA1LTQ2MDQtOGE5ZS03NjE1NDkyODI4M2IiLCJ2IjoiMDA0In0=",

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/jonhadfield/gosn-v2"
+	"github.com/jonhadfield/gosn-v2/session"
 	"github.com/urfave/cli"
 )
 
@@ -14,7 +14,7 @@ func processSession(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	sessKey := c.String("session-key")
 
 	if sStatus || sRemove {
-		if err = gosn.SessionExists(nil); err != nil {
+		if err = session.SessionExists(nil); err != nil {
 			return "", err
 		}
 	}
@@ -27,19 +27,19 @@ func processSession(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	}
 
 	if sAdd {
-		msg, err = gosn.AddSession(opts.server, sessKey, nil, opts.debug)
+		msg, err = session.AddSession(opts.server, sessKey, nil, opts.debug)
 
 		return msg, err
 	}
 
 	if sRemove {
-		msg = gosn.RemoveSession(nil)
+		msg = session.RemoveSession(nil)
 
 		return msg, nil
 	}
 
 	if sStatus {
-		msg, err = gosn.SessionStatus(sessKey, nil)
+		msg, err = session.SessionStatus(sessKey, nil)
 	}
 
 	return msg, err
