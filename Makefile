@@ -6,9 +6,8 @@ clean:
 	rm -rf ./dist
 
 setup:
-	go get -u github.com/alecthomas/gometalinter
-	go get -u golang.org/x/tools/cmd/cover
-	gometalinter --install --update
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+	go install -v github.com/go-critic/go-critic/cmd/gocritic@latest
 
 test:
 	echo 'mode: atomic' > coverage.txt && go list ./... | xargs -n1 -I{} sh -c 'go test -v -failfast -p 1 -parallel 1 -timeout=600s -covermode=atomic -coverprofile=coverage.tmp {} && tail -n +2 coverage.tmp >> coverage.txt' && rm coverage.tmp

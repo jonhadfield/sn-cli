@@ -416,8 +416,9 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 			allTags = append(allTags, *tag)
 			if tag.Content.GetTitle() == ati.parent || tag.GetUUID() == ati.parentUUID {
 				itemRef := gosn.ItemReference{
-					UUID:        tag.GetUUID(),
-					ContentType: "Tag",
+					UUID:          tag.GetUUID(),
+					ContentType:   "Tag",
+					ReferenceType: "TagToParentTag",
 				}
 				parentRef = gosn.ItemReferences{itemRef}
 			}

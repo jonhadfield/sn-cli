@@ -4,7 +4,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -132,7 +131,7 @@ type EncryptedItemsFile struct {
 }
 
 func readJSON(filePath string) (items items.EncryptedItems, err error) {
-	file, err := ioutil.ReadFile(filePath)
+	file, err := os.ReadFile(filePath)
 	if err != nil {
 		err = fmt.Errorf("%w failed to open: %s", err, filePath)
 		return
@@ -168,8 +167,9 @@ func ItemRefsToJSON(irs []items.ItemReference) []ItemReferenceJSON {
 
 	for _, ref := range irs {
 		iRef := ItemReferenceJSON{
-			UUID:        ref.UUID,
-			ContentType: ref.ContentType,
+			UUID:          ref.UUID,
+			ContentType:   ref.ContentType,
+			ReferenceType: ref.ReferenceType,
 		}
 		iRefs = append(iRefs, iRef)
 	}
