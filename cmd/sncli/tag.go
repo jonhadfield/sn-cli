@@ -206,7 +206,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 	inTitle := strings.TrimSpace(c.String("title"))
 	inUUID := strings.TrimSpace(c.String("uuid"))
 
-	var matchAny bool
+	matchAny := true
 	if c.Bool("match-all") {
 		matchAny = false
 	}
