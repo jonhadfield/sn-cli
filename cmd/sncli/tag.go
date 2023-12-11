@@ -377,7 +377,6 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
 	// validate input
 	tagInput := c.String("title")
-	// parentTitle := c.String("parent")
 	if strings.TrimSpace(tagInput) == "" {
 		_ = cli.ShowSubcommandHelp(c)
 
