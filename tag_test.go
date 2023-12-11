@@ -52,7 +52,7 @@ func TestAddTagWithParent(t *testing.T) {
 		Parent:  "TestTagParent",
 	}
 
-	ato, err := addTagConfigChild.Run()
+	ato, err = addTagConfigChild.Run()
 	require.NoError(t, err)
 	require.Contains(t, ato.Added, "TestTagChild")
 	require.Empty(t, ato.Existing)
