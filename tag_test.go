@@ -33,6 +33,41 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestAddTagWithParent(t *testing.T) {
+	testDelay()
+
+	addTagConfigParent := AddTagsInput{
+		Session: testSession,
+		Tags:    []string{"TestTagParent"},
+	}
+
+	ato, err := addTagConfigParent.Run()
+	require.NoError(t, err)
+	require.Contains(t, ato.Added, "TestTagParent")
+	require.Empty(t, ato.Existing)
+
+	addTagConfigChild := AddTagsInput{
+		Session: testSession,
+		Tags:    []string{"TestTagChild"},
+		Parent:  "TestTagParent",
+	}
+
+	ato, err := addTagConfigChild.Run()
+	require.NoError(t, err)
+	require.Contains(t, ato.Added, "TestTagChild")
+	require.Empty(t, ato.Existing)
+
+	deleteTagConfig := DeleteTagConfig{
+		Session:   testSession,
+		TagTitles: []string{"TestTagParent", "TestTagChild"},
+	}
+
+	var noDeleted int
+	noDeleted, err = deleteTagConfig.Run()
+	require.Equal(t, 2, noDeleted)
+	require.NoError(t, err)
+}
+
 func TestGetTag(t *testing.T) {
 	testDelay()
 
