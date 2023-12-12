@@ -61,3 +61,4 @@ require (
 )
 
 // replace github.com/jonhadfield/gosn-v2 => ../gosn-v2
+replace github.com/jonhadfield/gosn-v2 => github.com/clayrosenthal/gosn-v2 v0.0.0-20231212073032-3d59f6965163
