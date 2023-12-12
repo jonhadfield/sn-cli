@@ -418,12 +418,12 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 				if parentRef != nil {
 					return ato, errors.New("multiple parent tags found, specify by UUID")
 				}
-				itemRef := gosn.ItemReference{
+				itemRef := items.ItemReference{
 					UUID:          tag.GetUUID(),
 					ContentType:   "Tag",
 					ReferenceType: "TagToParentTag",
 				}
-				parentRef = gosn.ItemReferences{itemRef}
+				parentRef = items.ItemReferences{itemRef}
 			}
 		}
 	}
