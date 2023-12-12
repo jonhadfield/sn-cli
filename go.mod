@@ -60,5 +60,4 @@ require (
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // indirect
 )
 
-//TODO: comment out before release
-replace github.com/jonhadfield/gosn-v2 => ../gosn
+// replace github.com/jonhadfield/gosn-v2 => ../gosn-v2

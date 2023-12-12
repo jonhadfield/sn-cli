@@ -153,8 +153,9 @@ func ItemRefsToYaml(irs []items.ItemReference) []ItemReferenceYAML {
 
 	for _, ref := range irs {
 		iRef := ItemReferenceYAML{
-			UUID:        ref.UUID,
-			ContentType: ref.ContentType,
+			UUID:          ref.UUID,
+			ContentType:   ref.ContentType,
+			ReferenceType: ref.ReferenceType,
 		}
 		iRefs = append(iRefs, iRef)
 	}

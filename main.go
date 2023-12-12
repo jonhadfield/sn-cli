@@ -18,8 +18,9 @@ const (
 )
 
 type ItemReferenceYAML struct {
-	UUID        string `yaml:"uuid"`
-	ContentType string `yaml:"content_type"`
+	UUID          string `yaml:"uuid"`
+	ContentType   string `yaml:"content_type"`
+	ReferenceType string `yaml:"reference_type",omitempty`
 }
 
 type ItemReferenceJSON struct {
