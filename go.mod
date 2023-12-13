@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/jonhadfield/gosn-v2 v0.0.0-20231211223627-abb88b737146
+	github.com/jonhadfield/gosn-v2 v0.0.0-20231212210044-96a40e9cc8cc
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/viper v1.18.1
 	github.com/stretchr/testify v1.8.4
@@ -60,5 +60,4 @@ require (
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // indirect
 )
 
-// replace github.com/jonhadfield/gosn-v2 => ../gosn-v2
-replace github.com/jonhadfield/gosn-v2 => github.com/clayrosenthal/gosn-v2 v0.0.0-20231212073032-3d59f6965163
+//replace github.com/jonhadfield/gosn-v2 => ../gosn-v2
