@@ -2,9 +2,10 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/alexeyco/simpletable"
 	"sort"
 	"time"
+
+	"github.com/alexeyco/simpletable"
 
 	// "github.com/fatih/color"
 	"github.com/gookit/color"
@@ -163,7 +164,7 @@ func (i *StatsConfig) GetData() (StatsData, error) {
 	var largestNotes []*items.Note
 
 	if len(notes) > 0 {
-		var finalItem = len(notes)
+		finalItem := len(notes)
 
 		if len(notes) >= 5 {
 			finalItem = 4
@@ -218,6 +219,7 @@ func showNoteHistory(data StatsData) {
 	fmt.Printf("Note History\n")
 	table.Println()
 }
+
 func showItemCounts(data StatsData) {
 	table := simpletable.New()
 	table.Header = &simpletable.Header{

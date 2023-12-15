@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gookit/color"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/gookit/color"
 
 	"github.com/asdine/storm/v3/q"
 	"github.com/jonhadfield/gosn-v2/cache"

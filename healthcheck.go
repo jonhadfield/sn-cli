@@ -2,10 +2,11 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/gookit/color"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gookit/color"
 
 	"github.com/briandowns/spinner"
 	"github.com/jonhadfield/gosn-v2/items"

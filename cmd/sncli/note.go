@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gookit/color"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gookit/color"
 
 	"github.com/asdine/storm/v3/q"
 	"github.com/divan/num2words"

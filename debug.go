@@ -3,8 +3,9 @@ package sncli
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/gookit/color"
 	"strings"
+
+	"github.com/gookit/color"
 
 	"github.com/jonhadfield/gosn-v2/crypto"
 	"github.com/jonhadfield/gosn-v2/items"

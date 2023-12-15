@@ -2,18 +2,19 @@ package main
 
 import (
 	"fmt"
-	"github.com/jonhadfield/gosn-v2/auth"
-	"github.com/jonhadfield/gosn-v2/cache"
-	"github.com/jonhadfield/gosn-v2/common"
-	"github.com/jonhadfield/gosn-v2/items"
-	"github.com/jonhadfield/gosn-v2/session"
-	sncli "github.com/jonhadfield/sn-cli"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jonhadfield/gosn-v2/auth"
+	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
+	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/jonhadfield/gosn-v2/session"
+	sncli "github.com/jonhadfield/sn-cli"
 
 	"github.com/stretchr/testify/require"
 )

@@ -1,9 +1,10 @@
 package sncli
 
 import (
-	"github.com/gookit/color"
 	"os"
 	"time"
+
+	"github.com/gookit/color"
 
 	"github.com/briandowns/spinner"
 	"github.com/jonhadfield/gosn-v2/cache"
