@@ -3,6 +3,7 @@ package sncli
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/gookit/color"
 	"strings"
 
 	"github.com/jonhadfield/gosn-v2/crypto"
@@ -60,7 +61,7 @@ type OutputSessionInput struct {
 }
 
 func OutputSession(input OutputSessionInput) error {
-	fmt.Println(Bold("session"))
+	fmt.Println(color.Bold.Sprintf("session"))
 	fmt.Printf("debug: %t\n\n", input.Session.Debug)
 	fmt.Println("key params")
 	fmt.Printf("- identifier: %s\n", input.Session.KeyParams.Identifier)

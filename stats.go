@@ -2,30 +2,28 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/alexeyco/simpletable"
 	"sort"
 	"time"
 
-	"github.com/fatih/color"
+	// "github.com/fatih/color"
+	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/ryanuber/columnize"
 )
 
-var (
-	Bold    = color.New(color.Bold).SprintFunc()
-	Red     = color.New(color.FgRed).SprintFunc()
-	Green   = color.New(color.FgGreen).SprintFunc()
-	Yellow  = color.New(color.FgYellow).SprintFunc()
-	HiWhite = color.New(color.FgHiWhite).SprintFunc()
-)
-
-type stats struct {
-	oldestNote, newestNote, lastUpdatedNote time.Time
-	hasOrphanedRefs                         []items.Item
+type StatsData struct {
+	CoreTypeCounter   typeCounter
+	OtherTypeCounter  typeCounter
+	LargestNotes      []*items.Note
+	ItemsOrphanedRefs []ItemOrphanedRefs
+	LastUpdatedNote   *items.Note
+	NewestNote        *items.Note
+	OldestNote        *items.Note
 }
 
-func (i *StatsConfig) Run() error {
-	var st stats
+func (i *StatsConfig) GetData() (StatsData, error) {
 	var err error
 
 	var so cache.SyncOutput
@@ -34,22 +32,24 @@ func (i *StatsConfig) Run() error {
 		Session: &i.Session,
 	}, true)
 	if err != nil {
-		return err
+		return StatsData{}, err
 	}
 
 	var allPersistedItems cache.Items
 
 	if err = so.DB.All(&allPersistedItems); err != nil {
-		return err
+		return StatsData{}, err
 	}
 
 	var gitems items.Items
 	gitems, err = allPersistedItems.ToItems(&i.Session)
 	if err != nil {
-		return err
+		return StatsData{}, err
 	}
 
 	var notes items.Items
+
+	var itemsOrphanedRefs []ItemOrphanedRefs
 
 	var missingItemsKey []string
 
@@ -62,11 +62,13 @@ func (i *StatsConfig) Run() error {
 		allUUIDs = append(allUUIDs, allPersistedItems[x].UUID)
 	}
 
-	var duplicateUUIDs []string
+	var ctCounter, otCounter typeCounter
 
-	var tCounter typeCounter
+	ctCounter.counts = make(map[string]int64)
+	otCounter.counts = make(map[string]int64)
 
-	tCounter.counts = make(map[string]int64)
+	var oldestNoteTime, newestNoteTime, lastUpdatedNoteTime time.Time
+	var oldestNote, newestNote, lastUpdatedNote *items.Note
 
 	for _, item := range gitems {
 		// check if item is trashed note
@@ -78,10 +80,15 @@ func (i *StatsConfig) Run() error {
 			}
 		}
 
-		if isTrashedNote {
-			tCounter.update("Notes (In Trash)")
-		} else {
-			tCounter.update(item.GetContentType())
+		switch {
+		case isTrashedNote:
+			ctCounter.update("Notes (In Trash)")
+		case item.GetContentType() == "Note":
+			ctCounter.update("Note")
+		case item.GetContentType() == "Tag":
+			ctCounter.update("Tag")
+		default:
+			otCounter.update(item.GetContentType())
 		}
 
 		if item.GetItemsKeyID() == "" {
@@ -95,7 +102,11 @@ func (i *StatsConfig) Run() error {
 		refs := item.GetContent().References()
 		for _, ref := range refs {
 			if !StringInSlice(ref.UUID, allUUIDs, false) {
-				st.hasOrphanedRefs = append(st.hasOrphanedRefs, item)
+				itemsOrphanedRefs = append(itemsOrphanedRefs, ItemOrphanedRefs{
+					ContentType:  item.GetContentType(),
+					Item:         item,
+					OrphanedRefs: []string{ref.UUID},
+				})
 
 				break
 			}
@@ -110,37 +121,35 @@ func (i *StatsConfig) Run() error {
 			cTime, err = time.Parse(timeLayout, item.GetCreatedAt())
 
 			if err != nil {
-				return err
+				return StatsData{}, err
 			}
 
 			var uTime time.Time
 
 			uTime, err = time.Parse(timeLayout, item.GetUpdatedAt())
 			if err != nil {
-				return err
+				return StatsData{}, err
 			}
 
-			if st.oldestNote.IsZero() || cTime.Before(st.oldestNote) {
-				st.oldestNote, err = time.Parse(timeLayout, item.GetCreatedAt())
-				if err != nil {
-					return err
-				}
+			if oldestNoteTime.IsZero() || cTime.Before(oldestNoteTime) {
+				oldestNote = item.(*items.Note)
+
+				oldestNoteTime = cTime
 			}
 
-			if st.newestNote.IsZero() || cTime.After(st.newestNote) {
-				st.newestNote, err = time.Parse(timeLayout, item.GetCreatedAt())
-				if err != nil {
-					return err
-				}
+			if newestNoteTime.IsZero() || cTime.After(newestNoteTime) {
+				newestNote = item.(*items.Note)
+
+				newestNoteTime = cTime
 			}
 
-			if st.lastUpdatedNote.IsZero() || uTime.After(st.lastUpdatedNote) {
-				st.lastUpdatedNote, err = time.Parse(timeLayout, item.GetUpdatedAt())
-				if err != nil {
-					return err
-				}
+			if lastUpdatedNoteTime.IsZero() || uTime.After(lastUpdatedNoteTime) {
+				lastUpdatedNote = item.(*items.Note)
+
+				lastUpdatedNoteTime = uTime
 			}
 
+			// create slice of notes with non-zero content size
 			if item.GetContentSize() > 0 {
 				notes = append(notes, item)
 			}
@@ -151,73 +160,132 @@ func (i *StatsConfig) Run() error {
 		return notes[i].GetContentSize() > notes[j].GetContentSize()
 	})
 
-	fmt.Println(Green("COUNTS"))
-	tCounter.present()
-	fmt.Println(Green("\nSTATS"))
-
-	var statLines []string
+	var largestNotes []*items.Note
 
 	if len(notes) > 0 {
-		statLines = append(statLines, fmt.Sprintf("Oldest | %v", timeSince(st.oldestNote.Local())))
-		statLines = append(statLines, fmt.Sprintf("Newest | %v", timeSince(st.newestNote.Local())))
-		statLines = append(statLines, fmt.Sprintf("Updated | %v", timeSince(st.lastUpdatedNote.Local())))
-		fmt.Println(columnize.SimpleFormat(statLines))
-
-		fmt.Println("Largest:")
-
-		var finalItem int
+		var finalItem = len(notes)
 
 		if len(notes) >= 5 {
 			finalItem = 4
-		} else {
-			finalItem = len(notes)
 		}
 
 		for x := 0; x < finalItem; x++ {
-			note := notes[x].(*items.Note)
-			fmt.Printf(" - %d bytes: \"%s\"\n", note.GetContentSize(), note.Content.Title)
-		}
-	} else {
-		fmt.Println("no notes returned")
-	}
-
-	fmt.Println(Green("\nISSUES"))
-
-	if allEmpty(duplicateUUIDs, missingContentUUIDs, missingContentTypeUUIDs, missingItemsKey) && len(st.hasOrphanedRefs) == 0 {
-		fmt.Println("None")
-	}
-
-	if len(st.hasOrphanedRefs) > 0 {
-		fmt.Println("items with dangling references")
-		for x := range st.hasOrphanedRefs {
-			o := st.hasOrphanedRefs[x]
-			fmt.Printf("- %s %s\n", o.GetContentType(), o.GetUUID())
+			largestNotes = append(largestNotes, notes[x].(*items.Note))
 		}
 	}
 
-	if len(missingContentUUIDs) > 0 {
-		fmt.Println("Missing content UUIDs:", outList(missingContentUUIDs, ", "))
-	}
-
-	if len(missingContentTypeUUIDs) > 0 {
-		fmt.Println("Missing content type UUIDs:", outList(missingContentTypeUUIDs, ", "))
-	}
-
-	if len(missingItemsKey) > 0 {
-		fmt.Println("Missing items key ID:\n", outList(missingItemsKey, "\n"))
-	}
-
-	return err
+	return StatsData{
+		CoreTypeCounter:   ctCounter,
+		OtherTypeCounter:  otCounter,
+		LargestNotes:      largestNotes,
+		ItemsOrphanedRefs: itemsOrphanedRefs,
+		LastUpdatedNote:   lastUpdatedNote,
+		NewestNote:        newestNote,
+		OldestNote:        oldestNote,
+	}, nil
 }
 
-func allEmpty(in ...[]string) bool {
-	for _, i := range in {
-		if len(i) > 0 {
-			return false
-		}
+type ItemOrphanedRefs struct {
+	ContentType  string
+	Item         items.Item
+	OrphanedRefs []string
+}
+
+func showNoteHistory(data StatsData) {
+	table := simpletable.New()
+	table.Header = &simpletable.Header{
+		Cells: []*simpletable.Cell{
+			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("")},
+			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Title")},
+			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Timestamp")},
+		},
+	}
+	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+		{Text: "Oldest"},
+		{Text: fmt.Sprintf("%s", data.OldestNote.Content.Title)},
+		{Text: fmt.Sprintf("%s", data.OldestNote.CreatedAt)},
+	})
+	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+		{Text: "Newest"},
+		{Text: fmt.Sprintf("%s", data.NewestNote.Content.Title)},
+		{Text: fmt.Sprintf("%s", data.NewestNote.CreatedAt)},
+	})
+	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+		{Text: "Most Recently Updated"},
+		{Text: fmt.Sprintf("%s", data.LastUpdatedNote.Content.Title)},
+		{Text: fmt.Sprintf("%s", data.LastUpdatedNote.UpdatedAt)},
+	})
+	fmt.Printf("Note History\n")
+	table.Println()
+}
+func showItemCounts(data StatsData) {
+	table := simpletable.New()
+	table.Header = &simpletable.Header{
+		Cells: []*simpletable.Cell{
+			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Type")},
+			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Count")},
+		},
+	}
+	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+		{Text: "Notes"},
+		{Text: fmt.Sprintf("%d", data.CoreTypeCounter.counts["Note"])},
+	})
+	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+		{Text: "Tags"},
+		{Text: fmt.Sprintf("%d", data.CoreTypeCounter.counts["Tag"])},
+	})
+	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+		{Text: "----------------"},
+		{Text: "------"},
+	})
+	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+		{Text: "Notes (In Trash)"},
+		{Text: fmt.Sprintf("%d", data.CoreTypeCounter.counts["Notes (In Trash)"])},
+	})
+	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+		{Text: "----------------"},
+		{Text: "------"},
+	})
+	for name, count := range data.OtherTypeCounter.counts {
+		table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+			{Text: name},
+			{Text: fmt.Sprintf("%d", count)},
+		})
 	}
 
-	return true
+	fmt.Printf("Item Counts\n")
+	table.Println()
+}
+
+func showLargestNotes(data StatsData) {
+	table := simpletable.New()
+	table.Header = &simpletable.Header{
+		Cells: []*simpletable.Cell{
+			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Size")},
+			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Title")},
+		},
+	}
+	for _, note := range data.LargestNotes {
+		table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
+			{Text: fmt.Sprintf("%d", note.GetContentSize())},
+			{Text: fmt.Sprintf("%s", note.Content.Title)},
+		})
+	}
+	fmt.Printf("Largest Notes\n")
+	table.Println()
+}
+
+func (i *StatsConfig) Run() error {
+	data, err := i.GetData()
+	if err != nil {
+		return err
+	}
+
+	showItemCounts(data)
+	showNoteHistory(data)
+	showLargestNotes(data)
+
+	return err
 }
 
 type typeCounter struct {

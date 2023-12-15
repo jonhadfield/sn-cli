@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/gookit/color"
 	"os"
 	"strings"
 	"time"
@@ -25,7 +26,7 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 	// request all items from SN
 
 	if !input.Session.Debug {
-		prefix := HiWhite("retrieving items ")
+		prefix := color.HiWhite.Sprintf("retrieving items ")
 
 		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stdout))
 		if input.UseStdOut {

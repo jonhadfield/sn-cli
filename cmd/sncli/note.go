@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gookit/color"
 	"io"
 	"io/ioutil"
 	"os"
@@ -640,7 +641,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 		return "", fmt.Errorf("failed to add note. %+v", err)
 	}
 
-	msg = sncli.Green(msgAddSuccess + " note")
+	msg = color.Green.Sprintf(msgAddSuccess + " note")
 
 	return msg, err
 }
@@ -690,7 +691,7 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 		strNote = "note"
 	}
 
-	msg = sncli.Green(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strNote))
+	msg = color.Green.Sprintf(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strNote))
 
 	return msg, err
 }
@@ -730,7 +731,7 @@ func processDeleteItems(c *cli.Context, opts configOptsOutput) (msg string, err 
 		strItem = "item"
 	}
 
-	msg = sncli.Green(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strItem))
+	msg = color.Green.Sprintf(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strItem))
 
 	return msg, err
 }

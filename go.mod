@@ -6,7 +6,6 @@ require (
 	github.com/asdine/storm/v3 v3.2.1
 	github.com/briandowns/spinner v1.23.0
 	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
-	github.com/fatih/color v1.16.0
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/jonhadfield/gosn-v2 v0.0.0-20231214143647-30e781fbf84e
@@ -46,16 +45,25 @@ require (
 )
 
 require (
+	github.com/alexeyco/simpletable v1.0.0
+	github.com/gookit/color v1.5.4
+)
+
+require (
 	github.com/alessio/shellescape v1.4.2 // indirect
+	github.com/fatih/color v1.16.0 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
+	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
+	github.com/rivo/uniseg v0.1.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
+	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // indirect
 )

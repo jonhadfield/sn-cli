@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gookit/color"
 	"os"
 	"strconv"
 	"strings"
@@ -409,12 +410,12 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	ato, err = addTagInput.Run()
 	if err != nil {
-		return "", fmt.Errorf(sncli.Red(err))
+		return "", fmt.Errorf(color.Red.Sprintf(err.Error()))
 	}
 
 	// present results
 	if len(ato.Added) > 0 {
-		msg = sncli.Green(msgAddSuccess+": ", strings.Join(ato.Added, ", "))
+		msg = color.Green.Sprint(msgAddSuccess+": ", strings.Join(ato.Added, ", "))
 	}
 
 	if len(ato.Existing) > 0 {
@@ -423,7 +424,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 			msg += "\n"
 		}
 
-		msg += sncli.Yellow(msgAlreadyExisting + ": " + strings.Join(ato.Existing, ", "))
+		msg += color.Yellow.Sprint(msgAlreadyExisting + ": " + strings.Join(ato.Existing, ", "))
 	}
 
 	return msg, err
@@ -518,9 +519,9 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 	}
 
 	if noDeleted > 0 {
-		msg = sncli.Green(fmt.Sprintf("%s tag", msgDeleted))
+		msg = color.Green.Sprintf(fmt.Sprintf("%s tag", msgDeleted))
 	} else {
-		msg = sncli.Yellow("Tag not found")
+		msg = color.Yellow.Sprintf("Tag not found")
 	}
 
 	return msg, err

@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"github.com/gookit/color"
 	"os"
 	"time"
 
@@ -283,7 +284,7 @@ var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
 func (i *WipeConfig) Run() (int, error) {
 	i.Session.RemoveDB()
 	if !i.Session.Debug && i.UseStdOut {
-		prefix := HiWhite("wiping ")
+		prefix := color.HiWhite.Sprintf("wiping ")
 
 		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stdout))
 		if i.UseStdOut {
