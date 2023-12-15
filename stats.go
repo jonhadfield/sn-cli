@@ -5,6 +5,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/dustin/go-humanize"
+
 	"github.com/alexeyco/simpletable"
 
 	// "github.com/fatih/color"
@@ -198,25 +200,27 @@ func showNoteHistory(data StatsData) {
 		Cells: []*simpletable.Cell{
 			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("")},
 			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Title")},
-			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Timestamp")},
+			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Time")},
 		},
 	}
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Oldest"},
 		{Text: fmt.Sprintf("%s", data.OldestNote.Content.Title)},
-		{Text: fmt.Sprintf("%s", data.OldestNote.CreatedAt)},
+		{Text: fmt.Sprintf("%s", humanize.Time(time.UnixMicro(data.OldestNote.CreatedAtTimestamp)))},
 	})
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Newest"},
 		{Text: fmt.Sprintf("%s", data.NewestNote.Content.Title)},
-		{Text: fmt.Sprintf("%s", data.NewestNote.CreatedAt)},
+		{Text: fmt.Sprintf("%s", humanize.Time(time.UnixMicro(data.NewestNote.CreatedAtTimestamp)))},
 	})
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Most Recently Updated"},
 		{Text: fmt.Sprintf("%s", data.LastUpdatedNote.Content.Title)},
-		{Text: fmt.Sprintf("%s", data.LastUpdatedNote.UpdatedAt)},
+		{Text: fmt.Sprintf("%s", humanize.Time(time.UnixMicro(data.LastUpdatedNote.UpdatedAtTimestamp)))},
 	})
-	fmt.Printf("Note History\n")
+
+	color.Bold.Println("Note History")
+
 	table.Println()
 }
 
@@ -230,11 +234,11 @@ func showItemCounts(data StatsData) {
 	}
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Notes"},
-		{Text: fmt.Sprintf("%d", data.CoreTypeCounter.counts["Note"])},
+		{Text: fmt.Sprintf("%s", humanize.Comma(data.CoreTypeCounter.counts["Note"]))},
 	})
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Tags"},
-		{Text: fmt.Sprintf("%d", data.CoreTypeCounter.counts["Tag"])},
+		{Text: fmt.Sprintf("%s", humanize.Comma(data.CoreTypeCounter.counts["Tag"]))},
 	})
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "----------------"},
@@ -242,20 +246,31 @@ func showItemCounts(data StatsData) {
 	})
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Notes (In Trash)"},
-		{Text: fmt.Sprintf("%d", data.CoreTypeCounter.counts["Notes (In Trash)"])},
+		{Text: fmt.Sprintf("%s", humanize.Comma(data.CoreTypeCounter.counts["Notes (In Trash)"]))},
 	})
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "----------------"},
 		{Text: "------"},
 	})
-	for name, count := range data.OtherTypeCounter.counts {
+
+	var keys []string
+
+	for key := range data.OtherTypeCounter.counts {
+		keys = append(keys, key)
+	}
+
+	sort.SliceStable(keys, func(i, j int) bool {
+		return data.OtherTypeCounter.counts[keys[i]] > data.OtherTypeCounter.counts[keys[j]]
+	})
+
+	for _, k := range keys {
 		table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
-			{Text: name},
-			{Text: fmt.Sprintf("%d", count)},
+			{Text: k},
+			{Text: fmt.Sprintf("%s", humanize.Comma(data.OtherTypeCounter.counts[k]))},
 		})
 	}
 
-	fmt.Printf("Item Counts\n")
+	color.Bold.Println("Item Counts")
 	table.Println()
 }
 
@@ -267,13 +282,16 @@ func showLargestNotes(data StatsData) {
 			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Title")},
 		},
 	}
+
 	for _, note := range data.LargestNotes {
 		table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
-			{Text: fmt.Sprintf("%d", note.GetContentSize())},
+			{Text: fmt.Sprintf("%s", humanize.Bytes(uint64(note.GetContentSize())))},
 			{Text: fmt.Sprintf("%s", note.Content.Title)},
 		})
 	}
-	fmt.Printf("Largest Notes\n")
+
+	color.Bold.Println("Largest Notes")
+
 	table.Println()
 }
 
@@ -323,74 +341,4 @@ func (in *typeCounter) present() {
 	config := columnize.DefaultConfig()
 	config.Delim = "^"
 	fmt.Println(columnize.Format(lines, config))
-}
-
-func timeSince(inTime time.Time) string {
-	now := time.Now()
-	if inTime.Location() != now.Location() {
-		now = now.In(inTime.Location())
-	}
-
-	if inTime.After(now) {
-		inTime, now = now, inTime
-	}
-
-	y1, M1, d1 := inTime.Date()
-	y2, M2, d2 := now.Date()
-
-	h1, m1, s1 := inTime.Clock()
-	h2, m2, s2 := now.Clock()
-
-	year := y2 - y1
-	month := M2 - M1
-	day := d2 - d1
-	hour := h2 - h1
-	min := m2 - m1
-	sec := s2 - s1
-
-	// Normalize negative values
-	if sec < 0 {
-		sec += 60
-		min--
-	}
-
-	if min < 0 {
-		min += 60
-		hour--
-	}
-
-	if hour < 0 {
-		hour += 24
-		day--
-	}
-
-	if day < 0 {
-		// days in month:
-		t := time.Date(y1, M1, 32, 0, 0, 0, 0, time.UTC)
-		day += 32 - t.Day()
-		month--
-	}
-
-	if month < 0 {
-		month += 12
-		year--
-	}
-
-	// determine output
-	switch {
-	case year > 0:
-		return fmt.Sprintf("%2d years %2d months %2d days", year, month, day)
-	case month > 0:
-		return fmt.Sprintf("%2d months %2d days %2d hours", month, day, hour)
-	case day > 0:
-		return fmt.Sprintf("%2d days %2d hours %2d minutes", day, hour, min)
-	case hour > 0:
-		return fmt.Sprintf("%2d hours %2d minutes", hour, min)
-	case min > 0:
-		return fmt.Sprintf("%2d minutes %2d seconds", min, sec)
-	case sec > 0:
-		return fmt.Sprintf("%2d seconds", sec)
-	default:
-		return "0"
-	}
 }

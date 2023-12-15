@@ -46,6 +46,7 @@ require (
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
 )
 
