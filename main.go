@@ -78,21 +78,28 @@ type SettingContentJSON struct {
 }
 
 type NoteContentYAML struct {
-	Title          string              `yaml:"title"`
-	Text           string              `json:"text"`
-	ItemReferences []ItemReferenceYAML `yaml:"references"`
-	AppData        AppDataContentYAML  `yaml:"appData"`
-	PreviewPlain   string              `yaml:"preview_plain"`
-	Trashed        *bool               `yaml:"trashed,omitempty"`
+	Title            string              `yaml:"title"`
+	Text             string              `json:"text"`
+	ItemReferences   []ItemReferenceYAML `yaml:"references"`
+	AppData          AppDataContentYAML  `yaml:"appData"`
+	References       []string            `yaml:"references"`
+	EditorIdentifier string              `yaml:"editorIdentifier"`
+	PreviewPlain     string              `yaml:"preview_plain"`
+	PreviewHtml      string              `yaml:"preview_html"`
+	Spellcheck       bool                `yaml:"spellcheck"`
+	Trashed          *bool               `yaml:"trashed,omitempty"`
 }
 
 type NoteContentJSON struct {
-	Title          string              `json:"title"`
-	Text           string              `json:"text"`
-	ItemReferences []ItemReferenceJSON `json:"references"`
-	AppData        AppDataContentJSON  `json:"appData"`
-	PreviewPlain   string              `json:"preview_plain"`
-	Trashed        *bool               `json:"trashed,omitempty"`
+	Title            string              `json:"title"`
+	Text             string              `json:"text"`
+	ItemReferences   []ItemReferenceJSON `json:"references"`
+	AppData          AppDataContentJSON  `json:"appData"`
+	EditorIdentifier string              `json:"editorIdentifier"`
+	PreviewPlain     string              `json:"preview_plain"`
+	PreviewHtml      string              `json:"preview_html"`
+	Spellcheck       bool                `json:"spellcheck"`
+	Trashed          *bool               `json:"trashed,omitempty"`
 }
 
 type TagJSON struct {
