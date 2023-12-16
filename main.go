@@ -82,7 +82,6 @@ type NoteContentYAML struct {
 	Text             string              `json:"text"`
 	ItemReferences   []ItemReferenceYAML `yaml:"references"`
 	AppData          AppDataContentYAML  `yaml:"appData"`
-	References       []string            `yaml:"references"`
 	EditorIdentifier string              `yaml:"editorIdentifier"`
 	PreviewPlain     string              `yaml:"preview_plain"`
 	PreviewHtml      string              `yaml:"preview_html"`

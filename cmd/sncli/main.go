@@ -771,6 +771,11 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 							Name:  "uuid",
 							Usage: "unique id of item to return (separate multiple with commas)",
 						},
+						cli.StringFlag{
+							Name:  "output",
+							Value: "json",
+							Usage: "output format",
+						},
 					},
 					Action: func(c *cli.Context) error {
 						opts, err := getOpts(c)

@@ -549,13 +549,18 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 				isTrashed = rt.(*items.Note).Content.Trashed
 			}
 
+			nc := rt.(*items.Note).Content
+
 			noteContentJSON := sncli.NoteContentJSON{
-				Title:          rt.(*items.Note).Content.GetTitle(),
-				Text:           rt.(*items.Note).Content.GetText(),
-				ItemReferences: sncli.ItemRefsToJSON(rt.(*items.Note).Content.References()),
-				AppData:        noteContentAppDataContent,
-				PreviewPlain:   rt.(*items.Note).Content.PreviewPlain,
-				Trashed:        isTrashed,
+				Title:            rt.(*items.Note).Content.GetTitle(),
+				Text:             rt.(*items.Note).Content.GetText(),
+				ItemReferences:   sncli.ItemRefsToJSON(rt.(*items.Note).Content.References()),
+				AppData:          noteContentAppDataContent,
+				EditorIdentifier: nc.EditorIdentifier,
+				PreviewPlain:     nc.PreviewPlain,
+				PreviewHtml:      nc.PreviewHtml,
+				Spellcheck:       nc.Spellcheck,
+				Trashed:          isTrashed,
 			}
 
 			notesJSON = append(notesJSON, sncli.NoteJSON{
@@ -586,10 +591,17 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 			bOutput, err = yaml.Marshal(notesYAML)
 		}
 		if len(bOutput) > 0 {
-			fmt.Print("{\n  \"items\": ")
-			fmt.Print(string(bOutput))
-			fmt.Print("\n}")
+			if output == "json" {
+				fmt.Print("{\n  \"items\": ")
+				fmt.Print(string(bOutput))
+				fmt.Print("\n}")
+
+				return msg, nil
+			}
+
+			fmt.Printf("---\n%s", string(bOutput))
 		}
+
 	}
 
 	return msg, err
