@@ -8,7 +8,7 @@ require (
 	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/jonhadfield/gosn-v2 v0.0.0-20231214143647-30e781fbf84e
+	//github.com/jonhadfield/gosn-v2 v0.0.0-20231214143647-30e781fbf84e
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/viper v1.18.1
 	github.com/stretchr/testify v1.8.4
@@ -41,13 +41,14 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
+	github.com/jonhadfield/gosn-v2 v0.0.0-20231216152334-8816fc070ac7
 )
 
 require (

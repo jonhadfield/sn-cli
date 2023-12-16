@@ -754,6 +754,38 @@ func startCLI(args []string) (msg string, useStdOut bool, err error) {
 					},
 				},
 				{
+					Name:    "item",
+					Aliases: []string{"items"},
+					Usage:   "get any standard notes item",
+					BashComplete: func(c *cli.Context) {
+						getItemOpts := []string{"--uuid"}
+						if c.NArg() > 0 {
+							return
+						}
+						for _, t := range getItemOpts {
+							fmt.Println(t)
+						}
+					},
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "uuid",
+							Usage: "unique id of item to return (separate multiple with commas)",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						opts, err := getOpts(c)
+						if err != nil {
+							return err
+						}
+
+						useStdOut = opts.useStdOut
+
+						msg, err = processGetItems(c, opts)
+
+						return err
+					},
+				},
+				{
 					Name:    "trash",
 					Aliases: []string{"trashed"},
 					Usage:   "get notes in trash",

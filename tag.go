@@ -214,6 +214,39 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	return output, err
 }
 
+func (i *GetItemsConfig) Run() (items items.Items, err error) {
+	var so cache.SyncOutput
+
+	si := cache.SyncInput{
+		Session: i.Session,
+	}
+
+	so, err = Sync(si, true)
+	if err != nil {
+		return items, err
+	}
+
+	var allPersistedItems cache.Items
+
+	err = so.DB.All(&allPersistedItems)
+	if err != nil {
+		return
+	}
+
+	err = so.DB.Close()
+	if err != nil {
+		return
+	}
+
+	items, err = allPersistedItems.ToItems(i.Session)
+	if err != nil {
+		return
+	}
+
+	items.FilterAllTypes(i.Filters)
+	return items, err
+}
+
 func (i *GetTagConfig) Run() (items items.Items, err error) {
 	var so cache.SyncOutput
 

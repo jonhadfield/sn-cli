@@ -154,6 +154,13 @@ type TagItemsConfig struct {
 	Debug      bool
 }
 
+type GetItemsConfig struct {
+	Session *cache.Session
+	Filters items.ItemFilters
+	Output  string
+	Debug   bool
+}
+
 type AddTagsInput struct {
 	Session    *cache.Session
 	Tags       []string
