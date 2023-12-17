@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/jonhadfield/gosn-v2/common"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -89,6 +90,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 
 	so, err = Sync(si, true)
 	if err != nil {
+
 		return
 	}
 
@@ -112,6 +114,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 		var gi items.Items
 		gi, err = gnc.Run()
 		if err != nil {
+
 			return
 		}
 		switch len(gi) {
@@ -308,11 +311,12 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 	}
 
 	notes.Filter(itemFilter)
+
 	var notesToDelete items.Notes
 
 	for _, item := range notes {
-		if item.GetContentType() != "Note" {
-			panic(fmt.Sprintf("Got a non-note item in the notes list: %s", item.GetContentType()))
+		if item.GetContentType() != common.SNItemTypeNote {
+			panic(fmt.Sprintf("got a non-note item in the notes list: %s", item.GetContentType()))
 		}
 		note := item.(*items.Note)
 		if note.GetContent() != nil {
@@ -322,7 +326,10 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 		}
 	}
 
-	if notesToDelete == nil {
+	if notesToDelete == nil || len(notesToDelete) == 0 {
+		// close db as we're not going to save anything
+		session.CacheDB.Close()
+
 		return
 	}
 
@@ -332,9 +339,9 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 
 	pii := cache.SyncInput{
 		Session: session,
+		Close:   true,
 	}
 
-	pii.Close = true
 	_, err = Sync(pii, true)
 	if err != nil {
 		return
@@ -433,9 +440,9 @@ func deleteItems(session *cache.Session, noteTitles []string, noteText string, i
 
 	pii := cache.SyncInput{
 		Session: session,
+		Close:   true,
 	}
 
-	pii.Close = true
 	_, err = Sync(pii, true)
 	if err != nil {
 		return

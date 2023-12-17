@@ -4,22 +4,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jonhadfield/gosn-v2/common"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/divan/num2words"
 	"github.com/gookit/color"
 
 	"github.com/asdine/storm/v3/q"
-	"github.com/divan/num2words"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/items"
 	sncli "github.com/jonhadfield/sn-cli"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v2"
 )
 
@@ -90,7 +90,7 @@ func getNotesByTitle(sess cache.Session, title string, close bool) (notes items.
 
 	var allEncNotes cache.Items
 
-	query := sess.CacheDB.Select(q.And(q.Eq("ContentType", "Note"), q.Eq("Deleted", false)))
+	query := sess.CacheDB.Select(q.And(q.Eq("ContentType", common.SNItemTypeNote), q.Eq("Deleted", false)))
 	if err = query.Find(&allEncNotes); err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return nil, fmt.Errorf("could not find any notes")
@@ -171,7 +171,7 @@ func captureInputFromEditor(title, text, editor string) ([]byte, error) {
 	return bytes, nil
 }
 
-func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processEditNote(c *cli.Context, opts configOptsOutput) (err error) {
 	inUUID := c.String("uuid")
 	inTitle := c.String("title")
 	inEditor := c.String("editor")
@@ -179,14 +179,14 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
 		_ = cli.ShowSubcommandHelp(c)
 
-		return "", errors.New("title or UUID is required")
+		return errors.New("title or UUID is required")
 	}
 
 	var cSession cache.Session
 	cSession, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	cSession.Debug = opts.debug
@@ -195,7 +195,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	cacheDBPath, err = cache.GenCacheDBPath(cSession, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	cSession.CacheDBPath = cacheDBPath
@@ -233,11 +233,11 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 		}
 
 		if len(notes) == 0 {
-			return "", errors.New("note not found")
+			return errors.New(fmt.Sprintf("%s: %s", msgNoteNotFound, inTitle))
 		}
 
 		if len(notes) > 1 {
-			return "", errors.New("multiple notes found with same title")
+			return errors.New(msgMultipleNotesFoundWithSameTitle)
 		}
 
 		note = notes[0]
@@ -247,7 +247,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	b, err = captureInputFromEditor(note.Content.Title, note.Content.Text, inEditor)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	var newTitle, newText string
@@ -258,7 +258,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	if note.Content.Title == newTitle && note.Content.Text == newText {
-		return "note unchanged", nil
+		return nil
 	}
 
 	note.Content.Title = newTitle
@@ -281,7 +281,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (msg string, err err
 		return
 	}
 
-	return "", err
+	return err
 }
 
 func parseEditorOutput(in []byte) (title, text string, err error) {
@@ -302,7 +302,7 @@ func parseEditorOutput(in []byte) (title, text string, err error) {
 	return
 }
 
-func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 	uuid := c.String("uuid")
 	title := c.String("title")
 	text := c.String("text")
@@ -373,13 +373,13 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return "", err
+		return err
 	}
 	var cacheDBPath string
 
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	session.CacheDBPath = cacheDBPath
@@ -393,7 +393,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	return outputNotes(c, count, output, getNoteConfig)
 }
 
-func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 	uuid := c.String("uuid")
 	title := c.String("title")
 	text := c.String("text")
@@ -462,14 +462,14 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	var cacheDBPath string
 
 	cacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	session.CacheDBPath = cacheDBPath
@@ -483,12 +483,12 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (msg string, err err
 	return outputNotes(c, count, output, getNoteConfig)
 }
 
-func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.GetNoteConfig) (msg string, err error) {
+func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.GetNoteConfig) (err error) {
 	var rawNotes items.Items
 
 	rawNotes, err = getNoteConfig.Run()
 	if err != nil {
-		return "", err
+		return err
 	}
 	// strip deleted items
 	rawNotes = sncli.RemoveDeleted(rawNotes)
@@ -573,41 +573,30 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 		}
 	}
 
-	if numResults <= 0 {
-		if count {
-			msg = "0"
-		} else {
-			msg = msgNoMatches
-		}
-	} else if count {
-		msg = strconv.Itoa(numResults)
-	} else {
-		output = c.String("output")
-		var bOutput []byte
-		switch strings.ToLower(output) {
-		case "json":
-			bOutput, err = json.MarshalIndent(notesJSON, "", "    ")
-		case "yaml":
-			bOutput, err = yaml.Marshal(notesYAML)
-		}
-		if len(bOutput) > 0 {
-			if output == "json" {
-				fmt.Print("{\n  \"items\": ")
-				fmt.Print(string(bOutput))
-				fmt.Print("\n}")
+	output = c.String("output")
+	var bOutput []byte
+	switch strings.ToLower(output) {
+	case "json":
+		bOutput, err = json.MarshalIndent(notesJSON, "", "    ")
+	case "yaml":
+		bOutput, err = yaml.Marshal(notesYAML)
+	}
+	if len(bOutput) > 0 {
+		if output == "json" {
+			fmt.Print("{\n  \"items\": ")
+			fmt.Print(string(bOutput))
+			fmt.Print("\n}")
 
-				return msg, nil
-			}
-
-			fmt.Printf("---\n%s", string(bOutput))
+			return nil
 		}
 
+		fmt.Printf("---\n%s", string(bOutput))
 	}
 
-	return msg, err
+	return err
 }
 
-func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processAddNotes(c *cli.Context, opts configOptsOutput) (err error) {
 	// get input
 	title := strings.TrimSpace(c.String("title"))
 	text := strings.TrimSpace(c.String("text"))
@@ -618,26 +607,26 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 			panic(cErr)
 		}
 
-		return "", errors.New("note title not defined")
+		return errors.New("note title not defined")
 	}
 
 	if filePath == "" && text == "" {
 		_ = cli.ShowSubcommandHelp(c)
 
-		return "", errors.New("note text not defined")
+		return errors.New("note text not defined")
 	}
 
 	// get session
 	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	processedTags := sncli.CommaSplit(c.String("tag"))
 
 	session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	AddNoteInput := sncli.AddNoteInput{
@@ -651,41 +640,38 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (msg string, err err
 	}
 
 	if err = AddNoteInput.Run(); err != nil {
-		return "", fmt.Errorf("failed to add note. %+v", err)
+		return fmt.Errorf("failed to add note. %+v", err)
 	}
 
-	msg = color.Green.Sprintf(msgAddSuccess + " note")
+	_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf("%s: %s", msgNoteAdded, title))
 
-	return msg, err
+	return nil
 }
 
-func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processDeleteNote(c *cli.Context, opts configOptsOutput) (err error) {
 	title := strings.TrimSpace(c.String("title"))
 	uuid := strings.TrimSpace(c.String("uuid"))
 
 	if title == "" && uuid == "" {
 		_ = cli.ShowSubcommandHelp(c)
 
-		return "", errors.New("")
+		return errors.New("")
 	}
 
 	sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return msg, err
+		return err
 	}
 
 	processedNotes := sncli.CommaSplit(title)
 
 	processedUUIDs := sncli.CommaSplit(uuid)
 
-	var cacheDBPath string
-	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
-
+	sess.CacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return msg, err
+		return err
 	}
 
-	sess.CacheDBPath = cacheDBPath
 	DeleteNoteConfig := sncli.DeleteNoteConfig{
 		Session:    &sess,
 		NoteTitles: processedNotes,
@@ -696,25 +682,26 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (msg string, err e
 	var noDeleted int
 
 	if noDeleted, err = DeleteNoteConfig.Run(); err != nil {
-		return msg, fmt.Errorf("failed to delete note. %+v", err)
+		return fmt.Errorf("failed to delete note. %+v", err)
 	}
 
-	strNote := "notes"
-	if noDeleted == 1 {
-		strNote = "note"
+	if noDeleted <= 0 {
+		_, _ = fmt.Fprintf(c.App.Writer, color.Yellow.Sprintf(fmt.Sprintf("%s: %s", msgNoteNotFound, title)))
+
+		return nil
 	}
 
-	msg = color.Green.Sprintf(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strNote))
+	_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf(fmt.Sprintf("%s: %s", msgNoteDeleted, title)))
 
-	return msg, err
+	return nil
 }
 
-func processDeleteItems(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processDeleteItems(c *cli.Context, opts configOptsOutput) (err error) {
 	uuid := strings.TrimSpace(c.String("uuid"))
 
 	sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return msg, err
+		return err
 	}
 
 	processedUUIDs := sncli.CommaSplit(uuid)
@@ -723,7 +710,7 @@ func processDeleteItems(c *cli.Context, opts configOptsOutput) (msg string, err 
 	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 
 	if err != nil {
-		return msg, err
+		return err
 	}
 
 	sess.CacheDBPath = cacheDBPath
@@ -735,8 +722,8 @@ func processDeleteItems(c *cli.Context, opts configOptsOutput) (msg string, err 
 
 	var noDeleted int
 
-	if noDeleted, err = DeleteItemConfig.Run(); err != nil {
-		return msg, fmt.Errorf("failed to delete items. %+v", err)
+	if _, err = DeleteItemConfig.Run(); err != nil {
+		return fmt.Errorf("failed to delete items. %+v", err)
 	}
 
 	strItem := "items"
@@ -744,7 +731,8 @@ func processDeleteItems(c *cli.Context, opts configOptsOutput) (msg string, err 
 		strItem = "item"
 	}
 
-	msg = color.Green.Sprintf(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strItem))
+	_, _ = fmt.Fprintf(c.App.Writer,
+		color.Green.Sprintf(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strItem)))
 
-	return msg, err
+	return err
 }

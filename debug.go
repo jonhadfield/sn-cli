@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gookit/color"
-
 	"github.com/jonhadfield/gosn-v2/crypto"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/jonhadfield/gosn-v2/session"

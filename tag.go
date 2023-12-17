@@ -194,7 +194,6 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	if err != nil {
 		return AddTagsOutput{}, err
 	}
-
 	output.Added = ato.added
 	output.Existing = ato.existing
 
@@ -331,6 +330,9 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 
 	tags = gItems
 	tags.Filter(deleteFilter)
+	if len(tags) == 0 {
+		return 0, nil
+	}
 
 	var tagsToDelete items.Items
 
@@ -360,25 +362,27 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 		return 0, err
 	}
 
+	if len(eTagsToDelete) == 0 {
+		return 0, nil
+	}
+
 	if err = cache.SaveEncryptedItems(so.DB, eTagsToDelete, true); err != nil {
 		return
 	}
 
-	if len(tagsToDelete) > 0 {
-		pii := cache.SyncInput{
-			Session: session,
-			Close:   true,
-		}
+	pii := cache.SyncInput{
+		Session: session,
+		Close:   true,
+	}
 
-		_, err = Sync(pii, true)
-		if err != nil {
-			return
-		}
+	_, err = Sync(pii, true)
+	if err != nil {
+		return
 	}
 
 	noDeleted = len(tagsToDelete)
 
-	return noDeleted, err
+	return noDeleted, nil
 }
 
 type addTagsInput struct {

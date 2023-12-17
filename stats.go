@@ -5,11 +5,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/dustin/go-humanize"
-
 	"github.com/alexeyco/simpletable"
-
-	// "github.com/fatih/color"
+	"github.com/dustin/go-humanize"
+	// "github.com/fatih/color".
 	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/items"

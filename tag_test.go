@@ -212,3 +212,16 @@ func TestTaggingOfNotes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, deletedTags)
 }
+
+func TestGetTagsByTitleAndUUID(t *testing.T) {
+	addTagConfig := AddTagsInput{
+		Session: testSession,
+		Tags:    []string{"TestTagOne", "TestTagTwo"},
+	}
+
+	ato, err := addTagConfig.Run()
+	require.NoError(t, err)
+	require.Contains(t, ato.Added, "TestTagOne")
+	require.Contains(t, ato.Added, "TestTagTwo")
+	require.Empty(t, ato.Existing)
+}

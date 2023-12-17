@@ -1,232 +1,146 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/jonhadfield/gosn-v2/auth"
+	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
+	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/jonhadfield/gosn-v2/session"
 )
 
-func TestWipe(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgItemsDeleted)
-	time.Sleep(1 * time.Second)
+var (
+	testSession      *cache.Session
+	gTtestSession    *session.Session
+	testUserEmail    string
+	testUserPassword string
+)
+
+func localTestMain() {
+	localServer := "http://ramea:3000"
+	testUserEmail = fmt.Sprintf("ramea-%s", strconv.FormatInt(time.Now().UnixNano(), 16))
+	testUserPassword = "secretsanta"
+
+	rInput := auth.RegisterInput{
+		Password:  testUserPassword,
+		Email:     testUserEmail,
+		APIServer: localServer,
+		Version:   "004",
+		// Debug:     true,
+	}
+
+	_, err := rInput.Register()
+	if err != nil {
+		panic(fmt.Sprintf("failed to register with: %s", localServer))
+	}
+
+	signIn(localServer, testUserEmail, testUserPassword)
 }
 
-func TestAddTag(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
-	require.NoError(t, err)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgAddSuccess)
+func signIn(server, email, password string) {
+	ts, err := auth.CliSignIn(email, password, server, true)
+	if err != nil {
+		fmt.Println(err)
+
+		os.Exit(1)
+	}
+
+	if server == "" {
+		server = session.SNServerURL
+	}
+
+	httpClient := common.NewHTTPClient()
+
+	debug := false
+	if !debug {
+		httpClient.Logger = nil
+	}
+
+	ts.HTTPClient = httpClient
+	if httpClient.Logger != nil {
+		panic("httpClient.Logger should be nil")
+	}
+
+	gTtestSession = &session.Session{
+		Debug:             debug,
+		HTTPClient:        httpClient,
+		SchemaValidation:  false,
+		Server:            server,
+		FilesServerUrl:    ts.FilesServerUrl,
+		Token:             "",
+		MasterKey:         ts.MasterKey,
+		ItemsKeys:         nil,
+		DefaultItemsKey:   session.SessionItemsKey{},
+		KeyParams:         auth.KeyParams{},
+		AccessToken:       ts.AccessToken,
+		RefreshToken:      ts.RefreshToken,
+		AccessExpiration:  ts.AccessExpiration,
+		RefreshExpiration: ts.RefreshExpiration,
+		ReadOnlyAccess:    ts.ReadOnlyAccess,
+		PasswordNonce:     ts.PasswordNonce,
+		Schemas:           nil,
+	}
+
+	testSession = &cache.Session{
+		Session:     gTtestSession,
+		CacheDB:     nil,
+		CacheDBPath: "",
+	}
+
 }
 
-func TestAddGetTag(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
-	require.NoError(t, err)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgAddSuccess)
-	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--title", "testAddOneTagGetCount"})
-	require.NoError(t, err)
-}
+func TestMain(m *testing.M) {
+	// if os.Getenv("SN_SERVER") == "" || strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
+	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
+		localTestMain()
+	} else {
+		signIn(session.SNServerURL, os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"))
+	}
 
-// func TestAddGetTagExport(t *testing.T) {
-// 	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
-// 	require.NoError(t, err)
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
-// 	require.NoError(t, err)
-// 	require.Contains(t, msg, msgAddSuccess)
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "tag", "--title", "testAddOneTagGetCount"})
-// 	require.NoError(t, err)
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "export"})
-// 	require.NoError(t, err)
-// }
+	if _, err := items.Sync(items.SyncInput{Session: gTtestSession}); err != nil {
+		fmt.Println(err)
 
-func TestAddDeleteTag(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
-	require.NoError(t, err, "'wipe --yes' failed")
-	require.Contains(t, msg, msgItemsDeleted)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testTag"})
-	require.NoError(t, err, "'add tag --title testTag' failed")
-	require.Contains(t, msg, msgAddSuccess)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--title", "testTag", "--count"})
-	require.Equal(t, "1", msg)
-	require.NoError(t, err)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testTag"})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgDeleted)
-}
+		os.Exit(1)
+	}
 
-// func TestAddTagExportDeleteTagReImport(t *testing.T) {
-// 	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
-// 	require.NoError(t, err)
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag", "--title", "testAddOneTagGetCount"})
-// 	require.NoError(t, err)
-// 	require.Contains(t, msg, msgAddSuccess)
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
-// 	require.NoError(t, err)
-// 	require.Equal(t, "1", msg)
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "export"})
-// 	require.NoError(t, err)
-// 	require.True(t, strings.HasPrefix(msg, "encrypted export written to:"))
-// 	path := strings.TrimPrefix(msg, "encrypted export written to:")
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount"})
-// 	require.NoError(t, err)
-// 	require.Contains(t, msg, msgDeleted)
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
-// 	require.NoError(t, err)
-// 	require.Equal(t, "0", msg)
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "import", "--experiment", "--file", path})
-// 	require.NoError(t, err)
-// 	require.True(t, strings.HasPrefix(msg, "imported"))
-// 	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
-// 	require.NoError(t, err)
-// 	require.Equal(t, "1", msg)
-// }
+	if gTtestSession.DefaultItemsKey.ItemsKey == "" {
+		panic("failed in TestMain due to empty default items key")
+	}
+	if strings.TrimSpace(gTtestSession.Server) == "" {
+		panic("failed in TestMain due to empty server")
+	}
 
-func TestAddTagErrorMissingTitle(t *testing.T) {
-	_, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "tag"})
-	require.Error(t, err, "error should be returned if title is unspecified")
-}
+	var err error
+	testSession, err = cache.ImportSession(&auth.SignInResponseDataSession{
+		Debug:             gTtestSession.Debug,
+		HTTPClient:        gTtestSession.HTTPClient,
+		SchemaValidation:  false,
+		Server:            gTtestSession.Server,
+		FilesServerUrl:    gTtestSession.FilesServerUrl,
+		Token:             "",
+		MasterKey:         gTtestSession.MasterKey,
+		KeyParams:         gTtestSession.KeyParams,
+		AccessToken:       gTtestSession.AccessToken,
+		RefreshToken:      gTtestSession.RefreshToken,
+		AccessExpiration:  gTtestSession.AccessExpiration,
+		RefreshExpiration: gTtestSession.RefreshExpiration,
+		ReadOnlyAccess:    gTtestSession.ReadOnlyAccess,
+		PasswordNonce:     gTtestSession.PasswordNonce,
+	}, "")
+	if err != nil {
+		return
+	}
 
-func TestDeleteTagErrorMissingTitle(t *testing.T) {
-	_, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag"})
-	require.Error(t, err, "error should be returned if title is unspecified")
-}
+	testSession.CacheDBPath, err = cache.GenCacheDBPath(*testSession, "", common.LibName)
+	if err != nil {
+		panic(err)
+	}
 
-func TestAddDeleteNote(t *testing.T) {
-	_, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
-	require.NoError(t, err, "failed to wipe")
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note", "--title", "testNote", "--text", "some example text"})
-	require.NoError(t, err, "failed to add note")
-	require.Contains(t, msg, msgAddSuccess)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note", "--count"})
-	require.NoError(t, err, "failed to get note count")
-	require.Equal(t, "1", msg)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "note", "--title", "testNote"})
-	require.NoError(t, err, "failed to delete note")
-	require.Contains(t, msg, msgDeleted)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note", "--count"})
-	require.NoError(t, err, "failed to get note count")
-	require.Equal(t, "0", msg)
-	time.Sleep(1 * time.Second)
-}
-
-func TestAddNoteErrorMissingTitle(t *testing.T) {
-	_, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note"})
-	require.Error(t, err)
-}
-
-func TestDeleteNoteErrorMissingTitle(t *testing.T) {
-	_, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "note"})
-	require.Error(t, err, "error should be returned if title is unspecified")
-}
-
-func TestTagNotesByTextWithNewTags(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note", "--title", "TestNoteOne", "--text", "test note one"})
-	require.Contains(t, msg, msgAddSuccess)
-	require.NoError(t, err)
-
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "add", "note", "--title", "TestNoteTwo", "--text", "test note two"})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgAddSuccess)
-
-	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "tag", "--find-text", "test note", "--title", "testTagOne,testTagTwo"})
-	require.NoError(t, err)
-
-	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "note", "--title", "TestNoteOne,TestNoteTwo"})
-	require.NoError(t, err)
-
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note"})
-	require.NoError(t, err)
-
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "0", msg)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note"})
-	require.NoError(t, err)
-	require.NotEmpty(t, msg)
-
-	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testTagOne,testTagTwo"})
-	require.NoError(t, err)
-	time.Sleep(1 * time.Second)
-}
-
-func TestAddOneNoteGetCount(t *testing.T) {
-	msg, _, err := startCLI([]string{
-		"sncli", "--debug", "--no-stdout", "add", "note", "--title", "testAddOneNoteGetCount Title",
-		"--text", "testAddOneNoteGetCount Text",
-	})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgAddSuccess)
-
-	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note"})
-	require.NoError(t, err)
-
-	msg, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "1", msg)
-
-	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "note", "--title", "testAddOneNoteGetCount Title"})
-	require.NoError(t, err)
-	time.Sleep(1 * time.Second)
-}
-
-func TestAddOneTagGetCount(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "add", "tag", "--title", "testAddOneTagGetCount Title"})
-	require.NoError(t, err)
-	require.Contains(t, msg, msgAddSuccess)
-	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "1", msg)
-
-	_, _, err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount Title"})
-	require.NoError(t, err)
-
-	time.Sleep(1 * time.Second)
-}
-
-func TestGetNoteCountWithNoResults(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "0", msg)
-	time.Sleep(1 * time.Second)
-}
-
-func TestGetTagCountWithNoResults(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "0", msg)
-	time.Sleep(1 * time.Second)
-}
-
-func TestGetNotesWithNoResults(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "get", "note"})
-	require.NoError(t, err)
-	require.Equal(t, msgNoMatches, msg)
-	time.Sleep(1 * time.Second)
-}
-
-func TestGetTagsWithNoResults(t *testing.T) {
-	msg, _, err := startCLI([]string{"sncli", "--debug", "get", "tag"})
-	require.NoError(t, err)
-	require.Equal(t, msgNoMatches, msg)
-	time.Sleep(1 * time.Second)
-}
-
-func TestFinalWipeAndCountZero(t *testing.T) {
-	_, _, err := startCLI([]string{"sncli", "--debug", "wipe", "--yes"})
-	require.NoError(t, err)
-
-	var msg string
-
-	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "note", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "0", msg)
-
-	msg, _, err = startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
-	require.NoError(t, err)
-	require.Equal(t, "0", msg)
+	os.Exit(m.Run())
 }

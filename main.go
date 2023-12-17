@@ -4,9 +4,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/gookit/color"
-
 	"github.com/briandowns/spinner"
+	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/items"
 )

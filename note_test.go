@@ -219,7 +219,7 @@ func TestReplaceNote(t *testing.T) {
 	var preReplace, postReplace items.Items
 
 	preReplace, err := gnc.Run()
-	require.NoError(t, err, err)
+	require.NoError(t, err)
 	require.Len(t, preReplace, 1)
 	// require.NoError(t, testSession.CacheDB.Close())
 
@@ -405,7 +405,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 
 	var noDeleted int
 	noDeleted, err = deleteNoteConfig.Run()
-	require.Equal(t, noDeleted, 1)
+	require.Equal(t, 1, noDeleted)
 	require.NoError(t, err)
 
 	// get same note again

@@ -3,15 +3,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/items"
 	sncli "github.com/jonhadfield/sn-cli"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
-	"strings"
 )
 
-func processGetItems(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processGetItems(c *cli.Context, opts configOptsOutput) (err error) {
 	inUUID := strings.TrimSpace(c.String("uuid"))
 
 	matchAny := true
@@ -34,7 +35,7 @@ func processGetItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// TODO: validate output
@@ -44,7 +45,7 @@ func processGetItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	sess.CacheDBPath = cacheDBPath
@@ -59,7 +60,7 @@ func processGetItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	rawItems, err = appGetItemsConfig.Run()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// strip deleted items
@@ -67,9 +68,9 @@ func processGetItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 	numResults := len(rawItems)
 
 	if numResults == 0 {
-		msg = msgNoMatches
+		// msg = msgNoMatches
 
-		return msgNoMatches, nil
+		return nil
 	}
 
 	output = c.String("output")
@@ -89,5 +90,5 @@ func processGetItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 		fmt.Print("\n}")
 	}
 
-	return msg, err
+	return err
 }

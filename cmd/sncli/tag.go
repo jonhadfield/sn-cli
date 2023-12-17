@@ -6,16 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
-	"github.com/gookit/color"
-
 	"github.com/asdine/storm/v3/q"
+	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/items"
 	sncli "github.com/jonhadfield/sn-cli"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v2"
 )
 
@@ -107,63 +105,63 @@ func getTagsByTitle(sess cache.Session, title string) (tags items.Tags, err erro
 	return matchingRawTags, err
 }
 
-func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processEditTag(c *cli.Context, opts configOptsOutput) (err error) {
 	inUUID := c.String("uuid")
 	inTitle := c.String("title")
 
 	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
 		_ = cli.ShowSubcommandHelp(c)
 
-		return "", errors.New("title or UUID is required")
+		return errors.New("title or UUID is required")
 	}
 
 	var sess cache.Session
 
 	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	var cacheDBPath string
 
 	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	sess.CacheDBPath = cacheDBPath
 
-	var tag items.Tag
+	var tagToEdit items.Tag
 
 	var tags items.Tags
 
-	// if uuid was passed then retrieve tag from db using uuid
+	// if uuid was passed then retrieve tagToEdit from db using uuid
 	if inUUID != "" {
-		if tag, err = getTagByUUID(&sess, inUUID); err != nil {
+		if tagToEdit, err = getTagByUUID(&sess, inUUID); err != nil {
 			return
 		}
 	}
 
-	// if title was passed then retrieve tag(s) matching that title
+	// if title was passed then retrieve tagToEdit(s) matching that title
 	if inTitle != "" {
 		if tags, err = getTagsByTitle(sess, inTitle); err != nil {
 			return
 		}
 
 		if len(tags) == 0 {
-			return "", errors.New("tag not found")
+			return errors.New("tagToEdit not found")
 		}
 
 		if len(tags) > 1 {
-			return "", errors.New("multiple tags found with same title")
+			return errors.New("multiple tags found with same title")
 		}
 
-		tag = tags[0]
+		tagToEdit = tags[0]
 	}
 
 	// only show existing title information if uuid was passed
 	if inUUID != "" {
-		fmt.Printf("existing title: %s\n", tag.Content.Title)
+		fmt.Printf("existing title: %s\n", tagToEdit.Content.Title)
 	}
 
 	reader := bufio.NewReader(os.Stdin)
@@ -174,10 +172,10 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	text = strings.TrimSuffix(text, "\n")
 	if len(text) == 0 {
-		return "", errors.New("new tag title not entered")
+		return errors.New("new tagToEdit title not entered")
 	}
 
-	tag.Content.Title = text
+	tagToEdit.Content.Title = text
 
 	si := cache.SyncInput{
 		Session: &sess,
@@ -191,9 +189,9 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 		return
 	}
 
-	tags = items.Tags{tag}
+	tags = items.Tags{tagToEdit}
 
-	if err = cache.SaveTags(so.DB, &sess, tags, false); err != nil {
+	if err = cache.SaveTags(so.DB, &sess, tags, true); err != nil {
 		return
 	}
 
@@ -201,10 +199,12 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (msg string, err erro
 		return
 	}
 
-	return "", err
+	_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf("tag updated"))
+
+	return nil
 }
 
-func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
 	inTitle := strings.TrimSpace(c.String("title"))
 	inUUID := strings.TrimSpace(c.String("uuid"))
 
@@ -260,7 +260,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// TODO: validate output
@@ -270,7 +270,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	sess.CacheDBPath = cacheDBPath
@@ -286,7 +286,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	rawTags, err = appGetTagConfig.Run()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// strip deleted items
@@ -347,53 +347,53 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 			})
 		}
 	}
-	if !opts.useStdOut {
-		return
-	} else if numResults <= 0 {
-		if count {
-			msg = "0"
-		} else {
-			msg = msgNoMatches
-		}
-	} else if count {
-		msg = strconv.Itoa(numResults)
-	} else {
-		output = c.String("output")
-		var bOutput []byte
-		switch strings.ToLower(output) {
-		case "json":
-			bOutput, err = json.MarshalIndent(tagsJSON, "", "    ")
-		case "yaml":
-			bOutput, err = yaml.Marshal(tagsYAML)
-		}
-
-		if len(bOutput) > 0 {
-			fmt.Print("{\n  \"tags\": ")
-			fmt.Print(string(bOutput))
-			fmt.Print("\n}")
-		}
+	// if !opts.useStdOut {
+	// 	return
+	// } else if numResults <= 0 {
+	// 	if count {
+	// 		msg = "0"
+	// 	} else {
+	// 		msg = msgNoMatches
+	// 	}
+	// } else if count {
+	// 	msg = strconv.Itoa(numResults)
+	// } else {
+	output = c.String("output")
+	var bOutput []byte
+	switch strings.ToLower(output) {
+	case "json":
+		bOutput, err = json.MarshalIndent(tagsJSON, "", "    ")
+	case "yaml":
+		bOutput, err = yaml.Marshal(tagsYAML)
 	}
-	return msg, err
+
+	if len(bOutput) > 0 {
+		fmt.Print("{\n  \"tags\": ")
+		fmt.Print(string(bOutput))
+		fmt.Print("\n}")
+	}
+
+	return nil
 }
 
-func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processAddTags(c *cli.Context, opts configOptsOutput) (err error) {
 	// validate input
 	tagInput := c.String("title")
 	if strings.TrimSpace(tagInput) == "" {
 		_ = cli.ShowSubcommandHelp(c)
 
-		return "", errors.New("tag title not defined")
+		return errors.New("tag title not defined")
 	}
 
 	// get session
 	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// prepare input
@@ -411,12 +411,15 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 
 	ato, err = addTagInput.Run()
 	if err != nil {
-		return "", fmt.Errorf(color.Red.Sprintf(err.Error()))
+		_, _ = fmt.Fprintf(c.App.Writer, color.Red.Sprintf(err.Error()))
+		return err
 	}
 
+	var msg string
 	// present results
 	if len(ato.Added) > 0 {
-		msg = color.Green.Sprint(msgAddSuccess+": ", strings.Join(ato.Added, ", "))
+		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprint(msgTagAdded+": ", strings.Join(ato.Added, ", ")))
+		return err
 	}
 
 	if len(ato.Existing) > 0 {
@@ -425,13 +428,15 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (msg string, err erro
 			msg += "\n"
 		}
 
-		msg += color.Yellow.Sprint(msgAlreadyExisting + ": " + strings.Join(ato.Existing, ", "))
+		_, _ = fmt.Fprintf(c.App.Writer, color.Yellow.Sprint(msgTagAlreadyExists+": "+strings.Join(ato.Existing, ", ")))
 	}
 
-	return msg, err
+	_, _ = fmt.Fprintf(c.App.Writer, "%s\n", msg)
+
+	return err
 }
 
-func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processTagItems(c *cli.Context, opts configOptsOutput) (err error) {
 	findTitle := c.String("find-title")
 	findText := c.String("find-text")
 	findTag := c.String("find-tag")
@@ -439,20 +444,20 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	if findText == "" && findTitle == "" && findTag == "" {
 		fmt.Println("you must provide either text, title, or tag to search for")
 
-		return "", cli.ShowSubcommandHelp(c)
+		return cli.ShowSubcommandHelp(c)
 	}
 
 	processedTags := sncli.CommaSplit(newTags)
 
 	sess.CacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	appConfig := sncli.TagItemsConfig{
@@ -468,29 +473,27 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (msg string, err err
 
 	err = appConfig.Run()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	msg = msgTagSuccess
-
-	return msg, err
+	return err
 }
 
-func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err error) {
+func processDeleteTags(c *cli.Context, opts configOptsOutput) (err error) {
 	titleIn := strings.TrimSpace(c.String("title"))
 	uuidIn := strings.ReplaceAll(c.String("uuid"), " ", "")
 
 	if titleIn == "" && uuidIn == "" {
 		_ = cli.ShowSubcommandHelp(c)
 
-		return msg, errors.New("title or uuid required")
+		return errors.New("title or uuid required")
 	}
 
 	var sess cache.Session
 
 	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		return msg, err
+		return err
 	}
 
 	tags := sncli.CommaSplit(titleIn)
@@ -500,7 +503,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 
 	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 	if err != nil {
-		return msg, err
+		return err
 	}
 
 	sess.CacheDBPath = cacheDBPath
@@ -516,14 +519,61 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (msg string, err e
 
 	noDeleted, err = DeleteTagConfig.Run()
 	if err != nil {
-		return msg, fmt.Errorf("failed to delete tag. %+v", err)
+		return fmt.Errorf("%s: %s - %+v", msgFailedToDeleteTag, titleIn, err)
 	}
 
 	if noDeleted > 0 {
-		msg = color.Green.Sprintf(fmt.Sprintf("%s tag", msgDeleted))
-	} else {
-		msg = color.Yellow.Sprintf("Tag not found")
+		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf(fmt.Sprintf("%s: %s", msgTagDeleted, titleIn)))
+
+		return nil
 	}
 
-	return msg, err
+	_, _ = fmt.Fprintf(c.App.Writer, color.Yellow.Sprintf("%s: %s", msgTagNotFound, titleIn))
+
+	return nil
+}
+
+func cmdTag() *cli.Command {
+	return &cli.Command{
+		Name:  "tag",
+		Usage: "tag items",
+
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "find-title",
+				Usage: "match title",
+			},
+			&cli.StringFlag{
+				Name:  "find-text",
+				Usage: "match text",
+			},
+			&cli.StringFlag{
+				Name:  "find-tag",
+				Usage: "match tag",
+			},
+			&cli.StringFlag{
+				Name:  "title",
+				Usage: "tag title to apply (separate multiple with commas)",
+			},
+			&cli.BoolFlag{
+				Name:  "purge",
+				Usage: "delete other existing tags",
+			},
+			&cli.BoolFlag{
+				Name:  "ignore-case",
+				Usage: "ignore case when matching",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			opts, err := getOpts(c)
+			if err != nil {
+				return err
+			}
+			// useStdOut = opts.useStdOut
+
+			err = processTagItems(c, opts)
+
+			return err
+		},
+	}
 }

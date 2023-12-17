@@ -5,14 +5,11 @@ go 1.21
 require (
 	github.com/asdine/storm/v3 v3.2.1
 	github.com/briandowns/spinner v1.23.0
-	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	//github.com/jonhadfield/gosn-v2 v0.0.0-20231214143647-30e781fbf84e
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/viper v1.18.1
 	github.com/stretchr/testify v1.8.4
-	github.com/urfave/cli v1.22.14
 	golang.org/x/crypto v0.16.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -29,7 +26,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/smartystreets/goconvey v1.8.1 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -46,9 +42,11 @@ require (
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
+	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
-	github.com/jonhadfield/gosn-v2 v0.0.0-20231216152334-8816fc070ac7
+	github.com/jonhadfield/gosn-v2 v0.0.0-20231217230122-7ad4020ae28b
+	github.com/urfave/cli/v2 v2.26.0
 )
 
 require (
@@ -64,8 +62,10 @@ require (
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
+	github.com/smartystreets/goconvey v1.8.1 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	github.com/xrash/smetrics v0.0.0-20231213231151-1d8dd44e695e // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611 // indirect
 )
