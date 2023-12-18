@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"fmt"
+	"github.com/jonhadfield/gosn-v2/common"
 	"sort"
 	"time"
 
@@ -74,7 +75,7 @@ func (i *StatsConfig) GetData() (StatsData, error) {
 	for _, item := range gitems {
 		// check if item is trashed note
 		var isTrashedNote bool
-		if item.GetContentType() == "Note" {
+		if item.GetContentType() == common.SNItemTypeNote {
 			n := item.(*items.Note)
 			if n.Content.Trashed != nil && *n.Content.Trashed {
 				isTrashedNote = true
@@ -84,10 +85,10 @@ func (i *StatsConfig) GetData() (StatsData, error) {
 		switch {
 		case isTrashedNote:
 			ctCounter.update("Notes (In Trash)")
-		case item.GetContentType() == "Note":
-			ctCounter.update("Note")
-		case item.GetContentType() == "Tag":
-			ctCounter.update("Tag")
+		case item.GetContentType() == common.SNItemTypeNote:
+			ctCounter.update(common.SNItemTypeNote)
+		case item.GetContentType() == common.SNItemTypeTag:
+			ctCounter.update(common.SNItemTypeTag)
 		default:
 			otCounter.update(item.GetContentType())
 		}
@@ -113,7 +114,7 @@ func (i *StatsConfig) GetData() (StatsData, error) {
 			}
 		}
 
-		if item.GetContentType() == "Note" && !isTrashedNote {
+		if item.GetContentType() == common.SNItemTypeNote && !isTrashedNote {
 			if item.GetContent() == nil {
 				missingContentUUIDs = append(missingContentUUIDs, item.GetUUID())
 			}
@@ -232,11 +233,11 @@ func showItemCounts(data StatsData) {
 	}
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Notes"},
-		{Text: fmt.Sprintf("%s", humanize.Comma(data.CoreTypeCounter.counts["Note"]))},
+		{Text: fmt.Sprintf("%s", humanize.Comma(data.CoreTypeCounter.counts[common.SNItemTypeNote]))},
 	})
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Tags"},
-		{Text: fmt.Sprintf("%s", humanize.Comma(data.CoreTypeCounter.counts["Tag"]))},
+		{Text: fmt.Sprintf("%s", humanize.Comma(data.CoreTypeCounter.counts[common.SNItemTypeTag]))},
 	})
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "----------------"},
@@ -327,11 +328,11 @@ func (in *typeCounter) update(itemType string) {
 
 func (in *typeCounter) present() {
 	var lines []string
-	lines = append(lines, fmt.Sprintf("Notes ^ %d", in.counts["Note"]))
-	lines = append(lines, fmt.Sprintf("Tags ^ %d", in.counts["Tag"]))
+	lines = append(lines, fmt.Sprintf("Notes ^ %d", in.counts[common.SNItemTypeNote]))
+	lines = append(lines, fmt.Sprintf("Tags ^ %d", in.counts[common.SNItemTypeTag]))
 
 	for name, count := range in.counts {
-		if name != "Tag" && name != "Note" && name != "Deleted" {
+		if name != common.SNItemTypeTag && name != common.SNItemTypeNote && name != "Deleted" {
 			lines = append(lines, fmt.Sprintf("%s ^ %d", name, count))
 		}
 	}

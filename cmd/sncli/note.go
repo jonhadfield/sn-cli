@@ -310,7 +310,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 	output := c.String("output")
 
 	noteFilter := items.Filter{
-		Type: "Note",
+		Type: common.SNItemTypeNote,
 	}
 	getNotesIF := items.ItemFilters{
 		MatchAny: false,
@@ -319,7 +319,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if !c.Bool("include-trash") {
 		includeTrashFilter := items.Filter{
-			Type:       "Note",
+			Type:       common.SNItemTypeNote,
 			Key:        "Trash",
 			Comparison: "!=",
 			Value:      "true",
@@ -329,7 +329,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if uuid != "" {
 		titleFilter := items.Filter{
-			Type:       "Note",
+			Type:       common.SNItemTypeNote,
 			Key:        "uuid",
 			Comparison: "==",
 			Value:      uuid,
@@ -339,7 +339,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if title != "" {
 		titleFilter := items.Filter{
-			Type:       "Note",
+			Type:       common.SNItemTypeNote,
 			Key:        "Title",
 			Comparison: "contains",
 			Value:      title,
@@ -349,7 +349,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if text != "" {
 		titleFilter := items.Filter{
-			Type:       "Note",
+			Type:       common.SNItemTypeNote,
 			Key:        "Text",
 			Comparison: "contains",
 			Value:      text,
@@ -362,8 +362,8 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 	if len(processedTags) > 0 {
 		for _, t := range processedTags {
 			titleFilter := items.Filter{
-				Type:       "Note",
-				Key:        "Tag",
+				Type:       common.SNItemTypeNote,
+				Key:        common.SNItemTypeTag,
 				Comparison: "contains",
 				Value:      t,
 			}
@@ -401,7 +401,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 	output := c.String("output")
 
 	noteFilter := items.Filter{
-		Type: "Note",
+		Type: common.SNItemTypeNote,
 	}
 	getNotesIF := items.ItemFilters{
 		MatchAny: false,
@@ -409,7 +409,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 	}
 
 	TrashFilter := items.Filter{
-		Type:       "Note",
+		Type:       common.SNItemTypeNote,
 		Key:        "Trash",
 		Comparison: "==",
 		Value:      "true",
@@ -418,7 +418,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if uuid != "" {
 		titleFilter := items.Filter{
-			Type:       "Note",
+			Type:       common.SNItemTypeNote,
 			Key:        "uuid",
 			Comparison: "==",
 			Value:      uuid,
@@ -428,7 +428,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if title != "" {
 		titleFilter := items.Filter{
-			Type:       "Note",
+			Type:       common.SNItemTypeNote,
 			Key:        "Title",
 			Comparison: "contains",
 			Value:      title,
@@ -438,7 +438,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if text != "" {
 		titleFilter := items.Filter{
-			Type:       "Note",
+			Type:       common.SNItemTypeNote,
 			Key:        "Text",
 			Comparison: "contains",
 			Value:      text,
@@ -451,8 +451,8 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 	if len(processedTags) > 0 {
 		for _, t := range processedTags {
 			titleFilter := items.Filter{
-				Type:       "Note",
-				Key:        "Tag",
+				Type:       common.SNItemTypeNote,
+				Key:        common.SNItemTypeTag,
 				Comparison: "contains",
 				Value:      t,
 			}

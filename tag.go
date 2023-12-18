@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"errors"
+	"github.com/jonhadfield/gosn-v2/common"
 	"strings"
 
 	"github.com/jonhadfield/gosn-v2/cache"
@@ -37,10 +38,10 @@ func tagNotes(i tagNotesInput) (err error) {
 
 	// get notes and tags
 	getNotesFilter := items.Filter{
-		Type: "Note",
+		Type: common.SNItemTypeNote,
 	}
 	getTagsFilter := items.Filter{
-		Type: "Tag",
+		Type: common.SNItemTypeTag,
 	}
 	filters := []items.Filter{getNotesFilter, getTagsFilter}
 	itemFilter := items.ItemFilters{
@@ -84,11 +85,11 @@ func tagNotes(i tagNotesInput) (err error) {
 			continue
 		}
 
-		if item.GetContentType() == "Tag" {
+		if item.GetContentType() == common.SNItemTypeTag {
 			allTags = append(allTags, item.(*items.Tag))
 		}
 
-		if item.GetContentType() == "Note" {
+		if item.GetContentType() == common.SNItemTypeNote {
 			allNotes = append(allNotes, item.(*items.Note))
 		}
 	}
@@ -99,11 +100,11 @@ func tagNotes(i tagNotesInput) (err error) {
 	for _, note := range allNotes {
 		switch {
 		case StringInSlice(note.UUID, i.matchNoteUUIDs, false):
-			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
+			typeUUIDs[common.SNItemTypeNote] = append(typeUUIDs[common.SNItemTypeNote], note.UUID)
 		case strings.TrimSpace(i.matchTitle) != "" && strings.Contains(strings.ToLower(note.Content.GetTitle()), strings.ToLower(i.matchTitle)):
-			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
+			typeUUIDs[common.SNItemTypeNote] = append(typeUUIDs[common.SNItemTypeNote], note.UUID)
 		case strings.TrimSpace(i.matchText) != "" && strings.Contains(strings.ToLower(note.Content.GetText()), strings.ToLower(i.matchText)):
-			typeUUIDs["Note"] = append(typeUUIDs["Note"], note.UUID)
+			typeUUIDs[common.SNItemTypeNote] = append(typeUUIDs[common.SNItemTypeNote], note.UUID)
 		}
 	}
 
@@ -287,7 +288,7 @@ func (i *DeleteTagConfig) Run() (noDeleted int, err error) {
 
 func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (noDeleted int, err error) {
 	deleteTagsFilter := items.Filter{
-		Type: "Tag",
+		Type: common.SNItemTypeTag,
 	}
 	filters := []items.Filter{deleteTagsFilter}
 	deleteFilter := items.ItemFilters{
@@ -342,7 +343,7 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 		}
 
 		var gTag *items.Tag
-		if tag.GetContentType() == "Tag" {
+		if tag.GetContentType() == common.SNItemTypeTag {
 			gTag = tag.(*items.Tag)
 		} else {
 			continue
@@ -401,7 +402,7 @@ type addTagsOutput struct {
 func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	// get all tags
 	addTagsFilter := items.Filter{
-		Type: "Tag",
+		Type: common.SNItemTypeTag,
 	}
 
 	filters := []items.Filter{addTagsFilter}
@@ -448,7 +449,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 			continue
 		}
 
-		if item.GetContentType() == "Tag" {
+		if item.GetContentType() == common.SNItemTypeTag {
 			tag := item.(*items.Tag)
 			allTags = append(allTags, *tag)
 			if tag.Content.GetTitle() == ati.parent || tag.GetUUID() == ati.parentUUID {
@@ -457,7 +458,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 				}
 				itemRef := items.ItemReference{
 					UUID:          tag.GetUUID(),
-					ContentType:   "Tag",
+					ContentType:   common.SNItemTypeTag,
 					ReferenceType: "TagToParentTag",
 				}
 				parentRef = items.ItemReferences{itemRef}

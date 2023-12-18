@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"github.com/jonhadfield/gosn-v2/common"
 	"os"
 	"time"
 
@@ -292,7 +293,7 @@ func filterCacheItemsByTypes(ei cache.Items, types []string) (o cache.Items) {
 	return o
 }
 
-var supportedContentTypes = []string{"Note", "Tag", "SN|Component"}
+var supportedContentTypes = []string{common.SNItemTypeNote, common.SNItemTypeTag, common.SNItemTypeComponent}
 
 func (i *WipeConfig) Run() (int, error) {
 	i.Session.RemoveDB()

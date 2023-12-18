@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"github.com/jonhadfield/gosn-v2/common"
 	"testing"
 
 	"github.com/jonhadfield/gosn-v2/cache"
@@ -95,7 +96,7 @@ func TestGetTag(t *testing.T) {
 		getTagFilters.Filters = append(getTagFilters.Filters, items.Filter{
 			Key:        "Title",
 			Value:      testTagTitle,
-			Type:       "Tag",
+			Type:       common.SNItemTypeTag,
 			Comparison: "==",
 		})
 	}
@@ -180,7 +181,7 @@ func TestTaggingOfNotes(t *testing.T) {
 	require.NoError(t, err)
 
 	filterNotesByTagName := items.Filter{
-		Type:       "Note",
+		Type:       common.SNItemTypeNote,
 		Key:        "TagTitle",
 		Comparison: "==",
 		Value:      "testTag",

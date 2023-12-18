@@ -3,6 +3,7 @@ package sncli
 import (
 	"fmt"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -25,7 +26,7 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 
 	// get new note
 	filter := items.Filter{
-		Type:       "Note",
+		Type:       common.SNItemTypeNote,
 		Key:        "Title",
 		Comparison: "==",
 		Value:      "TestNoteOne",
@@ -81,12 +82,12 @@ func TestReplaceNote(t *testing.T) {
 		Filters: items.ItemFilters{
 			MatchAny: false,
 			Filters: []items.Filter{{
-				Type:       "Note",
+				Type:       common.SNItemTypeNote,
 				Key:        "Title",
 				Comparison: "==",
 				Value:      "TestNoteOne",
 			}, {
-				Type:       "Note",
+				Type:       common.SNItemTypeNote,
 				Key:        "Text",
 				Comparison: "==",
 				Value:      "TestNoteOneText",
@@ -116,12 +117,12 @@ func TestReplaceNote(t *testing.T) {
 		Filters: items.ItemFilters{
 			MatchAny: false,
 			Filters: []items.Filter{{
-				Type:       "Note",
+				Type:       common.SNItemTypeNote,
 				Key:        "Title",
 				Comparison: "==",
 				Value:      "TestNoteOne",
 			}, {
-				Type:       "Note",
+				Type:       common.SNItemTypeNote,
 				Key:        "Text",
 				Comparison: "==",
 				Value:      "TestNoteOneReplacementText",
@@ -139,7 +140,7 @@ func TestReplaceNote(t *testing.T) {
 		Filters: items.ItemFilters{
 			MatchAny: false,
 			Filters: []items.Filter{{
-				Type:       "Note",
+				Type:       common.SNItemTypeNote,
 				Key:        "Title",
 				Comparison: "==",
 				Value:      "TestNoteOne",
@@ -167,7 +168,7 @@ func TestWipeWith50(t *testing.T) {
 
 	// check notes created
 	noteFilter := items.Filter{
-		Type: "Note",
+		Type: common.SNItemTypeNote,
 	}
 	filters := items.ItemFilters{
 		Filters: []items.Filter{noteFilter},
@@ -191,7 +192,7 @@ func TestWipeWith50(t *testing.T) {
 	var nonotes int
 
 	for _, i := range cItems {
-		if i.ContentType == "Note" {
+		if i.ContentType == common.SNItemTypeNote {
 			nonotes++
 		}
 	}
@@ -242,7 +243,7 @@ func TestAddDeleteNoteByTitle(t *testing.T) {
 	require.NoError(t, err)
 
 	filter := items.Filter{
-		Type:       "Note",
+		Type:       common.SNItemTypeNote,
 		Key:        "Title",
 		Comparison: "==",
 		Value:      "TestNoteOne",
@@ -288,7 +289,7 @@ func TestAddDeleteNoteByTitleRegex(t *testing.T) {
 
 	// get same note again
 	filter := items.Filter{
-		Type:       "Note",
+		Type:       common.SNItemTypeNote,
 		Key:        "Title",
 		Comparison: "==",
 		Value:      "TestNoteOne",
@@ -322,7 +323,7 @@ func TestGetNote(t *testing.T) {
 	require.NoError(t, err)
 
 	noteFilter := items.Filter{
-		Type:       "Note",
+		Type:       common.SNItemTypeNote,
 		Key:        "Title",
 		Comparison: "==",
 		Value:      "TestNoteOne",
@@ -355,7 +356,7 @@ func TestCreateOneHundredNotes(t *testing.T) {
 	require.NoError(t, err)
 
 	noteFilter := items.Filter{
-		Type: "Note",
+		Type: common.SNItemTypeNote,
 	}
 	filter := items.ItemFilters{
 		Filters: []items.Filter{noteFilter},

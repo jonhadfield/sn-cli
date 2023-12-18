@@ -103,7 +103,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 				MatchAny: false,
 				Filters: []items.Filter{
 					{
-						Type:       "Note",
+						Type:       common.SNItemTypeNote,
 						Key:        "Title",
 						Comparison: "==",
 						Value:      i.noteTitle,
@@ -150,7 +150,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 
 	var allEncTags cache.Items
 
-	query := so.DB.Select(q.And(q.Eq("ContentType", "Tag"), q.Eq("Deleted", false)))
+	query := so.DB.Select(q.And(q.Eq("ContentType", common.SNItemTypeTag), q.Eq("Deleted", false)))
 
 	err = query.Find(&allEncTags)
 	// it's ok if there are no tags, so only error if something else went wrong
@@ -253,7 +253,7 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 				Key:        "Title",
 				Value:      title,
 				Comparison: comparison,
-				Type:       "Note",
+				Type:       common.SNItemTypeNote,
 			})
 		}
 	case noteText != "":
@@ -266,7 +266,7 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 			Key:        "Text",
 			Value:      noteText,
 			Comparison: comparison,
-			Type:       "Note",
+			Type:       common.SNItemTypeNote,
 		})
 	case len(noteUUIDs) > 0:
 		for _, uuid := range noteUUIDs {
@@ -274,7 +274,7 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 				Key:        "UUID",
 				Value:      uuid,
 				Comparison: "==",
-				Type:       "Note",
+				Type:       common.SNItemTypeNote,
 			})
 		}
 	}
@@ -328,7 +328,7 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 
 	if notesToDelete == nil || len(notesToDelete) == 0 {
 		// close db as we're not going to save anything
-		session.CacheDB.Close()
+		_ = session.CacheDB.Close()
 
 		return
 	}
@@ -365,7 +365,7 @@ func deleteItems(session *cache.Session, noteTitles []string, noteText string, i
 				Key:        "Title",
 				Value:      title,
 				Comparison: comparison,
-				Type:       "Note",
+				Type:       common.SNItemTypeNote,
 			})
 		}
 	case noteText != "":
@@ -378,7 +378,7 @@ func deleteItems(session *cache.Session, noteTitles []string, noteText string, i
 			Key:        "Text",
 			Value:      noteText,
 			Comparison: comparison,
-			Type:       "Note",
+			Type:       common.SNItemTypeNote,
 		})
 	case len(itemUUIDs) > 0:
 		for _, uuid := range itemUUIDs {

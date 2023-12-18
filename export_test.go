@@ -20,7 +20,7 @@ package sncli
 // 	require.NotEmpty(t, encItems[0].CreatedAtTimestamp)
 // 	require.NotEmpty(t, encItems[0].CreatedAt)
 // 	require.False(t, encItems[0].Deleted)
-// 	require.Equal(t, "Note", encItems[0].ContentType)
+// 	require.Equal(t, common.SNItemTypeNote, encItems[0].ContentType)
 // 	require.NotEmpty(t, encItems[0].Content)
 // 	require.Empty(t, encItems[0].DuplicateOf)
 //
@@ -39,13 +39,13 @@ package sncli
 // 	var dn items.Note
 //
 // 	for x := range pi {
-// 		if pi[x].GetContentType() == "Note" {
+// 		if pi[x].GetContentType() == common.SNItemTypeNote {
 // 			dn = *pi[x].(*items.Note)
 //
 // 		}
 // 	}
 //
-// 	require.Equal(t, "Note", dn.ContentType)
+// 	require.Equal(t, common.SNItemTypeNote, dn.ContentType)
 // 	require.Equal(t, "test title", dn.Content.GetTitle())
 // 	require.Equal(t, "test content", dn.Content.GetText())
 // 	require.NotEmpty(t, dn.UUID)
@@ -171,7 +171,7 @@ package sncli
 // 	var importedNote cache.Item
 //
 // 	for _, i := range aa {
-// 		if i.ContentType == "Note" {
+// 		if i.ContentType == common.SNItemTypeNote {
 // 			if i.UUID == note.UUID {
 // 				importedNote = i
 // 			}
@@ -282,7 +282,7 @@ package sncli
 // 	var foundNote cache.Item
 //
 // 	for _, i := range aa {
-// 		if i.ContentType == "Note" {
+// 		if i.ContentType == common.SNItemTypeNote {
 // 			if i.UUID == note.UUID {
 // 				require.False(t, i.Deleted)
 // 				foundNote = i
@@ -385,7 +385,7 @@ package sncli
 // 			origFound = true
 // 		}
 //
-// 		if x.ContentType == "Note" {
+// 		if x.ContentType == common.SNItemTypeNote {
 // 			if x.UUID != originalNote.UUID {
 // 				newItemWithDupeIDBeingOrig = true
 // 			}
@@ -514,7 +514,7 @@ package sncli
 // 	var found bool
 //
 // 	for _, i := range gItems {
-// 		if i.GetContentType() == "Tag" {
+// 		if i.GetContentType() == common.SNItemTypeTag {
 // 			if i.(*items.Tag).Equals(originalTag) {
 // 				found = true
 // 			}
@@ -654,7 +654,7 @@ package sncli
 // 	var found bool
 //
 // 	for _, i := range gItems {
-// 		if i.GetContentType() == "Tag" {
+// 		if i.GetContentType() == common.SNItemTypeTag {
 // 			if i.GetUUID() == originalTag.UUID {
 // 				found = true
 // 			}
