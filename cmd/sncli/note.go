@@ -493,6 +493,12 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 	// strip deleted items
 	rawNotes = sncli.RemoveDeleted(rawNotes)
 
+	if len(rawNotes) == 0 {
+		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf(msgNoMatches))
+
+		return nil
+	}
+
 	var numResults int
 
 	var notesYAML []sncli.NoteYAML

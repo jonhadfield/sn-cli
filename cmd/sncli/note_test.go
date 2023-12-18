@@ -31,6 +31,20 @@ func TestAddDeleteNote(t *testing.T) {
 	require.Contains(t, stdout, msgDeleted)
 }
 
+func TestGetMissingNote(t *testing.T) {
+	time.Sleep(1 * time.Second)
+	var outputBuffer bytes.Buffer
+	app, err := appSetup()
+	require.NoError(t, err)
+	app.Writer = &outputBuffer
+	osArgs := []string{"sncli", "get", "note", "--title", "missing note"}
+	err = app.Run(osArgs)
+	stdout := outputBuffer.String()
+	fmt.Println(stdout)
+	require.NoError(t, err)
+	require.Contains(t, stdout, msgNoMatches)
+}
+
 func TestDeleteNonExistantNote(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	var outputBuffer bytes.Buffer
