@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jonhadfield/gosn-v2/common"
 	"os"
 	"strings"
 
@@ -78,7 +79,7 @@ func getTagsByTitle(sess cache.Session, title string) (tags items.Tags, err erro
 
 	var allEncTags cache.Items
 
-	query := so.DB.Select(q.And(q.Eq("ContentType", "Tag"), q.Eq("Deleted", false)))
+	query := so.DB.Select(q.And(q.Eq("ContentType", common.SNItemTypeTag), q.Eq("Deleted", false)))
 
 	err = query.Find(&allEncTags)
 	if err != nil {
@@ -224,7 +225,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
 	if inUUID != "" {
 		for _, uuid := range sncli.CommaSplit(inUUID) {
 			titleFilter := items.Filter{
-				Type:       "Tag",
+				Type:       common.SNItemTypeTag,
 				Key:        "uuid",
 				Comparison: "==",
 				Value:      uuid,
@@ -241,7 +242,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
 	if inTitle != "" {
 		for _, title := range sncli.CommaSplit(inTitle) {
 			titleFilter := items.Filter{
-				Type:       "Tag",
+				Type:       common.SNItemTypeTag,
 				Key:        "Title",
 				Comparison: comparison,
 				Value:      title,
@@ -252,7 +253,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if inTitle == "" && inUUID == "" {
 		getTagsIF.Filters = append(getTagsIF.Filters, items.Filter{
-			Type: "Tag",
+			Type: common.SNItemTypeTag,
 		})
 	}
 
