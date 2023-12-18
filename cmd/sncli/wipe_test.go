@@ -14,7 +14,7 @@ func TestWipe(t *testing.T) {
 	app, _ := appSetup()
 	app.Writer = &outputBuffer
 
-	osArgs := []string{"sncli", "--debug", "wipe", "--yes"}
+	osArgs := []string{"sncli", "wipe", "--yes"}
 	err := app.Run(osArgs)
 	stdout := outputBuffer.String()
 	// fmt.Println(stdout)

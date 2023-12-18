@@ -63,7 +63,7 @@ var testParas = []string{
 }
 
 func randInt(min int, max int) int {
-	rand.Seed(time.Now().UTC().UnixNano())
+	rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	return min + rand.Intn(max-min)
 }
 

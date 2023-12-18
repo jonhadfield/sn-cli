@@ -44,7 +44,7 @@ func localTestMain() {
 }
 
 func signIn(server, email, password string) {
-	ts, err := auth.CliSignIn(email, password, server, true)
+	ts, err := auth.CliSignIn(email, password, server, false)
 	if err != nil {
 		fmt.Println(err)
 

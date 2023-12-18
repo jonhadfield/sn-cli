@@ -15,7 +15,7 @@ func TestAddDeleteNote(t *testing.T) {
 	app, err := appSetup()
 	require.NoError(t, err)
 	app.Writer = &outputBuffer
-	osArgs := []string{"sncli", "--debug", "add", "note", "--title", "testNote", "--text", "testAddNote"}
+	osArgs := []string{"sncli", "add", "note", "--title", "testNote", "--text", "testAddNote"}
 	err = app.Run(osArgs)
 	stdout := outputBuffer.String()
 	fmt.Println(stdout)
@@ -53,7 +53,7 @@ func TestDeleteNonExistantNote(t *testing.T) {
 	app.Writer = &outputBuffer
 
 	outputBuffer.Reset()
-	osArgs := []string{"sncli", "--debug", "delete", "note", "--title", "testNote"}
+	osArgs := []string{"sncli", "delete", "note", "--title", "testNote"}
 	err = app.Run(osArgs)
 	stdout := outputBuffer.String()
 	fmt.Println(stdout)
