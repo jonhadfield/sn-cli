@@ -9,7 +9,7 @@ import (
 )
 
 func TestWipe(t *testing.T) {
-	time.Sleep(1 * time.Second)
+	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app, _ := appSetup()
 	app.Writer = &outputBuffer
@@ -37,7 +37,7 @@ func TestWipe(t *testing.T) {
 // 	err = startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note", "--count"})
 // 	require.NoError(t, err, "failed to get note count")
 // 	require.Equal(t, "0", msg)
-// 	time.Sleep(1 * time.Second)
+// 	time.Sleep(250 * time.Millisecond)
 // }
 //
 // func TestAddNoteErrorMissingTitle(t *testing.T) {
@@ -77,7 +77,7 @@ func TestWipe(t *testing.T) {
 //
 // 	err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testTagOne,testTagTwo"})
 // 	require.NoError(t, err)
-// 	time.Sleep(1 * time.Second)
+// 	time.Sleep(250 * time.Millisecond)
 // }
 //
 // func TestAddOneNoteGetCount(t *testing.T) {
@@ -97,7 +97,7 @@ func TestWipe(t *testing.T) {
 //
 // 	err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "note", "--title", "testAddOneNoteGetCount Title"})
 // 	require.NoError(t, err)
-// 	time.Sleep(1 * time.Second)
+// 	time.Sleep(250 * time.Millisecond)
 // }
 //
 // func TestAddOneTagGetCount(t *testing.T) {
@@ -111,35 +111,35 @@ func TestWipe(t *testing.T) {
 // 	err = startCLI([]string{"sncli", "--debug", "--no-stdout", "delete", "tag", "--title", "testAddOneTagGetCount Title"})
 // 	require.NoError(t, err)
 //
-// 	time.Sleep(1 * time.Second)
+// 	time.Sleep(250 * time.Millisecond)
 // }
 //
 // func TestGetNoteCountWithNoResults(t *testing.T) {
 // 	err := startCLI([]string{"sncli", "--debug", "--no-stdout", "get", "note", "--count"})
 // 	require.NoError(t, err)
 // 	require.Equal(t, "0", msg)
-// 	time.Sleep(1 * time.Second)
+// 	time.Sleep(250 * time.Millisecond)
 // }
 //
 // func TestGetTagCountWithNoResults(t *testing.T) {
 // 	err := startCLI([]string{"sncli", "--debug", "get", "tag", "--count"})
 // 	require.NoError(t, err)
 // 	require.Equal(t, "0", msg)
-// 	time.Sleep(1 * time.Second)
+// 	time.Sleep(250 * time.Millisecond)
 // }
 //
 // func TestGetNotesWithNoResults(t *testing.T) {
 // 	err := startCLI([]string{"sncli", "--debug", "get", "note"})
 // 	require.NoError(t, err)
 // 	require.Equal(t, msgNoMatches, msg)
-// 	time.Sleep(1 * time.Second)
+// 	time.Sleep(250 * time.Millisecond)
 // }
 //
 // func TestGetTagsWithNoResults(t *testing.T) {
 // 	err := startCLI([]string{"sncli", "--debug", "get", "tag"})
 // 	require.NoError(t, err)
 // 	require.Equal(t, msgNoMatches, msg)
-// 	time.Sleep(1 * time.Second)
+// 	time.Sleep(250 * time.Millisecond)
 // }
 //
 // func TestFinalWipeAndCountZero(t *testing.T) {

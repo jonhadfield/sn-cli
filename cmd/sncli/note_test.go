@@ -10,7 +10,7 @@ import (
 )
 
 func TestAddDeleteNote(t *testing.T) {
-	time.Sleep(1 * time.Second)
+	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app, err := appSetup()
 	require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestAddDeleteNote(t *testing.T) {
 }
 
 func TestGetMissingNote(t *testing.T) {
-	time.Sleep(1 * time.Second)
+	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app, err := appSetup()
 	require.NoError(t, err)
@@ -46,7 +46,7 @@ func TestGetMissingNote(t *testing.T) {
 }
 
 func TestDeleteNonExistantNote(t *testing.T) {
-	time.Sleep(1 * time.Second)
+	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app, err := appSetup()
 	require.NoError(t, err)

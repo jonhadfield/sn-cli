@@ -9,8 +9,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGetMissingTag(t *testing.T) {
+	time.Sleep(250 * time.Millisecond)
+	var outputBuffer bytes.Buffer
+	app, err := appSetup()
+	require.NoError(t, err)
+	app.Writer = &outputBuffer
+	osArgs := []string{"sncli", "get", "tag", "--title", "missing tag"}
+	err = app.Run(osArgs)
+	stdout := outputBuffer.String()
+	fmt.Println(stdout)
+	require.NoError(t, err)
+	require.Contains(t, stdout, msgNoMatches)
+}
+
 func TestAddTag(t *testing.T) {
-	time.Sleep(1 * time.Second)
+	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app, err := appSetup()
 	require.NoError(t, err)
@@ -43,7 +57,7 @@ func TestAddTag(t *testing.T) {
 }
 
 func TestAddGetTag(t *testing.T) {
-	time.Sleep(1 * time.Second)
+	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app, _ := appSetup()
 	app.Writer = &outputBuffer
@@ -85,7 +99,7 @@ func TestAddGetTag(t *testing.T) {
 // }
 
 func TestAddDeleteTag(t *testing.T) {
-	time.Sleep(1 * time.Second)
+	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app, _ := appSetup()
 	app.Writer = &outputBuffer

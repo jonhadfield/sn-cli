@@ -292,6 +292,12 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
 	// strip deleted items
 	rawTags = sncli.RemoveDeleted(rawTags)
 
+	if len(rawTags) == 0 {
+		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf(msgNoMatches))
+
+		return nil
+	}
+
 	var tagsYAML []sncli.TagYAML
 
 	var tagsJSON []sncli.TagJSON
