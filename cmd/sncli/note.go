@@ -306,6 +306,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 	uuid := c.String("uuid")
 	title := c.String("title")
 	text := c.String("text")
+	editor := c.String("editor")
 	count := c.Bool("count")
 	output := c.String("output")
 
@@ -355,6 +356,16 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 			Value:      text,
 		}
 		getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
+	}
+
+	if editor != "" {
+		editorFilter := items.Filter{
+			Type:       common.SNItemTypeNote,
+			Key:        "Editor",
+			Comparison: "contains",
+			Value:      editor,
+		}
+		getNotesIF.Filters = append(getNotesIF.Filters, editorFilter)
 	}
 
 	processedTags := sncli.CommaSplit(c.String("tag"))

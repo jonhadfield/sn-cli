@@ -214,6 +214,18 @@ type DeleteTagConfig struct {
 	Debug     bool
 }
 
+type ListChecklistsInput struct {
+	Session *cache.Session
+	Debug   bool
+}
+
+type ShowChecklistInput struct {
+	Session *cache.Session
+	Title   string
+	UUID    string
+	Debug   bool
+}
+
 type AddNoteInput struct {
 	Session  *cache.Session
 	Title    string

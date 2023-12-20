@@ -125,6 +125,7 @@ func appSetup() (app *cli.App, err error) {
 	}
 	app.Commands = []*cli.Command{
 		cmdAdd(),
+		cmdChecklist(),
 		cmdDebug(),
 		cmdDelete(),
 		cmdEdit(),
