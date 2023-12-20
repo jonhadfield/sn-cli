@@ -10,6 +10,8 @@ import (
 )
 
 func TestAddDeleteTagByTitle(t *testing.T) {
+	defer cleanUp(*testSession)
+
 	testDelay()
 
 	addTagConfig := AddTagsInput{
@@ -35,6 +37,8 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 }
 
 func TestAddTagWithParent(t *testing.T) {
+	defer cleanUp(*testSession)
+
 	testDelay()
 
 	addTagConfigParent := AddTagsInput{
