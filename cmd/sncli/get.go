@@ -242,6 +242,10 @@ func cmdGet() *cli.Command {
 						Name:  "uuid",
 						Usage: "find by uuid",
 					},
+					&cli.StringFlag{
+						Name:  "editor",
+						Usage: "find by associated editor",
+					},
 					&cli.BoolFlag{
 						Name:  "include-trash",
 						Usage: "include notes in trash",

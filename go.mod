@@ -8,9 +8,9 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/ryanuber/columnize v2.1.2+incompatible
-	github.com/spf13/viper v1.18.1
+	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -45,7 +45,7 @@ require (
 	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
-	github.com/jonhadfield/gosn-v2 v0.0.0-20231218094330-c9b925b73ab2
+	github.com/jonhadfield/gosn-v2 v0.0.0-20231220090451-c5c78c5c6cf0
 	github.com/urfave/cli/v2 v2.26.0
 )
 
