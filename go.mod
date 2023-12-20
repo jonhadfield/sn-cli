@@ -45,7 +45,7 @@ require (
 	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
-	github.com/jonhadfield/gosn-v2 v0.0.0-20231220090451-c5c78c5c6cf0
+	github.com/jonhadfield/gosn-v2 v0.0.0-20231220100241-fba7cf1f2185
 	github.com/urfave/cli/v2 v2.26.0
 )
 
