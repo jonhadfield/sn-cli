@@ -32,9 +32,6 @@ func cmdChecklist() *cli.Command {
 					}
 					var sess cache.Session
 					sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
-					if !sess.SchemaValidation {
-						panic("schema validation is false")
-					}
 					if err != nil {
 						return err
 					}
