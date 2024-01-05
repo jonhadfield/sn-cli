@@ -108,6 +108,10 @@ func tagNotes(i tagNotesInput) (err error) {
 		}
 	}
 
+	if len(typeUUIDs[common.SNItemTypeNote]) == 0 {
+		return errors.New("note not found")
+	}
+
 	// update existing (and just created) tags to reference matching uuids
 	// determine which TAGS need updating and create list to sync back to server
 	var tagsToPush items.Tags
@@ -211,6 +215,7 @@ func (i *GetItemsConfig) Run() (items items.Items, err error) {
 	}
 
 	items.FilterAllTypes(i.Filters)
+
 	return items, err
 }
 

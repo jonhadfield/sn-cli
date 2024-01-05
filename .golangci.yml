@@ -145,26 +145,26 @@ linters-settings:
     # Check for plain error comparisons
     comparison: true
 
-  exhaustive:
-    # check switch statements in generated files also
-    check-generated: false
-    # presence of "default" case in switch statements satisfies exhaustiveness,
-    # even if all enum members are not listed
-    default-signifies-exhaustive: false
-    # enum members matching the supplied regex do not have to be listed in
-    # switch statements to satisfy exhaustiveness
-    ignore-enum-members: ""
-    # consider enums only in package scopes, not in inner scopes
-    package-scope-only: false
-
-  exhaustivestruct:
-    # Struct Patterns is list of expressions to match struct packages and names
-    # The struct packages have the form example.com/package.ExampleStruct
-    # The matching patterns can use matching syntax from https://pkg.go.dev/path#Match
-    # If this list is empty, all structs are tested.
-    struct-patterns:
-      - '*.Test'
-      - 'example.com/package.ExampleStruct'
+#   exhaustive:
+#     # check switch statements in generated files also
+#     check-generated: false
+#     # presence of "default" case in switch statements satisfies exhaustiveness,
+#     # even if all enum members are not listed
+#     default-signifies-exhaustive: false
+#     # enum members matching the supplied regex do not have to be listed in
+#     # switch statements to satisfy exhaustiveness
+#     ignore-enum-members: ""
+#     # consider enums only in package scopes, not in inner scopes
+#     package-scope-only: false
+#
+#   exhaustivestruct:
+#     # Struct Patterns is list of expressions to match struct packages and names
+#     # The struct packages have the form example.com/package.ExampleStruct
+#     # The matching patterns can use matching syntax from https://pkg.go.dev/path#Match
+#     # If this list is empty, all structs are tested.
+#     struct-patterns:
+#       - '*.Test'
+#       - 'example.com/package.ExampleStruct'
 
   forbidigo:
     # Forbid the following identifiers (identifiers are written using regexp):

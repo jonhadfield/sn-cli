@@ -2,17 +2,18 @@ package sncli
 
 import (
 	"fmt"
+	"slices"
+	"time"
+
 	"github.com/alexeyco/simpletable"
 	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/items"
-	"slices"
-	"time"
 )
 
-func conflictedWarning([]items.Checklist) string {
-	if len(items.Checklists{}) > 0 {
-		return color.Yellow.Sprintf("%d conflicted versions", len(items.Checklists{}))
+func conflictedWarning([]items.Tasklist) string {
+	if len(items.Tasklists{}) > 0 {
+		return color.Yellow.Sprintf("%d conflicted versions", len(items.Tasklists{}))
 	}
 
 	return "-"
@@ -52,17 +53,17 @@ func (ci *ListChecklistsInput) Run() (err error) {
 	return nil
 }
 
-// construct a map of duplicates
-func getChecklistsDuplicatesMap(checklistNotes items.Notes) (map[string][]items.Checklist, error) {
-	duplicates := make(map[string][]items.Checklist)
+// construct a map of duplicates.
+func getChecklistsDuplicatesMap(checklistNotes items.Notes) (map[string][]items.Tasklist, error) {
+	duplicates := make(map[string][]items.Tasklist)
 
 	for x := range checklistNotes {
 		if checklistNotes[x].DuplicateOf != "" {
 			// checklist is a duplicate
 			// get the checklist content
-			cl, err := checklistNotes[x].Content.ToCheckList()
+			cl, err := checklistNotes[x].Content.ToTaskList()
 			if err != nil {
-				return map[string][]items.Checklist{}, err
+				return map[string][]items.Tasklist{}, err
 			}
 
 			// skip trashed content
@@ -73,7 +74,7 @@ func getChecklistsDuplicatesMap(checklistNotes items.Notes) (map[string][]items.
 			cl.UUID = checklistNotes[x].UUID
 			cl.UpdatedAt, err = time.Parse(timeLayout, checklistNotes[x].UpdatedAt)
 			if err != nil {
-				return map[string][]items.Checklist{}, err
+				return map[string][]items.Tasklist{}, err
 			}
 
 			duplicates[checklistNotes[x].DuplicateOf] = append(duplicates[checklistNotes[x].DuplicateOf], cl)
@@ -83,20 +84,20 @@ func getChecklistsDuplicatesMap(checklistNotes items.Notes) (map[string][]items.
 	return duplicates, nil
 }
 
-func getChecklists(sess *cache.Session) (items.Checklists, error) {
+func getChecklists(sess *cache.Session) (items.Tasklists, error) {
 	var so cache.SyncOutput
 
 	so, err := Sync(cache.SyncInput{
 		Session: sess,
 	}, true)
 	if err != nil {
-		return items.Checklists{}, err
+		return items.Tasklists{}, err
 	}
 
 	var allPersistedItems cache.Items
 
 	if err = so.DB.All(&allPersistedItems); err != nil {
-		return items.Checklists{}, err
+		return items.Tasklists{}, err
 	}
 
 	allItemUUIDs := allPersistedItems.UUIDs()
@@ -104,7 +105,7 @@ func getChecklists(sess *cache.Session) (items.Checklists, error) {
 	var gitems items.Items
 	gitems, err = allPersistedItems.ToItems(sess)
 	if err != nil {
-		return items.Checklists{}, err
+		return items.Tasklists{}, err
 	}
 
 	gitems.Filter(items.ItemFilters{
@@ -118,7 +119,7 @@ func getChecklists(sess *cache.Session) (items.Checklists, error) {
 		},
 	})
 
-	var checklists items.Checklists
+	var checklists items.Tasklists
 	checklistNotes := gitems.Notes()
 
 	duplicatesMap, err := getChecklistsDuplicatesMap(checklistNotes)
@@ -136,16 +137,16 @@ func getChecklists(sess *cache.Session) (items.Checklists, error) {
 			continue
 		}
 
-		var cl items.Checklist
-		cl, err = checklistNotes[x].Content.ToCheckList()
+		var cl items.Tasklist
+		cl, err = checklistNotes[x].Content.ToTaskList()
 		if err != nil {
-			return items.Checklists{}, err
+			return items.Tasklists{}, err
 		}
 
 		cl.UUID = checklistNotes[x].UUID
 		cl.UpdatedAt, err = time.Parse(timeLayout, checklistNotes[x].UpdatedAt)
 		if err != nil {
-			return items.Checklists{}, err
+			return items.Tasklists{}, err
 		}
 
 		cl.Duplicates = duplicatesMap[checklistNotes[x].UUID]
