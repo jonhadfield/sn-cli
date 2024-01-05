@@ -2,10 +2,10 @@ package sncli
 
 import (
 	"errors"
-	"github.com/jonhadfield/gosn-v2/common"
 	"strings"
 
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 )
 
@@ -160,28 +160,6 @@ func (i *TagItemsConfig) Run() error {
 }
 
 func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
-	// Sync DB
-	si := cache.SyncInput{
-		Session: i.Session,
-		Close:   false,
-	}
-
-	var so cache.SyncOutput
-	so, err = Sync(si, true)
-
-	if err != nil {
-		return
-	}
-
-	err = so.DB.Close()
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		_ = so.DB.Close()
-	}()
-
 	ati := addTagsInput{
 		tagTitles:  i.Tags,
 		parent:     i.Parent,
@@ -191,25 +169,14 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 	}
 
 	var ato addTagsOutput
+
 	ato, err = addTags(ati)
 	if err != nil {
 		return AddTagsOutput{}, err
 	}
+
 	output.Added = ato.added
 	output.Existing = ato.existing
-
-	// Sync DB with SN
-	err = so.DB.Close()
-	if err != nil {
-		return
-	}
-
-	so, err = Sync(cache.SyncInput{
-		Session: i.Session,
-	}, true)
-	if err != nil {
-		return
-	}
 
 	return output, err
 }
