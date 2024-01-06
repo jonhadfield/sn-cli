@@ -46,7 +46,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
 	github.com/jonhadfield/gosn-v2 v0.0.0-20240106151742-c861fe8116e5
-	github.com/urfave/cli/v2 v2.26.0
+	github.com/urfave/cli/v2 v2.27.1
 )
 
 require (
