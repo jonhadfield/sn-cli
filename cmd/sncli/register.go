@@ -26,17 +26,12 @@ func cmdRegister() *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			var opts configOptsOutput
-			opts, err := getOpts(c)
-			if err != nil {
-				return err
-			}
+			opts := getOpts(c)
 
-			// useStdOut = opts.useStdOut
-
+			var err error
 			if strings.TrimSpace(c.String("email")) == "" {
-				if cErr := cli.ShowCommandHelp(c, "register"); cErr != nil {
-					panic(cErr)
+				if err = cli.ShowCommandHelp(c, "register"); err != nil {
+					panic(err)
 				}
 
 				return errors.New("email required")
@@ -53,10 +48,10 @@ func cmdRegister() *cli.Command {
 				APIServer: opts.server,
 				Debug:     opts.debug,
 			}
-			err = registerConfig.Run()
-			if err != nil {
+			if err = registerConfig.Run(); err != nil {
 				return err
 			}
+
 			fmt.Println(msgRegisterSuccess)
 
 			return nil

@@ -2,19 +2,19 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/jonhadfield/gosn-v2/common"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/asdine/storm/v3/q"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 )
 
-func (i *AddNoteInput) Run() (err error) {
+func (i *AddNoteInput) Run() error {
 	// get DB
-	var syncToken, newNoteUUID string
+	var syncToken string
 
 	ani := addNoteInput{
 		noteTitle: i.Title,
@@ -25,22 +25,24 @@ func (i *AddNoteInput) Run() (err error) {
 		replace:   i.Replace,
 	}
 
-	newNoteUUID, err = addNote(ani)
+	newNoteUUID, err := addNote(ani)
 	if err != nil {
-		return
+		return err
 	}
 
 	if len(ani.tagTitles) > 0 {
-		err = tagNotes(tagNotesInput{
+		if err = tagNotes(tagNotesInput{
 			matchNoteUUIDs: []string{newNoteUUID},
 			syncToken:      syncToken,
 			session:        i.Session,
 			newTags:        i.Tags,
 			replace:        i.Replace,
-		})
+		}); err != nil {
+			return err
+		}
 	}
 
-	return
+	return nil
 }
 
 type addNoteInput struct {
@@ -52,16 +54,15 @@ type addNoteInput struct {
 	replace   bool
 }
 
-func loadNoteContentFromFile(filePath string) (content string, err error) {
+func loadNoteContentFromFile(filePath string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		err = fmt.Errorf("%w failed to open: %s", err, filePath)
-		return
+		return "", fmt.Errorf("%w failed to open: %s", err, filePath)
 	}
 
-	b, err := ioutil.ReadAll(file)
+	b, err := io.ReadAll(file)
 	if err != nil {
-		return
+		return "", fmt.Errorf("%w failed to read: %s", err, filePath)
 	}
 
 	return string(b), nil
@@ -90,7 +91,6 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 
 	so, err = Sync(si, true)
 	if err != nil {
-
 		return
 	}
 
@@ -111,12 +111,14 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 				},
 			},
 		}
+
 		var gi items.Items
+
 		gi, err = gnc.Run()
 		if err != nil {
-
 			return
 		}
+
 		switch len(gi) {
 		case 0:
 			err = fmt.Errorf("failed to find existing note to replace")
@@ -166,6 +168,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 
 	pii := cache.SyncInput{
 		Session: i.session,
+		Close:   false,
 	}
 
 	so, err = Sync(pii, true)
@@ -200,10 +203,8 @@ func (i *DeleteItemConfig) Run() (noDeleted int, err error) {
 	return noDeleted, err
 }
 
-func (i *DeleteNoteConfig) Run() (noDeleted int, err error) {
-	noDeleted, err = deleteNotes(i.Session, i.NoteTitles, i.NoteText, i.NoteUUIDs, i.Regex)
-
-	return noDeleted, err
+func (i *DeleteNoteConfig) Run() (int, error) {
+	return deleteNotes(i.Session, i.NoteTitles, i.NoteText, i.NoteUUIDs, i.Regex)
 }
 
 func (i *GetNoteConfig) Run() (items items.Items, err error) {
@@ -221,6 +222,7 @@ func (i *GetNoteConfig) Run() (items items.Items, err error) {
 	err = so.DB.All(&allPersistedItems)
 	if err != nil {
 		err = fmt.Errorf("getting items from db: %w", err)
+
 		return
 	}
 

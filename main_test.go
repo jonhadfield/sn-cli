@@ -2,17 +2,18 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/jonhadfield/gosn-v2/auth"
-	"github.com/jonhadfield/gosn-v2/cache"
-	"github.com/jonhadfield/gosn-v2/common"
-	"github.com/jonhadfield/gosn-v2/items"
-	"github.com/jonhadfield/gosn-v2/session"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jonhadfield/gosn-v2/auth"
+	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
+	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/jonhadfield/gosn-v2/session"
 )
 
 var (

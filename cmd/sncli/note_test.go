@@ -11,13 +11,20 @@ import (
 
 func TestAddDeleteNote(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
+
 	var outputBuffer bytes.Buffer
-	app, err := appSetup()
-	require.NoError(t, err)
+
+	app := appSetup()
+
 	app.Writer = &outputBuffer
+
 	osArgs := []string{"sncli", "add", "note", "--title", "testNote", "--text", "testAddNote"}
-	err = app.Run(osArgs)
+
+	err := app.Run(osArgs)
+	require.NoError(t, err)
+
 	stdout := outputBuffer.String()
+
 	fmt.Println(stdout)
 	require.NoError(t, err)
 	require.Contains(t, stdout, msgAddSuccess)
@@ -34,11 +41,14 @@ func TestAddDeleteNote(t *testing.T) {
 func TestGetMissingNote(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
-	app, err := appSetup()
-	require.NoError(t, err)
+	app := appSetup()
+
 	app.Writer = &outputBuffer
 	osArgs := []string{"sncli", "get", "note", "--title", "missing note"}
-	err = app.Run(osArgs)
+
+	err := app.Run(osArgs)
+	require.NoError(t, err)
+
 	stdout := outputBuffer.String()
 	fmt.Println(stdout)
 	require.NoError(t, err)
@@ -48,15 +58,13 @@ func TestGetMissingNote(t *testing.T) {
 func TestDeleteNonExistantNote(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
-	app, err := appSetup()
-	require.NoError(t, err)
+	app := appSetup()
 	app.Writer = &outputBuffer
 
 	outputBuffer.Reset()
-	osArgs := []string{"sncli", "delete", "note", "--title", "testNote"}
-	err = app.Run(osArgs)
+	require.NoError(t, app.Run([]string{"sncli", "delete", "note", "--title", "testNote"}))
+
 	stdout := outputBuffer.String()
 	fmt.Println(stdout)
-	require.NoError(t, err)
 	require.Contains(t, stdout, msgNoteNotFound)
 }

@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jonhadfield/gosn-v2/common"
 	"os"
 	"strings"
 
 	"github.com/asdine/storm/v3/q"
 	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli/v2"
@@ -118,7 +118,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (err error) {
 
 	var sess cache.Session
 
-	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	sess, _, err = cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -259,7 +259,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
 
 	var sess cache.Session
 
-	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	sess, _, err = cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -393,7 +393,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (err error) {
 	}
 
 	// get session
-	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	session, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -426,6 +426,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (err error) {
 	// present results
 	if len(ato.Added) > 0 {
 		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprint(msgTagAdded+": ", strings.Join(ato.Added, ", ")))
+
 		return err
 	}
 
@@ -449,7 +450,7 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (err error) {
 	findTag := c.String("find-tag")
 	newTags := c.String("title")
 
-	sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	sess, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -498,7 +499,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (err error) {
 
 	var sess cache.Session
 
-	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	sess, _, err = cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -572,15 +573,15 @@ func cmdTag() *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			opts, err := getOpts(c)
-			if err != nil {
+			opts := getOpts(c)
+
+			if err := processTagItems(c, opts); err != nil {
 				return err
 			}
-			// useStdOut = opts.useStdOut
 
-			err = processTagItems(c, opts)
+			_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf("%s", msgTagSuccess))
 
-			return err
+			return nil
 		},
 	}
 }

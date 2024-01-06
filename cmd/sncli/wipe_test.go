@@ -11,7 +11,7 @@ import (
 func TestWipe(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
-	app, _ := appSetup()
+	app := appSetup()
 	app.Writer = &outputBuffer
 
 	osArgs := []string{"sncli", "wipe", "--yes"}

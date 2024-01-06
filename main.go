@@ -1,13 +1,13 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn-v2/common"
 	"os"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 )
 

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jonhadfield/gosn-v2/common"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,11 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/asdine/storm/v3/q"
 	"github.com/divan/num2words"
 	"github.com/gookit/color"
-
-	"github.com/asdine/storm/v3/q"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli/v2"
@@ -183,7 +182,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (err error) {
 	}
 
 	var cSession cache.Session
-	cSession, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	cSession, _, err = cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 
 	if err != nil {
 		return err
@@ -382,7 +381,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 		}
 	}
 
-	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	session, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -471,7 +470,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 		}
 	}
 
-	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	session, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -634,7 +633,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (err error) {
 	}
 
 	// get session
-	session, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	session, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -675,7 +674,7 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (err error) {
 		return errors.New("")
 	}
 
-	sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	sess, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -716,7 +715,7 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (err error) {
 func processDeleteItems(c *cli.Context, opts configOptsOutput) (err error) {
 	uuid := strings.TrimSpace(c.String("uuid"))
 
-	sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	sess, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}

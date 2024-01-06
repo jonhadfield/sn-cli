@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli/v2"
@@ -46,10 +47,7 @@ func cmdGet() *cli.Command {
 					return err
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 
 					// useStdOut = opts.useStdOut
 
@@ -67,7 +65,7 @@ func cmdGet() *cli.Command {
 						},
 					}
 
-					sess, _, err := cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+					sess, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 					if err != nil {
 						return err
 					}
@@ -210,15 +208,9 @@ func cmdGet() *cli.Command {
 					return err
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
-					// useStdOut = opts.useStdOut
+					opts := getOpts(c)
 
-					err = processGetTags(c, opts)
-
-					return err
+					return processGetTags(c, opts)
 				},
 			},
 			{
@@ -261,15 +253,9 @@ func cmdGet() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 					// useStdOut = opts.useStdOut
-
-					err = processGetNotes(c, opts)
-
-					return err
+					return processGetNotes(c, opts)
 				},
 			},
 			{
@@ -297,10 +283,7 @@ func cmdGet() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 
 					// useStdOut = opts.useStdOut
 
@@ -340,10 +323,7 @@ func cmdGet() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 					// useStdOut = opts.useStdOut
 
 					return processGetTrash(c, opts)
