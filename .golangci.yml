@@ -464,20 +464,33 @@ linters-settings:
     disable-all: false
 
   depguard:
-    list-type: blacklist
-    include-go-root: false
-    packages:
-      - github.com/sirupsen/logrus
-    packages-with-error-message:
-      # specify an error message to output when a blacklisted package is used
-      - github.com/sirupsen/logrus: "logging is allowed only by logutils.Log"
+    rules:
+      main:
+        list-mode: lax
+        allow:
+          - $gostd
+          - github.com/jonhadfield/gosn-v2
+          - github.com/sirupsen/logrus
+          - github.com/urfave/cli/v2
+          - github.com/stretchr/testify
+          - github.com/dustin/go-humanize
+          - github.com/ryanuber/columnize
+          - github.com/asdine/storm/v3
+          - github.com/divan/num2words
+          - github.com/alexeyco/simpletable
+          - github.com/briandowns/spinner
+          - github.com/gookit/color
+          - github.com/spf13/viper
+          - github.com/jonhadfield/sn-cli
+        deny:
+          - pkg: io/ioutil
+            desc: "replaced by io and os packages since Go 1.16: https://tip.golang.org/doc/go1.16#ioutil"
 
-  ifshort:
-    # Maximum length of variable declaration measured in number of lines, after which linter won't suggest using short syntax.
-    # Has higher priority than max-decl-chars.
-    max-decl-lines: 1
-    # Maximum length of variable declaration measured in number of characters, after which linter won't suggest using short syntax.
-    max-decl-chars: 30
+
+
+#     packages-with-error-message:
+#       # specify an error message to output when a blacklisted package is used
+#       - github.com/sirupsen/logrus: "logging is allowed only by logutils.Log"
 
   importas:
     # if set to `true`, force to use alias.
@@ -693,8 +706,7 @@ linters-settings:
     check-exported: false
 
   unused:
-    # Select the Go version to target. The default is '1.13'.
-    go: "1.15"
+    go: "1.21"
 
   varnamelen:
     # The longest distance, in source lines, that is being considered a "small scope." (defaults to 5)
@@ -780,11 +792,21 @@ linters:
     #- govet
   enable-all: true
   disable:
+    - forbidigo
+    - gochecknoglobals
+    - exhaustruct
+    - exhaustive
+    - exhaustivestruct
     - goerr113
     - paralleltest
     - tagliatelle
     - lll
     - testpackage
+    - varcheck
+    - ifshort
+    - deadcode
+    - structcheck
+    - nosnakecase
     - varnamelen
     - wrapcheck
     - dupl
