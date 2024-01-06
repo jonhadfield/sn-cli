@@ -49,16 +49,9 @@ func cmdDebug() *cli.Command {
 						str = c.Args().First()
 					}
 
-					var opts configOptsOutput
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
-					// useStdOut = opts.useStdOut
+					opts := getOpts(c)
 
-					var sess session.Session
-
-					sess, _, err = session.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+					sess, _, err := session.GetSession(nil, opts.useSession, opts.sessKey, opts.server, opts.debug)
 					if err != nil {
 						return err
 					}

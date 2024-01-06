@@ -45,7 +45,7 @@ require (
 	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
-	github.com/jonhadfield/gosn-v2 v0.0.0-20231220100241-fba7cf1f2185
+	github.com/jonhadfield/gosn-v2 v0.0.0-20240106151742-c861fe8116e5
 	github.com/urfave/cli/v2 v2.26.0
 )
 
@@ -57,6 +57,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
@@ -66,8 +67,12 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xrash/smetrics v0.0.0-20231213231151-1d8dd44e695e // indirect
+	go.elara.ws/pcre v0.0.0-20230805032557-4ce849193f64 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611 // indirect
+	modernc.org/libc v1.16.8 // indirect
+	modernc.org/mathutil v1.4.1 // indirect
+	modernc.org/memory v1.1.1 // indirect
 )
 
 //replace github.com/jonhadfield/gosn-v2 => ../gosn-v2

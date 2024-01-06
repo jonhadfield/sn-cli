@@ -92,7 +92,6 @@ func signIn(server, email, password string) {
 		CacheDB:     nil,
 		CacheDBPath: "",
 	}
-
 }
 
 func TestMain(m *testing.M) {

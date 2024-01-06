@@ -11,15 +11,15 @@ import (
 	"github.com/jonhadfield/gosn-v2/items"
 )
 
-func conflictedWarning([]items.Tasklist) string {
-	if len(items.Tasklists{}) > 0 {
+func conflictedWarning(tl []items.Tasklist) string {
+	if len(tl) > 0 {
 		return color.Yellow.Sprintf("%d conflicted versions", len(items.Tasklists{}))
 	}
 
 	return "-"
 }
 
-func (ci *ListChecklistsInput) Run() (err error) {
+func (ci *ListChecklistsInput) Run() error {
 	checklists, err := getChecklists(ci.Session)
 	if err != nil {
 		return err

@@ -15,15 +15,14 @@ import (
 )
 
 const (
+	snAppName                          = "sn-cli"
 	msgAddSuccess                      = "added"
-	msgAlreadyExisting                 = "already existing"
 	msgDeleted                         = "deleted"
 	msgMultipleNotesFoundWithSameTitle = "multiple notes found with the same title"
 	msgNoteAdded                       = "note added"
 	msgNoteDeleted                     = "note deleted"
-	msgFailedToDeleteNote              = "failed to delete note"
 	msgNoteNotFound                    = "note not found"
-	msgTagSuccess                      = "tagged"
+	msgTagSuccess                      = "item tagged"
 	msgTagAlreadyExists                = "tag already exists"
 	msgTagAdded                        = "tag added"
 	msgTagDeleted                      = "tag deleted"
@@ -32,7 +31,6 @@ const (
 	msgItemsDeleted                    = "items deleted"
 	msgNoMatches                       = "no matches"
 	msgRegisterSuccess                 = "registered"
-	snAppName                          = "sn-cli"
 )
 
 var yamlAbbrevs = []string{"yml", "yaml"}
@@ -58,7 +56,7 @@ type configOptsOutput struct {
 	debug      bool
 }
 
-func getOpts(c *cli.Context) (out configOptsOutput, err error) {
+func getOpts(c *cli.Context) (out configOptsOutput) {
 	out.useStdOut = true
 
 	if c.Bool("no-stdout") {
@@ -89,7 +87,7 @@ func getOpts(c *cli.Context) (out configOptsOutput, err error) {
 	return
 }
 
-func appSetup() (app *cli.App, err error) {
+func appSetup() (app *cli.App) {
 	viper.SetEnvPrefix("sn")
 	viper.AutomaticEnv()
 
@@ -144,11 +142,11 @@ func appSetup() (app *cli.App, err error) {
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 
-	return app, err
+	return app
 }
 
 func startCLI(args []string) (err error) {
-	app, _ := appSetup()
+	app := appSetup()
 
 	sort.Sort(cli.FlagsByName(app.Flags))
 

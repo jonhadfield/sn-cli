@@ -30,10 +30,8 @@ func tagNotes(i tagNotesInput) (err error) {
 		replace:   i.replace,
 	}
 
-	_, err = addTags(ati)
-
-	if err != nil {
-		return
+	if _, err = addTags(ati); err != nil {
+		return err
 	}
 
 	// get notes and tags
@@ -58,7 +56,7 @@ func tagNotes(i tagNotesInput) (err error) {
 
 	so, err = Sync(syncInput, true)
 	if err != nil {
-		return
+		return err
 	}
 
 	var allPersistedItems cache.Items
@@ -129,7 +127,7 @@ func tagNotes(i tagNotesInput) (err error) {
 
 	if len(tagsToPush) > 0 {
 		if err = cache.SaveTags(so.DB, i.session, tagsToPush, true); err != nil {
-			return
+			return err
 		}
 
 		pii := cache.SyncInput{
@@ -138,29 +136,27 @@ func tagNotes(i tagNotesInput) (err error) {
 
 		so, err = Sync(pii, true)
 		if err != nil {
-			return
+			return err
 		}
 
 		if err = so.DB.Close(); err != nil {
-			return
+			return err
 		}
 
-		return err
+		return nil
 	}
 
 	return nil
 }
 
 func (i *TagItemsConfig) Run() error {
-	tni := tagNotesInput{
+	return tagNotes(tagNotesInput{
 		matchTitle: i.FindTitle,
 		matchText:  i.FindText,
 		matchTags:  []string{i.FindTag},
 		newTags:    i.NewTags,
 		session:    i.Session,
-	}
-
-	return tagNotes(tni)
+	})
 }
 
 func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
@@ -255,6 +251,7 @@ func (i *GetTagConfig) Run() (items items.Items, err error) {
 
 func (i *DeleteTagConfig) Run() (noDeleted int, err error) {
 	noDeleted, err = deleteTags(i.Session, i.TagTitles, i.TagUUIDs)
+
 	return noDeleted, err
 }
 
@@ -303,6 +300,7 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 
 	tags = gItems
 	tags.Filter(deleteFilter)
+
 	if len(tags) == 0 {
 		return 0, nil
 	}
@@ -389,6 +387,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	}
 
 	var so cache.SyncOutput
+
 	so, err = Sync(putItemsInput, true)
 	if err != nil {
 		return
@@ -402,6 +401,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	}
 
 	var gItems items.Items
+
 	gItems, err = allPersistedItems.ToItems(ati.session)
 	if err != nil {
 		return
@@ -424,6 +424,7 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 		if item.GetContentType() == common.SNItemTypeTag {
 			tag := item.(*items.Tag)
 			allTags = append(allTags, *tag)
+
 			if tag.Content.GetTitle() == ati.parent || tag.GetUUID() == ati.parentUUID {
 				if parentRef != nil {
 					return ato, errors.New("multiple parent tags found, specify by UUID")

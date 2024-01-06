@@ -2,11 +2,12 @@ package sncli
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
@@ -215,9 +216,11 @@ func TestWipeWith50(t *testing.T) {
 	}
 
 	var deleted int
+
 	deleted, err = wipeConfig.Run()
 	require.NoError(t, err)
-	require.True(t, deleted >= numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
+
+	require.GreaterOrEqual(t, deleted, numNotes, fmt.Sprintf("notes created: %d items deleted: %d", numNotes, deleted))
 }
 
 func TestAddDeleteNoteByTitle(t *testing.T) {

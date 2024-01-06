@@ -2,15 +2,16 @@ package sncli
 
 import (
 	"fmt"
-	"github.com/jonhadfield/gosn-v2/common"
 	"sort"
 	"time"
 
 	"github.com/alexeyco/simpletable"
 	"github.com/dustin/go-humanize"
+
 	// "github.com/fatih/color".
 	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/ryanuber/columnize"
 )
@@ -202,11 +203,11 @@ func showNoteHistory(data StatsData) {
 			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Time")},
 		},
 	}
-	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
-		{Text: "Oldest"},
-		{Text: fmt.Sprintf("%s", data.OldestNote.Content.Title)},
-		{Text: fmt.Sprintf("%s", humanize.Time(time.UnixMicro(data.OldestNote.CreatedAtTimestamp)))},
-	})
+
+	if data.OldestNote != nil {
+		data.OldestNote.Content = items.NoteContent{}
+	}
+
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Newest"},
 		{Text: fmt.Sprintf("%s", data.NewestNote.Content.Title)},
@@ -231,6 +232,7 @@ func showItemCounts(data StatsData) {
 			{Align: simpletable.AlignLeft, Text: color.Bold.Sprintf("Count")},
 		},
 	}
+
 	table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 		{Text: "Notes"},
 		{Text: fmt.Sprintf("%s", humanize.Comma(data.CoreTypeCounter.counts[common.SNItemTypeNote]))},

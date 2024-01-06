@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli/v2"
 )
@@ -23,19 +24,15 @@ func cmdWipe() *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			var opts configOptsOutput
-			opts, err := getOpts(c)
-			if err != nil {
-				return err
-			}
+			opts := getOpts(c)
 
-			var cacheSession cache.Session
-			cacheSession, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+			cacheSession, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 			if err != nil {
 				return err
 			}
 
 			var cacheDBPath string
+
 			cacheDBPath, err = cache.GenCacheDBPath(cacheSession, opts.cacheDBDir, snAppName)
 			if err != nil {
 				return err
@@ -73,7 +70,7 @@ func cmdWipe() *cli.Command {
 				return nil
 			}
 
-			return err
+			return nil
 		},
 	}
 }

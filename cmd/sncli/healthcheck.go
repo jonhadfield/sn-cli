@@ -43,17 +43,12 @@ func cmdHealthcheck() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					var opts configOptsOutput
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 					// useStdOut = opts.useStdOut
 
 					var sess session.Session
 
-					sess, _, err = session.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
-
+					sess, _, err := session.GetSession(nil, opts.useSession, opts.sessKey, opts.server, opts.debug)
 					if err != nil {
 						return err
 					}

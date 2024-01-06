@@ -12,38 +12,31 @@ import (
 func TestGetMissingTag(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
-	app, err := appSetup()
-	require.NoError(t, err)
+	app := appSetup()
 	app.Writer = &outputBuffer
-	osArgs := []string{"sncli", "get", "tag", "--title", "missing tag"}
-	err = app.Run(osArgs)
+
+	require.NoError(t, app.Run([]string{"sncli", "get", "tag", "--title", "missing tag"}))
 	stdout := outputBuffer.String()
 	fmt.Println(stdout)
-	require.NoError(t, err)
 	require.Contains(t, stdout, msgNoMatches)
 }
 
 func TestAddTag(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
-	app, err := appSetup()
-	require.NoError(t, err)
+	app := appSetup()
 	app.Writer = &outputBuffer
 
-	osArgs := []string{"sncli", "add", "tag", "--title", "testAddOneTagGetCount"}
-	err = app.Run(osArgs)
+	require.NoError(t, app.Run([]string{"sncli", "add", "tag", "--title", "testAddOneTagGetCount"}))
 	stdout := outputBuffer.String()
 	fmt.Println(stdout)
-	require.NoError(t, err)
 	require.Contains(t, stdout, msgAddSuccess)
 
 	outputBuffer.Reset()
 
-	osArgs = []string{"sncli", "add", "tag", "--title", "testAddOneTagGetCount"}
-	err = app.Run(osArgs)
+	require.NoError(t, app.Run([]string{"sncli", "add", "tag", "--title", "testAddOneTagGetCount"}))
 	stdout = outputBuffer.String()
 	fmt.Println(stdout)
-	require.NoError(t, err)
 	require.Contains(t, stdout, msgTagAlreadyExists)
 
 	// err := startCLI([]string{"sncli", "--debug", "--no-stdout", "wipe", "--yes"})
@@ -59,7 +52,7 @@ func TestAddTag(t *testing.T) {
 func TestAddGetTag(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
-	app, _ := appSetup()
+	app := appSetup()
 	app.Writer = &outputBuffer
 
 	// wipe
@@ -101,7 +94,7 @@ func TestAddGetTag(t *testing.T) {
 func TestAddDeleteTag(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
-	app, _ := appSetup()
+	app := appSetup()
 	app.Writer = &outputBuffer
 
 	// wipe

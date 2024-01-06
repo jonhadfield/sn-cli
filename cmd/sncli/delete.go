@@ -43,16 +43,9 @@ func cmdDelete() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 
-					// useStdOut = opts.useStdOut
-
-					err = processDeleteTags(c, opts)
-
-					return err
+					return processDeleteTags(c, opts)
 				},
 			},
 			{
@@ -78,14 +71,9 @@ func cmdDelete() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 
-					err = processDeleteNote(c, opts)
-
-					return err
+					return processDeleteNote(c, opts)
 				},
 			},
 			{
@@ -107,16 +95,9 @@ func cmdDelete() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 
-					// useStdOut = opts.useStdOut
-
-					err = processDeleteItems(c, opts)
-
-					return err
+					return processDeleteItems(c, opts)
 				},
 			},
 		},

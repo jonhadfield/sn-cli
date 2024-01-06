@@ -43,11 +43,7 @@ func cmdEdit() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
-					// useStdOut = opts.useStdOut
+					opts := getOpts(c)
 
 					return processEditTag(c, opts)
 				},
@@ -80,12 +76,8 @@ func cmdEdit() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 					// useStdOut = opts.useStdOut
-
 					return processEditNote(c, opts)
 				},
 			},

@@ -1,10 +1,10 @@
 package sncli
 
 import (
-	"github.com/jonhadfield/gosn-v2/common"
 	"testing"
 
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/stretchr/testify/require"
 )

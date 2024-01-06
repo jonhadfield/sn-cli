@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli/v2"
@@ -33,7 +34,7 @@ func processGetItems(c *cli.Context, opts configOptsOutput) (err error) {
 
 	var sess cache.Session
 
-	sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+	sess, _, err = cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -75,8 +76,8 @@ func processGetItems(c *cli.Context, opts configOptsOutput) (err error) {
 
 	output = c.String("output")
 
-	output = "json"
 	var bOutput []byte
+
 	switch strings.ToLower(output) {
 	case "json":
 		bOutput, err = json.MarshalIndent(rawItems, "", "    ")

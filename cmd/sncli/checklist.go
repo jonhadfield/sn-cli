@@ -2,15 +2,18 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/jonhadfield/gosn-v2/cache"
+	"github.com/jonhadfield/gosn-v2/common"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli/v2"
 )
 
 func cmdChecklist() *cli.Command {
 	return &cli.Command{
-		Name:  "checklist",
-		Usage: "manage checklists",
+		Name:   "checklist",
+		Usage:  "manage checklists",
+		Hidden: true,
 		BashComplete: func(c *cli.Context) {
 			addTasks := []string{"list"}
 			if c.NArg() > 0 {
@@ -25,13 +28,9 @@ func cmdChecklist() *cli.Command {
 				Name:  "list",
 				Usage: "list checklists",
 				Action: func(c *cli.Context) error {
-					var opts configOptsOutput
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
-					var sess cache.Session
-					sess, _, err = cache.GetSession(opts.useSession, opts.sessKey, opts.server, opts.debug)
+					opts := getOpts(c)
+
+					sess, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 					if err != nil {
 						return err
 					}
@@ -63,7 +62,7 @@ func cmdChecklist() *cli.Command {
 			// 	},
 			// 	Action: func(c *cli.Context) error {
 			// 		var opts configOptsOutput
-			// 		opts, err := getOpts(c)
+			// 		opts := getOpts(c)
 			// 		if err != nil {
 			// 			return err
 			// 		}

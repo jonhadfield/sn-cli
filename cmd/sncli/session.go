@@ -33,12 +33,7 @@ func cmdSession() *cli.Command {
 		},
 		Hidden: false,
 		Action: func(c *cli.Context) error {
-			var opts configOptsOutput
-			opts, err := getOpts(c)
-			if err != nil {
-				return err
-			}
-			// useStdOut = opts.useStdOut
+			opts := getOpts(c)
 
 			return processSession(c, opts)
 		},
@@ -67,7 +62,7 @@ func processSession(c *cli.Context, opts configOptsOutput) (err error) {
 	if sAdd {
 		var msg string
 
-		msg, err = session.AddSession(opts.server, sessKey, nil, opts.debug)
+		msg, err = session.AddSession(nil, opts.server, sessKey, nil, opts.debug)
 		if err != nil {
 			return err
 		}
@@ -117,7 +112,7 @@ func processSession(c *cli.Context, opts configOptsOutput) (err error) {
 //			},
 //			Action: func(c *cli.Context) error {
 //				var opts configOptsOutput
-//				opts, err := getOpts(c)
+//				opts := getOpts(c)
 //				if err != nil {
 //					return err
 //				}

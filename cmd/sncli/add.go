@@ -44,15 +44,9 @@ func cmdAdd() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					var opts configOptsOutput
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
+					opts := getOpts(c)
 					// useStdOut = opts.useStdOut
-					err = processAddTags(c, opts)
-
-					return err
+					return processAddTags(c, opts)
 				},
 			},
 			{
@@ -90,15 +84,9 @@ func cmdAdd() *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					opts, err := getOpts(c)
-					if err != nil {
-						return err
-					}
-					// useStdOut = opts.useStdOut
+					opts := getOpts(c)
 
-					err = processAddNotes(c, opts)
-
-					return err
+					return processAddNotes(c, opts)
 				},
 			},
 		},
