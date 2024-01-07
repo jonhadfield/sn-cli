@@ -123,7 +123,6 @@ func appSetup() (app *cli.App) {
 	}
 	app.Commands = []*cli.Command{
 		cmdAdd(),
-		cmdChecklist(),
 		cmdDebug(),
 		cmdDelete(),
 		cmdEdit(),
@@ -133,6 +132,7 @@ func appSetup() (app *cli.App) {
 		cmdResync(),
 		cmdSession(),
 		cmdStats(),
+		cmdTask(),
 		cmdTag(),
 		cmdWipe(),
 	}

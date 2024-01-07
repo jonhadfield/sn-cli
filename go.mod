@@ -46,15 +46,21 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
 	github.com/jonhadfield/gosn-v2 v0.0.0-20240106194036-02cd03178214
+	github.com/pterm/pterm v0.12.74
 	github.com/urfave/cli/v2 v2.27.1
 )
 
 require (
+	atomicgo.dev/cursor v0.2.0 // indirect
+	atomicgo.dev/keyboard v0.2.9 // indirect
+	atomicgo.dev/schedule v0.1.0 // indirect
 	github.com/alessio/shellescape v1.4.2 // indirect
+	github.com/containerd/console v1.0.3 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
+	github.com/lithammer/fuzzysearch v1.1.8 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect

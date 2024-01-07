@@ -469,6 +469,7 @@ linters-settings:
         list-mode: lax
         allow:
           - $gostd
+          - github.com/pterm/pterm
           - github.com/jonhadfield/gosn-v2
           - github.com/sirupsen/logrus
           - github.com/urfave/cli/v2
