@@ -9,6 +9,22 @@ Thanks
 
 ## latest updates
 
+### version 0.3.3 - 2024-01-07
+
+- add `task` command for management of Checklists and Advanced Checklists
+
+### version 0.3.2 - 2024-01-06
+
+- bug fixes and sync speed increases
+
+### version 0.3.1 - 2023-12-20
+
+- various output improvements, including stats
+
+### version 0.3.0 - 2023-12-14
+
+- bug fixes and item schema tests
+
 ### version 0.2.8 - 2023-12-07
 
 - stored sessions are now auto-renewed when expired, or nearing expiry
