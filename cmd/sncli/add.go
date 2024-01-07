@@ -11,11 +11,10 @@ func cmdAdd() *cli.Command {
 		Name:  "add",
 		Usage: "add items",
 		BashComplete: func(c *cli.Context) {
-			addTasks := []string{"tag", "note"}
 			if c.NArg() > 0 {
 				return
 			}
-			for _, t := range addTasks {
+			for _, t := range []string{"tag", "note"} {
 				fmt.Println(t)
 			}
 		},
@@ -27,7 +26,9 @@ func cmdAdd() *cli.Command {
 					if c.NArg() > 0 {
 						return
 					}
-					fmt.Println("--title", "--parent", "--parent-uuid")
+					for _, t := range []string{"--title", "--parent", "--parent-uuid"} {
+						fmt.Println(t)
+					}
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{

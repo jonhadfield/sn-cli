@@ -509,6 +509,12 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 		return nil
 	}
 
+	if count {
+		_, _ = fmt.Fprintf(c.App.Writer, fmt.Sprintf("%d\n", len(rawNotes)))
+
+		return nil
+	}
+
 	var numResults int
 
 	var notesYAML []sncli.NoteYAML
@@ -518,7 +524,7 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 	for _, rt := range rawNotes {
 		numResults++
 
-		if !count && sncli.StringInSlice(output, yamlAbbrevs, false) {
+		if sncli.StringInSlice(output, yamlAbbrevs, false) {
 			noteContentOrgStandardNotesSNDetailYAML := sncli.OrgStandardNotesSNDetailYAML{
 				ClientUpdatedAt: rt.(*items.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 			}
@@ -549,7 +555,7 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 			})
 		}
 
-		if !count && strings.ToLower(output) == "json" {
+		if strings.ToLower(output) == "json" {
 			noteContentOrgStandardNotesSNDetailJSON := sncli.OrgStandardNotesSNDetailJSON{
 				ClientUpdatedAt:    rt.(*items.Note).Content.GetAppData().OrgStandardNotesSN.ClientUpdatedAt,
 				Pinned:             rt.(*items.Note).Content.GetAppData().OrgStandardNotesSN.Pinned,
@@ -590,13 +596,16 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 	}
 
 	output = c.String("output")
+
 	var bOutput []byte
+
 	switch strings.ToLower(output) {
 	case "json":
 		bOutput, err = json.MarshalIndent(notesJSON, "", "    ")
 	case "yaml":
 		bOutput, err = yaml.Marshal(notesYAML)
 	}
+
 	if len(bOutput) > 0 {
 		if output == "json" {
 			fmt.Print("{\n  \"items\": ")
@@ -656,10 +665,10 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (err error) {
 	}
 
 	if err = AddNoteInput.Run(); err != nil {
-		return fmt.Errorf("failed to add note. %+v", err)
+		return fmt.Errorf("failed to add note: %+v", err)
 	}
 
-	_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf("%s: %s", msgNoteAdded, title))
+	_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf("%s: %s\n", msgNoteAdded, title))
 
 	return nil
 }

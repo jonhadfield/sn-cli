@@ -11,6 +11,9 @@ func cmdResync() *cli.Command {
 	return &cli.Command{
 		Name:  "resync",
 		Usage: "purge cache and resync content",
+		BashComplete: func(c *cli.Context) {
+			return
+		},
 		Action: func(c *cli.Context) error {
 			opts := getOpts(c)
 

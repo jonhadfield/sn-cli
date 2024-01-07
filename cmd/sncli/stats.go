@@ -11,6 +11,11 @@ func cmdStats() *cli.Command {
 	return &cli.Command{
 		Name:  "stats",
 		Usage: "show statistics",
+		BashComplete: func(c *cli.Context) {
+			if c.NArg() > 0 {
+				return
+			}
+		},
 		Action: func(c *cli.Context) error {
 			opts := getOpts(c)
 

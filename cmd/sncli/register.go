@@ -17,7 +17,10 @@ func cmdRegister() *cli.Command {
 			if c.NArg() > 0 {
 				return
 			}
-			fmt.Println("--email")
+
+			for _, t := range []string{"--email"} {
+				fmt.Println(t)
+			}
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{

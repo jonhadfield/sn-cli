@@ -31,7 +31,15 @@ func cmdSession() *cli.Command {
 				Required: false,
 			},
 		},
-		Hidden: false,
+		BashComplete: func(c *cli.Context) {
+			if c.NArg() > 0 {
+				return
+			}
+
+			for _, t := range []string{"--add", "--remove", "--status", "--session-key"} {
+				fmt.Println(t)
+			}
+		},
 		Action: func(c *cli.Context) error {
 			opts := getOpts(c)
 
@@ -81,12 +89,13 @@ func processSession(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if sStatus {
 		var msg string
+
 		msg, err = session.SessionStatus(sessKey, nil)
 		if err != nil {
 			return err
 		}
 
-		_, _ = fmt.Fprint(c.App.Writer, msg)
+		_, _ = fmt.Fprint(c.App.Writer, msg+"\n")
 	}
 
 	return err

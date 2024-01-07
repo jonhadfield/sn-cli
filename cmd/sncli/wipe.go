@@ -16,12 +16,21 @@ func cmdWipe() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "yes",
-				Usage: "ignore warning",
+				Usage: "accpet warning",
 			},
 			&cli.BoolFlag{
 				Name:  "everything",
 				Usage: "wipe settings also",
 			},
+		},
+		BashComplete: func(c *cli.Context) {
+			if c.NArg() > 0 {
+				return
+			}
+
+			for _, t := range []string{"--yes", "--everything"} {
+				fmt.Println(t)
+			}
 		},
 		Action: func(c *cli.Context) error {
 			opts := getOpts(c)

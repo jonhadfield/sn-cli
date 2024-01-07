@@ -112,7 +112,13 @@ func appSetup() (app *cli.App) {
 	app.HelpName = "-"
 	app.Usage = "Standard Notes CLI"
 	app.Description = ""
-
+	app.BashComplete = func(c *cli.Context) {
+		for _, cmd := range c.App.Commands {
+			if !cmd.Hidden {
+				fmt.Fprintln(c.App.Writer, cmd.Name)
+			}
+		}
+	}
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{Name: "debug", Value: viper.GetBool("debug")},
 		&cli.StringFlag{Name: "server", Value: viper.GetString("server")},

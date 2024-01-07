@@ -120,12 +120,14 @@ then add the following to ~/.bash_profile:
 `` 
 #### installing completion script ([found here](https://github.com/jonhadfield/sn-cli/tree/master/autocomplete/bash_autocomplete))
 ##### macOS  
-``  
-$ cp bash_autocomplete /usr/local/etc/bash_completion.d/sn
-``  
+```  
+$ cp bash_autocomplete /usr/local/etc/bash_completion.d/sn  
+$ echo "source /usr/local/etc/bash_completion.d/sn" | tee -a ~/.bashrc
+``` 
 ##### Linux  
 ``
 $ cp bash_autocomplete /etc/bash_completion.d/sn
+$ echo "source /etc/bash_completion.d/sn" | tee -a ~/.bashrc
 ``
 
 ##### autocomplete commands

@@ -35,7 +35,16 @@ const (
 func cmdTask() *cli.Command {
 	return &cli.Command{
 		Name:  "task",
-		Usage: "task",
+		Usage: "manage checklist tasks",
+		BashComplete: func(c *cli.Context) {
+			addTasks := []string{"add", "list", "show", "complete", "reopen", "delete"}
+			if c.NArg() > 0 {
+				return
+			}
+			for _, t := range addTasks {
+				fmt.Println(t)
+			}
+		},
 		Subcommands: []*cli.Command{
 			cmdTaskAddTask(),
 			cmdTaskComplete(),
@@ -87,7 +96,15 @@ func cmdTaskAddTask() *cli.Command {
 			&cli.StringFlag{Name: flagGroupName, Aliases: []string{"g"}, Value: viper.GetString(txtDefaultGroup)},
 			&cli.StringFlag{Name: flagTitleName, Required: true},
 		},
-
+		BashComplete: func(c *cli.Context) {
+			addTasks := []string{"--title", "--list", "--group"}
+			if c.NArg() > 0 {
+				return
+			}
+			for _, t := range addTasks {
+				fmt.Println(t)
+			}
+		},
 		Action: func(c *cli.Context) error {
 			if c.String(flagTasklistName) == "" && c.String(flagUUIDName) == "" {
 				return fmt.Errorf("either --%s or --%s must be specified", flagTasklistName, flagUUIDName)
@@ -201,7 +218,15 @@ func cmdTaskDelete() *cli.Command {
 			&cli.StringFlag{Name: flagGroupName, Aliases: []string{"g"}, Value: viper.GetString(txtDefaultGroup)},
 			&cli.StringFlag{Name: flagTitleName, Aliases: []string{flagTaskName}},
 		},
-
+		BashComplete: func(c *cli.Context) {
+			addTasks := []string{"--title", "--list", "--group"}
+			if c.NArg() > 0 {
+				return
+			}
+			for _, t := range addTasks {
+				fmt.Println(t)
+			}
+		},
 		Action: func(c *cli.Context) error {
 			opts := getOpts(c)
 
@@ -261,7 +286,14 @@ func cmdTaskComplete() *cli.Command {
 			&cli.StringFlag{Name: flagTitleName},
 			&cli.StringFlag{Name: flagUUIDName},
 		},
-
+		BashComplete: func(c *cli.Context) {
+			if c.NArg() > 0 {
+				return
+			}
+			for _, t := range []string{"--title", "--list", "--group", "--uuid"} {
+				fmt.Println(t)
+			}
+		},
 		Action: func(c *cli.Context) error {
 			if c.String(flagTasklistName) == "" && c.String(flagUUIDName) == "" {
 				return fmt.Errorf("either --%s or --%s must be specified", flagTasklistName, flagUUIDName)

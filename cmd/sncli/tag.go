@@ -425,7 +425,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (err error) {
 	var msg string
 	// present results
 	if len(ato.Added) > 0 {
-		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprint(msgTagAdded+": ", strings.Join(ato.Added, ", ")))
+		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprint(msgTagAdded+": ", strings.Join(ato.Added, ", "), "\n"))
 
 		return err
 	}
@@ -436,7 +436,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (err error) {
 			msg += "\n"
 		}
 
-		_, _ = fmt.Fprintf(c.App.Writer, color.Yellow.Sprint(msgTagAlreadyExists+": "+strings.Join(ato.Existing, ", ")))
+		_, _ = fmt.Fprintf(c.App.Writer, color.Yellow.Sprint(msgTagAlreadyExists+": "+strings.Join(ato.Existing, ", "), "\n"))
 	}
 
 	_, _ = fmt.Fprintf(c.App.Writer, "%s\n", msg)
@@ -545,7 +545,6 @@ func cmdTag() *cli.Command {
 	return &cli.Command{
 		Name:  "tag",
 		Usage: "tag items",
-
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "find-title",
@@ -572,6 +571,16 @@ func cmdTag() *cli.Command {
 				Usage: "ignore case when matching",
 			},
 		},
+		BashComplete: func(c *cli.Context) {
+			if c.NArg() > 0 {
+				return
+			}
+			for _, t := range []string{
+				"--find-title", "--find-text", "--find-tag", "--title", "--purge", "--ignore-case",
+			} {
+				fmt.Println(t)
+			}
+		},
 		Action: func(c *cli.Context) error {
 			opts := getOpts(c)
 
@@ -579,7 +588,7 @@ func cmdTag() *cli.Command {
 				return err
 			}
 
-			_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf("%s", msgTagSuccess))
+			_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprint(msgTagSuccess, "\n"))
 
 			return nil
 		},

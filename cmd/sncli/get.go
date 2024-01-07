@@ -18,7 +18,7 @@ func cmdGet() *cli.Command {
 		Name:  "get",
 		Usage: "get items",
 		BashComplete: func(c *cli.Context) {
-			addTasks := []string{"tag", "note", "settings"}
+			addTasks := []string{"tag", "note"}
 			if c.NArg() > 0 {
 				return
 			}
@@ -177,6 +177,17 @@ func cmdGet() *cli.Command {
 				Name:    "tag",
 				Aliases: []string{"tags"},
 				Usage:   "get tags",
+				BashComplete: func(c *cli.Context) {
+					tagTasks := []string{
+						"--title", "--uuid", "--regex", "--match-all", "--count", "--output",
+					}
+					if c.NArg() > 0 {
+						return
+					}
+					for _, t := range tagTasks {
+						fmt.Println(t)
+					}
+				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "title",
@@ -217,6 +228,15 @@ func cmdGet() *cli.Command {
 				Name:    "note",
 				Aliases: []string{"notes"},
 				Usage:   "get notes",
+				BashComplete: func(c *cli.Context) {
+					addTasks := []string{"--title", "--text", "--tag", "--uuid", "--editor", "--include-trash", "--count"}
+					if c.NArg() > 0 {
+						return
+					}
+					for _, t := range addTasks {
+						fmt.Println(t)
+					}
+				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "title",
@@ -244,7 +264,7 @@ func cmdGet() *cli.Command {
 					},
 					&cli.BoolFlag{
 						Name:  "count",
-						Usage: "useStdOut countonly",
+						Usage: "number of notes",
 					},
 					&cli.StringFlag{
 						Name:  "output",
