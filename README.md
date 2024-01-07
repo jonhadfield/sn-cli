@@ -3,10 +3,6 @@ a command-line interface for [Standard Notes](https://standardnotes.org/).
 
 [![Build Status](https://www.travis-ci.org/jonhadfield/sn-cli.svg?branch=master)](https://www.travis-ci.org/jonhadfield/sn-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/jonhadfield/sn-cli)](https://goreportcard.com/report/github.com/jonhadfield/sn-cli)
 
-## Important 
-There have been significant updates to the StandardNotes API that I've attempted to address in this version.  Please ensure you have a backup in case of any issues caused by this app.  
-Thanks 
-
 ## latest updates
 
 ### version 0.3.3 - 2024-01-07
@@ -41,11 +37,15 @@ Thanks
 COMMANDS:
      add        add items
      delete     delete items
+     edit       edit notes
      tag        tag items
-     get        get items
+     task       manage checklists and tasks
+     session    store session to 
+     register   register an account
+     resync     delete and repopulate cache 
+     get        get item data
      stats      show statistics
      wipe       deletes all tags and notes
-     session    manage session credentials
      test-data  create test data (hidden option)
 ```
 *note: export and import currently disabled due to recent StandardNotes API changes*
@@ -103,7 +103,6 @@ To use your session automatically, set the environment variable ```SN_USE_SESSIO
 
 ## known issues  
 
-- sessions added to keychain do not currently refresh themselves. The workaround is to run re-add the session if an invalid session message is returned.
 - accounts registered via sn-cli are initialised without initial encryption key(s). The workaround is to log in via the offical web/desktop app, to create these keys, after initial registration.
 
 ## bash autocompletion
