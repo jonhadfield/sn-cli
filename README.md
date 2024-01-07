@@ -5,6 +5,10 @@ a command-line interface for [Standard Notes](https://standardnotes.org/).
 
 ## latest updates
 
+### version 0.3.4 - 2024-01-07
+
+- fix command completion and update instructions
+
 ### version 0.3.3 - 2024-01-07
 
 - add `task` command for management of Checklists and Advanced Checklists
@@ -40,9 +44,9 @@ COMMANDS:
      edit       edit notes
      tag        tag items
      task       manage checklists and tasks
-     session    store session to 
+     session    store session to
      register   register an account
-     resync     delete and repopulate cache 
+     resync     delete and repopulate cache
      get        get item data
      stats      show statistics
      wipe       deletes all tags and notes
@@ -55,19 +59,19 @@ Download the latest release here: https://github.com/jonhadfield/sn-cli/releases
 
 ### macOS and Linux
 
-Install:  
+Install:
 ``
 $ install <sn-cli binary> /usr/local/bin/sn
-``  
+``
 
 ### Windows
-  
-An installer is planned, but for now...  
+
+An installer is planned, but for now...
 Download the binary 'sncli_windows_amd64.exe' and rename to sn.exe
 
 ## running
 
-To see commands and options:  
+To see commands and options:
 ``
 $ sn --help
 ``
@@ -84,7 +88,7 @@ export SN_SERVER=<https://myserver.example.com>   # optional, if running persona
 ```
 
 #### session (macOS Keychain / Gnome Keyring)
-Using a session is different from storing credentials as you no longer need to authenticate. As a result, if using 2FA (Two Factor Authentication), you won't need to enter your token value each time.  
+Using a session is different from storing credentials as you no longer need to authenticate. As a result, if using 2FA (Two Factor Authentication), you won't need to enter your token value each time.
 ##### add session
 ```
 sn session --add   # session will be stored after successful authentication
@@ -99,32 +103,32 @@ If your session is encrypted, you will be prompted for the session key. To speci
 ```
 sn --use-session --session-key <key> <command>
 ```
-To use your session automatically, set the environment variable ```SN_USE_SESSION``` to ```true```  
+To use your session automatically, set the environment variable ```SN_USE_SESSION``` to ```true```
 
-## known issues  
+## known issues
 
 - accounts registered via sn-cli are initialised without initial encryption key(s). The workaround is to log in via the offical web/desktop app, to create these keys, after initial registration.
 
 ## bash autocompletion
 
 #### tool
-the bash completion tool should be installed by default on most Linux installations.  
+the bash completion tool should be installed by default on most Linux installations.
 
-To install on macOS (Homebrew)  
+To install on macOS (Homebrew)
 ``
-$ brew install bash_completion  
-``  
-then add the following to ~/.bash_profile:  
-``  
+$ brew install bash_completion
+``
+then add the following to ~/.bash_profile:
+``
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-`` 
+``
 #### installing completion script ([found here](https://github.com/jonhadfield/sn-cli/tree/master/autocomplete/bash_autocomplete))
-##### macOS  
-```  
-$ cp bash_autocomplete /usr/local/etc/bash_completion.d/sn  
+##### macOS
+```
+$ cp bash_autocomplete /usr/local/etc/bash_completion.d/sn
 $ echo "source /usr/local/etc/bash_completion.d/sn" | tee -a ~/.bashrc
-``` 
-##### Linux  
+```
+##### Linux
 ``
 $ cp bash_autocomplete /etc/bash_completion.d/sn
 $ echo "source /etc/bash_completion.d/sn" | tee -a ~/.bashrc
