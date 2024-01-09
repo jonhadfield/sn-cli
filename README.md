@@ -60,9 +60,9 @@ Download the latest release here: https://github.com/jonhadfield/sn-cli/releases
 ### macOS and Linux
 
 Install:
-``
+``` console
 $ install <sn-cli binary> /usr/local/bin/sn
-``
+```
 
 ### Windows
 
@@ -72,16 +72,16 @@ Download the binary 'sncli_windows_amd64.exe' and rename to sn.exe
 ## running
 
 To see commands and options:
-``
+``` console
 $ sn --help
-``
+```
 ### authentication
 
 By default, your credentials will be requested every time, but you can store them using either environment variables or, on MacOS and Linux, store your session using the native Keychain application.
 
 #### environment variables
 Note: if using 2FA, the token value will be requested each time
-```
+``` shell
 export SN_EMAIL=<email address>
 export SN_PASSWORD=<password>
 export SN_SERVER=<https://myserver.example.com>   # optional, if running personal server
@@ -115,26 +115,26 @@ To use your session automatically, set the environment variable ```SN_USE_SESSIO
 the bash completion tool should be installed by default on most Linux installations.
 
 To install on macOS (Homebrew)
-``
+``` console
 $ brew install bash_completion
-``
+```
 then add the following to ~/.bash_profile:
-``
+``` bash
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-``
+```
 #### installing completion script ([found here](https://github.com/jonhadfield/sn-cli/tree/master/autocomplete/bash_autocomplete))
 ##### macOS
-```
+``` console
 $ cp bash_autocomplete /usr/local/etc/bash_completion.d/sn
 $ echo "source /usr/local/etc/bash_completion.d/sn" | tee -a ~/.bashrc
 ```
 ##### Linux
-``
+``` console
 $ cp bash_autocomplete /etc/bash_completion.d/sn
 $ echo "source /etc/bash_completion.d/sn" | tee -a ~/.bashrc
-``
+```
 
 ##### autocomplete commands
-``
+``` console
 $ sn <tab>
-``
+```
