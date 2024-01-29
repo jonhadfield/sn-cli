@@ -46,7 +46,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
 	github.com/jonhadfield/gosn-v2 v0.0.0-20240106194036-02cd03178214
-	github.com/pterm/pterm v0.12.74
+	github.com/pterm/pterm v0.12.76
 	github.com/urfave/cli/v2 v2.27.1
 )
 
