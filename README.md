@@ -5,6 +5,13 @@ a command-line interface for [Standard Notes](https://standardnotes.org/).
 
 ## latest updates
 
+### version 0.3.5 - 2024-01-08
+
+- fix conflict warning handling
+- add helper tests
+- minor code simplification
+
+
 ### version 0.3.4 - 2024-01-07
 
 - fix command completion and update instructions
