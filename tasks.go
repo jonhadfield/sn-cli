@@ -309,9 +309,9 @@ func getAdvancedChecklists(sess *cache.Session, cacheItems cache.Items) (items.A
 	return checklists, nil
 }
 
-func taskListsConflictedWarning([]items.Tasklist) string {
-	if len(items.Tasklists{}) > 0 {
-		return color.Yellow.Sprintf("%d conflicted versions", len(items.Tasklists{}))
+func taskListsConflictedWarning(tasklists []items.Tasklist) string {
+	if len(tasklists) > 0 {
+		return color.Yellow.Sprintf("%d conflicted versions", len(tasklists))
 	}
 
 	return "-"
