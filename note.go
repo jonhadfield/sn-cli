@@ -211,7 +211,6 @@ func (i *GetNoteConfig) Run() (items.Items, error) {
 	so, err = Sync(cache.SyncInput{
 		Session: i.Session,
 	}, true)
-
 	if err != nil {
 		return nil, err
 	}

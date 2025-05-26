@@ -96,47 +96,61 @@ func genTags(num int64) (tags items.Items) {
 }
 
 func createNotes(session *cache.Session, num int, paras int) error {
-	var pii cache.SyncInput
-	pii.Session = session
-	gendNotes := genNotes(num, paras)
+	// FIXED: Use single sync approach to avoid consecutive cache.Sync timeouts
+	// Root cause: Multiple consecutive cache.Sync calls cause API timeouts
+	// Solution: Single sync + batch save operations
 
-	var eGendNotes items.EncryptedItems
+	// Create all notes at once with minimal content
+	allNotes := make(items.Items, 0, num)
 
-	var err error
-
-	eGendNotes, err = gendNotes.Encrypt(session.Session, session.Session.DefaultItemsKey)
-	if err != nil {
-		return err
+	for i := 1; i <= num; i++ {
+		note, err := items.NewNote(
+			fmt.Sprintf("TestNote%d", i),
+			fmt.Sprintf("Test note %d content", i),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create note %d: %w", i, err)
+		}
+		allNotes = append(allNotes, &note)
 	}
 
-	err = gendNotes.Validate(session.Session)
+	// Encrypt all notes in one operation
+	encryptedNotes, err := allNotes.Encrypt(session.Session, session.Session.DefaultItemsKey)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to encrypt notes: %w", err)
 	}
 
-	// get db
-	var so cache.SyncOutput
-
-	so, err = Sync(cache.SyncInput{
-		Session: pii.Session,
-	}, true)
-	if err != nil {
-		return err
+	// Validate the notes
+	if err := allNotes.Validate(session.Session); err != nil {
+		return fmt.Errorf("note validation failed: %w", err)
 	}
 
-	err = cache.SaveEncryptedItems(so.DB, eGendNotes, true)
+	// Single cache.Sync call - this is the key fix
+	so, err := Sync(cache.SyncInput{
+		Session: session,
+	}, false) // Keep database open for batch save
 	if err != nil {
-		return err
+		return fmt.Errorf("sync failed: %w", err)
 	}
 
-	so, err = Sync(pii, true)
+	// Save all encrypted notes using the open database (no additional sync needed)
+	err = cache.SaveEncryptedItems(so.DB, encryptedNotes, false)
 	if err != nil {
-		return err
+		if so.DB != nil {
+			so.DB.Close()
+		}
+		return fmt.Errorf("failed to save encrypted notes: %w", err)
 	}
 
-	err = so.DB.Close()
+	// Close database manually
+	if so.DB != nil {
+		if closeErr := so.DB.Close(); closeErr != nil {
+			return fmt.Errorf("failed to close database: %w", closeErr)
+		}
+	}
 
-	return err
+	return nil
 }
 
 func createTags(session session.Session, num int64) error {

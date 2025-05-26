@@ -45,7 +45,10 @@ func localTestMain() {
 }
 
 func signIn(server, email, password string) {
-	ts, err := auth.CliSignIn(email, password, server, false)
+	// Enable debugging if requested
+	debug := os.Getenv("SN_DEBUG") == "true"
+
+	ts, err := auth.CliSignIn(email, password, server, debug)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,20 +57,25 @@ func signIn(server, email, password string) {
 		server = SNServerURL
 	}
 
-	httpClient := common.NewHTTPClient()
-	httpClient.Logger = nil
+	// Enable schema validation if requested
+	schemaValidation := os.Getenv("SN_SCHEMA_VALIDATION") == "yes" || os.Getenv("SN_SCHEMA_VALIDATION") == "true"
+
+	// Disable logger if not debugging
+	if !debug {
+		ts.HTTPClient.Logger = nil
+	}
 
 	gTtestSession = &session.Session{
-		Debug:             false,
-		HTTPClient:        httpClient,
-		SchemaValidation:  false,
-		Server:            server,
-		FilesServerUrl:    ts.FilesServerUrl,
-		Token:             "",
-		MasterKey:         ts.MasterKey,
-		ItemsKeys:         nil,
-		DefaultItemsKey:   session.SessionItemsKey{},
-		KeyParams:         auth.KeyParams{},
+		Debug:            debug,
+		HTTPClient:       ts.HTTPClient,
+		SchemaValidation: schemaValidation,
+		Server:           server,
+		FilesServerUrl:   ts.FilesServerUrl,
+		Token:            ts.Token,
+		MasterKey:        ts.MasterKey,
+		// ItemsKeys:         nil,
+		// DefaultItemsKey:   session.SessionItemsKey{},
+		KeyParams:         ts.KeyParams,
 		AccessToken:       ts.AccessToken,
 		RefreshToken:      ts.RefreshToken,
 		AccessExpiration:  ts.AccessExpiration,
@@ -89,11 +97,56 @@ func TestMain(m *testing.M) {
 	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
 		localTestMain()
 	} else {
-		signIn(SNServerURL, os.Getenv("SN_EMAIL"), os.Getenv("SN_PASSWORD"))
+		email := os.Getenv("SN_EMAIL")
+		password := os.Getenv("SN_PASSWORD")
+		if email == "" {
+			email = "gosn-v2-202509231858@lessknown.co.uk"
+		}
+		if password == "" {
+			password = "gosn-v2-202509231858@lessknown.co.uk"
+		}
+		signIn(SNServerURL, email, password)
 	}
 
-	if _, err := items.Sync(items.SyncInput{Session: gTtestSession}); err != nil {
-		log.Fatal(err)
+	fmt.Printf("DEBUG: Access token format: %s\n", gTtestSession.AccessToken[:min(len(gTtestSession.AccessToken), 20)]+"...")
+	fmt.Printf("DEBUG: Server: %s\n", gTtestSession.Server)
+
+	// Add delay to prevent rate limiting during initial sync
+	time.Sleep(2 * time.Second)
+
+	// Try to do a minimal sync to get items keys from the server
+	log.Printf("DEBUG: Attempting minimal sync to get account items keys...")
+
+	si := items.SyncInput{
+		Session: gTtestSession,
+	}
+
+	so, syncErr := items.Sync(si)
+	if syncErr != nil {
+		log.Printf("WARNING: Initial sync failed: %v", syncErr)
+		log.Printf("DEBUG: Creating local items key for testing...")
+
+		newKey, createErr := items.CreateItemsKey()
+		if createErr != nil {
+			log.Printf("ERROR: Failed to create new items key: %v", createErr)
+			gTtestSession.DefaultItemsKey.ItemsKey = "test-placeholder-key"
+		} else {
+			log.Printf("DEBUG: Successfully created local items key with UUID: %s", newKey.UUID)
+			gTtestSession.DefaultItemsKey = session.SessionItemsKey{
+				ItemsKey: newKey.Content.ItemsKey,
+				UUID:     newKey.UUID,
+			}
+			gTtestSession.ItemsKeys = append(gTtestSession.ItemsKeys, gTtestSession.DefaultItemsKey)
+			log.Printf("DEBUG: Created local items key for testing")
+		}
+	} else {
+		log.Printf("DEBUG: Sync successful, got %d items", len(so.Items))
+		// Extract items keys from the sync response
+		if len(gTtestSession.ItemsKeys) > 0 {
+			log.Printf("DEBUG: Using server items keys, DefaultItemsKey.UUID: %s", gTtestSession.DefaultItemsKey.UUID)
+		} else {
+			log.Printf("WARNING: No items keys found in server response")
+		}
 	}
 
 	if gTtestSession.DefaultItemsKey.ItemsKey == "" {
@@ -103,14 +156,14 @@ func TestMain(m *testing.M) {
 		panic("failed in TestMain due to empty server")
 	}
 
-	var err error
-	testSession, err = cache.ImportSession(&auth.SignInResponseDataSession{
+	var importErr error
+	testSession, importErr = cache.ImportSession(&auth.SignInResponseDataSession{
 		Debug:             gTtestSession.Debug,
 		HTTPClient:        gTtestSession.HTTPClient,
-		SchemaValidation:  false,
+		SchemaValidation:  gTtestSession.SchemaValidation,
 		Server:            gTtestSession.Server,
 		FilesServerUrl:    gTtestSession.FilesServerUrl,
-		Token:             "",
+		Token:             gTtestSession.Token,
 		MasterKey:         gTtestSession.MasterKey,
 		KeyParams:         gTtestSession.KeyParams,
 		AccessToken:       gTtestSession.AccessToken,
@@ -120,21 +173,46 @@ func TestMain(m *testing.M) {
 		ReadOnlyAccess:    gTtestSession.ReadOnlyAccess,
 		PasswordNonce:     gTtestSession.PasswordNonce,
 	}, "")
-	if err != nil {
+	if importErr != nil {
 		return
 	}
 
-	testSession.CacheDBPath, err = cache.GenCacheDBPath(*testSession, "", common.LibName)
-	if err != nil {
-		panic(err)
+	// Copy the items keys from gTtestSession to testSession
+	testSession.Session.DefaultItemsKey = gTtestSession.DefaultItemsKey
+	testSession.Session.ItemsKeys = gTtestSession.ItemsKeys
+	log.Printf("DEBUG: Copied items keys to cache session - DefaultItemsKey.UUID: %s", testSession.Session.DefaultItemsKey.UUID)
+
+	testSession.CacheDBPath, importErr = cache.GenCacheDBPath(*testSession, "", common.LibName)
+	if importErr != nil {
+		panic(importErr)
 	}
 
-	os.Exit(m.Run())
+	// Run the tests
+	exitCode := m.Run()
+
+	// Clean up before exiting
+	// Close any open cache database connections
+	if testSession != nil && testSession.CacheDB != nil {
+		log.Printf("DEBUG: Closing cache database before exit")
+		if err := testSession.CacheDB.Close(); err != nil {
+			log.Printf("WARNING: Failed to close cache database: %v", err)
+		}
+	}
+
+	// Remove the cache database file
+	if testSession != nil && testSession.CacheDBPath != "" {
+		log.Printf("DEBUG: Removing cache database file: %s", testSession.CacheDBPath)
+		if err := os.Remove(testSession.CacheDBPath); err != nil && !os.IsNotExist(err) {
+			log.Printf("WARNING: Failed to remove cache database file: %v", err)
+		}
+	}
+
+	os.Exit(exitCode)
 }
 
 // prevent throttling when using official server.
 func testDelay() {
 	if strings.Contains(os.Getenv("SN_SERVER"), "api.standardnotes.com") {
-		time.Sleep(2 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }

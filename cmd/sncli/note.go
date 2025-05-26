@@ -183,7 +183,6 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (err error) {
 
 	var cSession cache.Session
 	cSession, _, err = cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
-
 	if err != nil {
 		return err
 	}
@@ -733,7 +732,6 @@ func processDeleteItems(c *cli.Context, opts configOptsOutput) (err error) {
 
 	var cacheDBPath string
 	cacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
-
 	if err != nil {
 		return err
 	}

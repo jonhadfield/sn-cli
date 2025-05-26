@@ -198,7 +198,6 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 				Session:   &input.Session,
 				Items:     itemsToDelete,
 			})
-
 			if err != nil {
 				return err
 			}
