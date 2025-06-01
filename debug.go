@@ -2,6 +2,7 @@ package sncli
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -18,7 +19,7 @@ type DecryptStringInput struct {
 	Key       string
 }
 
-func DecryptString(input DecryptStringInput) (plaintext string, err error) {
+func DecryptString(input DecryptStringInput) (string, error) {
 	key1 := input.Session.MasterKey
 	if input.Key != "" {
 		key1 = input.Key
@@ -34,20 +35,18 @@ func DecryptString(input DecryptStringInput) (plaintext string, err error) {
 
 	version, nonce, cipherText, authData := splitContent(input.In)
 	if version != "004" {
-		return plaintext, fmt.Errorf("only version 004 of encryption is supported")
+		return "", errors.New("only version 004 of encryption is supported")
 	}
 
 	bad, err := base64.StdEncoding.DecodeString(authData)
 	if err != nil {
-		err = fmt.Errorf("failed to base64 decode auth data: '%s' err: %+v", authData, err)
-
-		return
+		return "", fmt.Errorf("failed to base64 decode auth data: '%s' err: %+v", authData, err)
 	}
 	fmt.Printf("Decoded Auth Data: %+v\n", string(bad))
 
 	pb, err := crypto.DecryptCipherText(cipherText, key1, nonce, authData)
 	if err != nil {
-		return
+		return "", err
 	}
 
 	return string(pb), nil
@@ -107,16 +106,16 @@ type CreateItemsKeyInput struct {
 // 	return nil
 // }
 
-func splitContent(in string) (version, nonce, cipherText, authenticatedData string) {
+func splitContent(in string) (string, string, string, string) {
 	components := strings.Split(in, ":")
 	if len(components) < 3 {
 		panic(components)
 	}
 
-	version = components[0]           // protocol version
-	nonce = components[1]             // encryption nonce
-	cipherText = components[2]        // ciphertext
-	authenticatedData = components[3] // authenticated data
+	version := components[0]           // protocol version
+	nonce := components[1]             // encryption nonce
+	cipherText := components[2]        // ciphertext
+	authenticatedData := components[3] // authenticated data
 
-	return
+	return version, nonce, cipherText, authenticatedData
 }

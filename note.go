@@ -1,6 +1,7 @@
 package sncli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -68,11 +69,11 @@ func loadNoteContentFromFile(filePath string) (string, error) {
 	return string(b), nil
 }
 
-func addNote(i addNoteInput) (noteUUID string, err error) {
+func addNote(i addNoteInput) (string, error) {
 	// if file path provided, try loading content as note text
 	if i.filePath != "" {
 		if i.noteText, err = loadNoteContentFromFile(i.filePath); err != nil {
-			return
+			return "", err
 		}
 
 		if i.noteTitle == "" {
@@ -81,6 +82,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	}
 
 	var noteToAdd items.Note
+	var noteUUID string
 
 	si := cache.SyncInput{
 		Session: i.session,
@@ -91,7 +93,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 
 	so, err = Sync(si, true)
 	if err != nil {
-		return
+		return "", err
 	}
 
 	// if we're replacing, then retrieve note to update
@@ -116,26 +118,22 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 
 		gi, err = gnc.Run()
 		if err != nil {
-			return
+			return "", err
 		}
 
 		switch len(gi) {
 		case 0:
-			err = fmt.Errorf("failed to find existing note to replace")
-
-			return
+			return "", errors.New("failed to find existing note to replace")
 		case 1:
 			noteToAdd = gi.Notes()[0]
 			noteToAdd.Content.SetText(i.noteText)
 		default:
-			err = fmt.Errorf("multiple notes found with that title")
-
-			return
+			return "", errors.New("multiple notes found with that title")
 		}
 	} else {
 		noteToAdd, err = items.NewNote(i.noteTitle, i.noteText, nil)
 		if err != nil {
-			return
+			return "", err
 		}
 		noteUUID = noteToAdd.UUID
 	}
@@ -147,7 +145,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 
 	so, err = Sync(si, true)
 	if err != nil {
-		return
+		return "", err
 	}
 
 	var allEncTags cache.Items
@@ -157,11 +155,11 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 	err = query.Find(&allEncTags)
 	// it's ok if there are no tags, so only error if something else went wrong
 	if err != nil && err.Error() != "not found" {
-		return
+		return "", err
 	}
 
 	if err = cache.SaveNotes(i.session, so.DB, items.Notes{noteToAdd}, false); err != nil {
-		return
+		return "", err
 	}
 
 	_ = so.DB.Close()
@@ -173,7 +171,7 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 
 	so, err = Sync(pii, true)
 	if err != nil {
-		return
+		return "", err
 	}
 
 	defer func() {
@@ -190,15 +188,15 @@ func addNote(i addNoteInput) (noteUUID string, err error) {
 
 		err = tagNotes(tni)
 		if err != nil {
-			return
+			return "", err
 		}
 	}
 
 	return noteUUID, err
 }
 
-func (i *DeleteItemConfig) Run() (noDeleted int, err error) {
-	noDeleted, err = deleteItems(i.Session, []string{}, "", i.ItemsUUIDs, i.Regex)
+func (i *DeleteItemConfig) Run() (int, error) {
+	noDeleted, err := deleteItems(i.Session, []string{}, "", i.ItemsUUIDs, i.Regex)
 
 	return noDeleted, err
 }
@@ -207,40 +205,39 @@ func (i *DeleteNoteConfig) Run() (int, error) {
 	return deleteNotes(i.Session, i.NoteTitles, i.NoteText, i.NoteUUIDs, i.Regex)
 }
 
-func (i *GetNoteConfig) Run() (items items.Items, err error) {
+func (i *GetNoteConfig) Run() (items.Items, error) {
 	var so cache.SyncOutput
+	var err error
 	so, err = Sync(cache.SyncInput{
 		Session: i.Session,
 	}, true)
 
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	var allPersistedItems cache.Items
 
 	err = so.DB.All(&allPersistedItems)
 	if err != nil {
-		err = fmt.Errorf("getting items from db: %w", err)
-
-		return
+		return nil, fmt.Errorf("getting items from db: %w", err)
 	}
 
 	defer func() {
 		_ = so.DB.Close()
 	}()
 
-	items, err = allPersistedItems.ToItems(i.Session)
+	items, err := allPersistedItems.ToItems(i.Session)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	items.Filter(i.Filters)
 
-	return
+	return items, nil
 }
 
-func deleteNotes(session *cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool) (noDeleted int, err error) {
+func deleteNotes(session *cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool) (int, error) {
 	var getNotesFilters []items.Filter
 
 	switch {
@@ -294,22 +291,21 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 
 	gio, err = Sync(getItemsInput, true)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	var allPersistedItems cache.Items
 
 	err = gio.DB.All(&allPersistedItems)
 	if err != nil {
-		err = fmt.Errorf("getting items from db: %w", err)
-		return
+		return 0, fmt.Errorf("getting items from db: %w", err)
 	}
 
 	var notes items.Items
 
 	notes, err = allPersistedItems.ToItems(session)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	notes.Filter(itemFilter)
@@ -332,7 +328,7 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 		// close db as we're not going to save anything
 		_ = session.CacheDB.Close()
 
-		return
+		return 0, nil
 	}
 
 	if err = cache.SaveNotes(session, gio.DB, notesToDelete, true); err != nil {
@@ -346,13 +342,13 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 
 	_, err = Sync(pii, true)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	return len(notesToDelete), err
 }
 
-func deleteItems(session *cache.Session, noteTitles []string, noteText string, itemUUIDs []string, regex bool) (noDeleted int, err error) {
+func deleteItems(session *cache.Session, noteTitles []string, noteText string, itemUUIDs []string, regex bool) (int, error) {
 	var getItemsFilters []items.Filter
 
 	switch {
@@ -406,22 +402,21 @@ func deleteItems(session *cache.Session, noteTitles []string, noteText string, i
 
 	gio, err = Sync(getItemsInput, true)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	var allPersistedItems cache.Items
 
 	err = gio.DB.All(&allPersistedItems)
 	if err != nil {
-		err = fmt.Errorf("getting items from db: %w", err)
-		return
+		return 0, fmt.Errorf("getting items from db: %w", err)
 	}
 
 	var pItems items.Items
 
 	pItems, err = allPersistedItems.ToItems(session)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	pItems.Filter(itemFilter)
@@ -433,7 +428,7 @@ func deleteItems(session *cache.Session, noteTitles []string, noteText string, i
 	}
 
 	if itemsToDelete == nil {
-		return
+		return 0, nil
 	}
 
 	if err = cache.SaveItems(session, gio.DB, itemsToDelete, true); err != nil {
@@ -447,7 +442,7 @@ func deleteItems(session *cache.Session, noteTitles []string, noteText string, i
 
 	_, err = Sync(pii, true)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	return len(itemsToDelete), err

@@ -400,7 +400,7 @@ type AddTaskInput struct {
 	Tasklist string
 }
 
-func (ci *AddTaskInput) Run() (err error) {
+func (ci *AddTaskInput) Run() error {
 	tasklist, err := getTasklist(ci.Session, ci.Tasklist, ci.UUID)
 	if err != nil {
 		return err
@@ -408,7 +408,7 @@ func (ci *AddTaskInput) Run() (err error) {
 
 	// add task to the tasklist
 	if err = tasklist.AddTask(ci.Title); err != nil {
-		return
+		return err
 	}
 
 	// get corresponding note
@@ -437,7 +437,7 @@ func (ci *AddTaskInput) Run() (err error) {
 	ci.Session.CacheDB = si.CacheDB
 
 	if err = cache.SaveNotes(ci.Session, ci.Session.CacheDB, items.Notes{note}, true); err != nil {
-		return
+		return err
 	}
 
 	si = cache.SyncInput{
@@ -445,15 +445,14 @@ func (ci *AddTaskInput) Run() (err error) {
 		Close:   true,
 	}
 	if _, err = cache.Sync(si); err != nil {
-		return
+		return err
 	}
-
 	return nil
 }
 
-func (ci *AddAdvancedChecklistTaskInput) Run() (err error) {
+func (ci *AddAdvancedChecklistTaskInput) Run() error {
 	// sync to get db
-	_, err = Sync(cache.SyncInput{
+	_, err := Sync(cache.SyncInput{
 		Session: ci.Session,
 	}, true)
 	if err != nil {
@@ -475,7 +474,7 @@ func (ci *AddAdvancedChecklistTaskInput) Run() (err error) {
 
 	// add task to the checklist
 	if err = cl.AddTask(ci.Group, ci.Title); err != nil {
-		return
+		return err
 	}
 
 	taskNoteText := items.AdvancedCheckListToNoteText(cl)
@@ -492,17 +491,17 @@ func (ci *AddAdvancedChecklistTaskInput) Run() (err error) {
 	}
 
 	if err = cache.SaveNotes(ci.Session, ci.Session.CacheDB, items.Notes{notes[0]}, true); err != nil {
-		return
+		return err
 	}
 
 	if _, err = cache.Sync(si); err != nil {
-		return
+		return err
 	}
 
 	return nil
 }
 
-func getNoteByUUID(sess *cache.Session, uuid string) (note items.Note, err error) {
+func getNoteByUUID(sess *cache.Session, uuid string) (items.Note, error) {
 	if sess.CacheDBPath == "" {
 		return items.Note{}, errors.New("CacheDBPath missing from session")
 	}
@@ -518,9 +517,9 @@ func getNoteByUUID(sess *cache.Session, uuid string) (note items.Note, err error
 		Close:   false,
 	}
 
-	so, err = cache.Sync(si)
+	so, err := cache.Sync(si)
 	if err != nil {
-		return
+		return items.Note{}, err
 	}
 
 	defer func() {
@@ -532,16 +531,17 @@ func getNoteByUUID(sess *cache.Session, uuid string) (note items.Note, err error
 	query := so.DB.Select(q.And(q.Eq("UUID", uuid), q.Eq("Deleted", false)))
 	if err = query.Find(&encNotes); err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			return note, fmt.Errorf("could not find note with inUUID %s", uuid)
+			return items.Note{}, fmt.Errorf("could not find note with inUUID %s", uuid)
 		}
-
-		return
+		return items.Note{}, err
 	}
 
-	var rawEncItems items.Items
-	rawEncItems, err = encNotes.ToItems(sess)
+	rawEncItems, err := encNotes.ToItems(sess)
+	if err != nil {
+		return items.Note{}, err
+	}
 
-	return *rawEncItems[0].(*items.Note), err
+	return *rawEncItems[0].(*items.Note), nil
 }
 
 func getNotesByTitleUUID(sess *cache.Session, title string, uuid string, editor string) (items.Notes, error) {
@@ -607,7 +607,7 @@ func getNotesByTitleUUID(sess *cache.Session, title string, uuid string, editor 
 
 func getTasklist(sess *cache.Session, title string, uuid string) (items.Tasklist, error) {
 	if title == "" && uuid == "" {
-		return items.Tasklist{}, fmt.Errorf("title and/or uuid must be specified")
+		return items.Tasklist{}, errors.New("title and/or uuid must be specified")
 	}
 
 	var so cache.SyncOutput
@@ -709,11 +709,11 @@ func getTasklist(sess *cache.Session, title string, uuid string) (items.Tasklist
 
 	numTasklists := len(tasklists)
 	if numTasklists == 0 {
-		return items.Tasklist{}, fmt.Errorf("tasklist not found")
+		return items.Tasklist{}, errors.New("tasklist not found")
 	}
 
 	if numTasklists > 1 {
-		return items.Tasklist{}, fmt.Errorf("duplicate tasklists found")
+		return items.Tasklist{}, errors.New("duplicate tasklists found")
 	}
 
 	return tasklists[0], nil
@@ -1063,9 +1063,9 @@ type DeleteAdvancedChecklistTaskInput struct {
 	UUID      string
 }
 
-func (ci *DeleteTaskInput) Run() (err error) {
+func (ci *DeleteTaskInput) Run() error {
 	// sync to get db
-	_, err = Sync(cache.SyncInput{
+	_, err := Sync(cache.SyncInput{
 		Session: ci.Session,
 	}, true)
 	if err != nil {
@@ -1104,19 +1104,18 @@ func (ci *DeleteTaskInput) Run() (err error) {
 	}
 
 	if err = cache.SaveNotes(ci.Session, ci.Session.CacheDB, items.Notes{notes[0]}, true); err != nil {
-		return
+		return err
 	}
 
 	if _, err = cache.Sync(si); err != nil {
-		return
+		return err
 	}
-
 	return nil
 }
 
-func (ci *DeleteAdvancedChecklistTaskInput) Run() (err error) {
+func (ci *DeleteAdvancedChecklistTaskInput) Run() error {
 	// sync to get db
-	_, err = Sync(cache.SyncInput{
+	_, err := Sync(cache.SyncInput{
 		Session: ci.Session,
 	}, true)
 	if err != nil {
@@ -1138,7 +1137,7 @@ func (ci *DeleteAdvancedChecklistTaskInput) Run() (err error) {
 
 	// delete task from the checklist
 	if err = cl.DeleteTask(ci.Group, ci.Title); err != nil {
-		return
+		return err
 	}
 
 	taskNoteText := items.AdvancedCheckListToNoteText(cl)
@@ -1155,11 +1154,11 @@ func (ci *DeleteAdvancedChecklistTaskInput) Run() (err error) {
 	}
 
 	if err = cache.SaveNotes(ci.Session, ci.Session.CacheDB, items.Notes{notes[0]}, true); err != nil {
-		return
+		return err
 	}
 
 	if _, err = cache.Sync(si); err != nil {
-		return
+		return err
 	}
 
 	return nil
@@ -1202,9 +1201,9 @@ type CompleteTaskInput struct {
 	UUID     string
 }
 
-func (ci *CompleteTaskInput) Run() (err error) {
+func (ci *CompleteTaskInput) Run() error {
 	// sync to get db
-	_, err = Sync(cache.SyncInput{
+	_, err := Sync(cache.SyncInput{
 		Session: ci.Session,
 	}, true)
 	if err != nil {
@@ -1243,13 +1242,12 @@ func (ci *CompleteTaskInput) Run() (err error) {
 	}
 
 	if err = cache.SaveNotes(ci.Session, ci.Session.CacheDB, items.Notes{notes[0]}, true); err != nil {
-		return
+		return err
 	}
 
 	if _, err = cache.Sync(si); err != nil {
-		return
+		return err
 	}
-
 	return nil
 }
 
@@ -1321,9 +1319,9 @@ type ReopenTaskInput struct {
 	Tasklist string
 }
 
-func (ci *ReopenTaskInput) Run() (err error) {
+func (ci *ReopenTaskInput) Run() error {
 	// sync to get db
-	_, err = Sync(cache.SyncInput{
+	_, err := Sync(cache.SyncInput{
 		Session: ci.Session,
 	}, true)
 	if err != nil {
@@ -1362,13 +1360,12 @@ func (ci *ReopenTaskInput) Run() (err error) {
 	}
 
 	if err = cache.SaveNotes(ci.Session, ci.Session.CacheDB, items.Notes{notes[0]}, true); err != nil {
-		return
+		return err
 	}
 
 	if _, err = cache.Sync(si); err != nil {
-		return
+		return err
 	}
-
 	return nil
 }
 

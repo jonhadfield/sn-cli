@@ -5,33 +5,30 @@ import (
 	"github.com/jonhadfield/gosn-v2/items"
 )
 
-func (i *GetSettingsConfig) Run() (settings items.Items, err error) {
+func (i *GetSettingsConfig) Run() (items.Items, error) {
 	getItemsInput := cache.SyncInput{
 		Session: i.Session,
 	}
 
 	var so cache.SyncOutput
 
-	so, err = Sync(getItemsInput, true)
+	so, err := Sync(getItemsInput, true)
 	if err != nil {
 		return nil, err
 	}
 
 	var allPersistedItems cache.Items
 
-	err = so.DB.All(&allPersistedItems)
-	if err != nil {
-		return
+	if err = so.DB.All(&allPersistedItems); err != nil {
+		return nil, err
 	}
 
-	var items items.Items
-
-	items, err = allPersistedItems.ToItems(i.Session)
+	items, err := allPersistedItems.ToItems(i.Session)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	items.Filter(i.Filters)
 
-	return
+	return items, nil
 }

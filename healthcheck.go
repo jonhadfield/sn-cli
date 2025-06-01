@@ -28,9 +28,9 @@ func ItemKeysHealthcheck(input ItemsKeysHealthcheckInput) error {
 	if !input.Session.Debug {
 		prefix := color.HiWhite.Sprintf("retrieving items ")
 
-		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stdout))
+		s := spinner.New(spinner.CharSets[14], spinnerDelay, spinner.WithWriter(os.Stdout))
 		if input.UseStdOut {
-			s = spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
+			s = spinner.New(spinner.CharSets[14], spinnerDelay, spinner.WithWriter(os.Stderr))
 		}
 
 		s.Prefix = prefix
