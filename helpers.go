@@ -130,22 +130,19 @@ type EncryptedItemsFile struct {
 	Items items.EncryptedItems `json:"items"`
 }
 
-func readJSON(filePath string) (items items.EncryptedItems, err error) {
+func readJSON(filePath string) (items.EncryptedItems, error) {
 	file, err := os.ReadFile(filePath)
 	if err != nil {
-		err = fmt.Errorf("%w failed to open: %s", err, filePath)
-		return
+		return nil, fmt.Errorf("%w failed to open: %s", err, filePath)
 	}
 
 	var eif EncryptedItemsFile
 
-	err = json.Unmarshal(file, &eif)
-	if err != nil {
-		err = fmt.Errorf("failed to unmarshall json: %w", err)
-		return
+	if err = json.Unmarshal(file, &eif); err != nil {
+		return nil, fmt.Errorf("failed to unmarshall json: %w", err)
 	}
 
-	return eif.Items, err
+	return eif.Items, nil
 }
 
 func ItemRefsToYaml(irs []items.ItemReference) []ItemReferenceYAML {
@@ -198,12 +195,13 @@ func CommaSplit(i string) []string {
 	return s
 }
 
-func RemoveDeleted(in items.Items) (out items.Items) {
+func RemoveDeleted(in items.Items) items.Items {
+	var out items.Items
 	for _, i := range in {
 		if !i.IsDeleted() {
 			out = append(out, i)
 		}
 	}
 
-	return
+	return out
 }

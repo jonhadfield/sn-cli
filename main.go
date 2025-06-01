@@ -275,7 +275,8 @@ func referenceExists(tag items.Tag, refID string) bool {
 	return false
 }
 
-func filterEncryptedItemsByTypes(ei items.EncryptedItems, types []string) (o items.EncryptedItems) {
+func filterEncryptedItemsByTypes(ei items.EncryptedItems, types []string) items.EncryptedItems {
+	var o items.EncryptedItems
 	for _, i := range ei {
 		if StringInSlice(i.ContentType, types, true) {
 			o = append(o, i)
@@ -285,7 +286,8 @@ func filterEncryptedItemsByTypes(ei items.EncryptedItems, types []string) (o ite
 	return o
 }
 
-func filterItemsByTypes(ei items.Items, types []string) (o items.Items) {
+func filterItemsByTypes(ei items.Items, types []string) items.Items {
+	var o items.Items
 	for _, i := range ei {
 		if StringInSlice(i.GetContentType(), types, true) {
 			o = append(o, i)
@@ -295,7 +297,8 @@ func filterItemsByTypes(ei items.Items, types []string) (o items.Items) {
 	return o
 }
 
-func filterCacheItemsByTypes(ei cache.Items, types []string) (o cache.Items) {
+func filterCacheItemsByTypes(ei cache.Items, types []string) cache.Items {
+	var o cache.Items
 	for _, i := range ei {
 		if StringInSlice(i.ContentType, types, true) {
 			o = append(o, i)
@@ -312,9 +315,9 @@ func (i *WipeConfig) Run() (int, error) {
 	if !i.Session.Debug && i.UseStdOut {
 		prefix := color.HiWhite.Sprintf("wiping ")
 
-		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stdout))
+		s := spinner.New(spinner.CharSets[14], spinnerDelay, spinner.WithWriter(os.Stdout))
 		if i.UseStdOut {
-			s = spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
+			s = spinner.New(spinner.CharSets[14], spinnerDelay, spinner.WithWriter(os.Stderr))
 		}
 
 		s.Prefix = prefix

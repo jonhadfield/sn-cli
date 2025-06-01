@@ -22,7 +22,7 @@ type tagNotesInput struct {
 
 // create tags if they don't exist
 // get all notes and tags.
-func tagNotes(i tagNotesInput) (err error) {
+func tagNotes(i tagNotesInput) error {
 	// create tags if they don't exist
 	ati := addTagsInput{
 		session:   i.session,
@@ -30,7 +30,7 @@ func tagNotes(i tagNotesInput) (err error) {
 		replace:   i.replace,
 	}
 
-	if _, err = addTags(ati); err != nil {
+	if _, err := addTags(ati); err != nil {
 		return err
 	}
 
@@ -53,7 +53,7 @@ func tagNotes(i tagNotesInput) (err error) {
 
 	// get all notes and tags from db
 	var so cache.SyncOutput
-
+	var err error
 	so, err = Sync(syncInput, true)
 	if err != nil {
 		return err
@@ -61,14 +61,14 @@ func tagNotes(i tagNotesInput) (err error) {
 
 	var allPersistedItems cache.Items
 	if err = so.DB.All(&allPersistedItems); err != nil {
-		return
+		return err
 	}
 
 	var gItems items.Items
 
 	gItems, err = allPersistedItems.ToItems(i.session)
 	if err != nil {
-		return
+		return err
 	}
 
 	gItems.Filter(itemFilter)
@@ -159,7 +159,7 @@ func (i *TagItemsConfig) Run() error {
 	})
 }
 
-func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
+func (i *AddTagsInput) Run() (AddTagsOutput, error) {
 	ati := addTagsInput{
 		tagTitles:  i.Tags,
 		parent:     i.Parent,
@@ -168,21 +168,22 @@ func (i *AddTagsInput) Run() (output AddTagsOutput, err error) {
 		replace:    i.Replace,
 	}
 
-	var ato addTagsOutput
-
-	ato, err = addTags(ati)
+	ato, err := addTags(ati)
 	if err != nil {
 		return AddTagsOutput{}, err
 	}
 
-	output.Added = ato.added
-	output.Existing = ato.existing
+	output := AddTagsOutput{
+		Added:    ato.added,
+		Existing: ato.existing,
+	}
 
-	return output, err
+	return output, nil
 }
 
-func (i *GetItemsConfig) Run() (items items.Items, err error) {
+func (i *GetItemsConfig) Run() (items.Items, error) {
 	var so cache.SyncOutput
+	var err error
 
 	si := cache.SyncInput{
 		Session: i.Session,
@@ -190,33 +191,32 @@ func (i *GetItemsConfig) Run() (items items.Items, err error) {
 
 	so, err = Sync(si, true)
 	if err != nil {
-		return items, err
+		return nil, err
 	}
 
 	var allPersistedItems cache.Items
 
-	err = so.DB.All(&allPersistedItems)
-	if err != nil {
-		return
+	if err = so.DB.All(&allPersistedItems); err != nil {
+		return nil, err
 	}
 
-	err = so.DB.Close()
-	if err != nil {
-		return
+	if err = so.DB.Close(); err != nil {
+		return nil, err
 	}
 
-	items, err = allPersistedItems.ToItems(i.Session)
+	items, err := allPersistedItems.ToItems(i.Session)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	items.FilterAllTypes(i.Filters)
 
-	return items, err
+	return items, nil
 }
 
-func (i *GetTagConfig) Run() (items items.Items, err error) {
+func (i *GetTagConfig) Run() (items.Items, error) {
 	var so cache.SyncOutput
+	var err error
 
 	si := cache.SyncInput{
 		Session: i.Session,
@@ -224,38 +224,36 @@ func (i *GetTagConfig) Run() (items items.Items, err error) {
 
 	so, err = Sync(si, true)
 	if err != nil {
-		return items, err
+		return nil, err
 	}
 
 	var allPersistedItems cache.Items
 
-	err = so.DB.All(&allPersistedItems)
-	if err != nil {
-		return
+	if err = so.DB.All(&allPersistedItems); err != nil {
+		return nil, err
 	}
 
-	err = so.DB.Close()
-	if err != nil {
-		return
+	if err = so.DB.Close(); err != nil {
+		return nil, err
 	}
 
-	items, err = allPersistedItems.ToItems(i.Session)
+	items, err := allPersistedItems.ToItems(i.Session)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	items.Filter(i.Filters)
 
-	return items, err
+	return items, nil
 }
 
-func (i *DeleteTagConfig) Run() (noDeleted int, err error) {
-	noDeleted, err = deleteTags(i.Session, i.TagTitles, i.TagUUIDs)
+func (i *DeleteTagConfig) Run() (int, error) {
+	noDeleted, err := deleteTags(i.Session, i.TagTitles, i.TagUUIDs)
 
 	return noDeleted, err
 }
 
-func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (noDeleted int, err error) {
+func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (int, error) {
 	deleteTagsFilter := items.Filter{
 		Type: common.SNItemTypeTag,
 	}
@@ -288,14 +286,14 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 
 	err = so.DB.All(&allPersistedItems)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	var gItems items.Items
 
 	gItems, err = allPersistedItems.ToItems(session)
 	if err != nil {
-		return
+		return 0, err
 	}
 
 	tags = gItems
@@ -338,7 +336,7 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 	}
 
 	if err = cache.SaveEncryptedItems(so.DB, eTagsToDelete, true); err != nil {
-		return
+		return 0, err
 	}
 
 	pii := cache.SyncInput{
@@ -348,10 +346,10 @@ func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (
 
 	_, err = Sync(pii, true)
 	if err != nil {
-		return
+		return 0, err
 	}
 
-	noDeleted = len(tagsToDelete)
+	noDeleted := len(tagsToDelete)
 
 	return noDeleted, nil
 }
@@ -390,25 +388,25 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 
 	so, err = Sync(putItemsInput, true)
 	if err != nil {
-		return
+		return ato, err
 	}
 
 	var allPersistedItems cache.Items
 
 	err = so.DB.All(&allPersistedItems)
 	if err != nil {
-		return
+		return ato, err
 	}
 
 	var gItems items.Items
 
 	gItems, err = allPersistedItems.ToItems(ati.session)
 	if err != nil {
-		return
+		return ato, err
 	}
 
 	if err = so.DB.Close(); err != nil {
-		return
+		return ato, err
 	}
 
 	gItems.Filter(addFilter)
@@ -464,29 +462,29 @@ func addTags(ati addTagsInput) (ato addTagsOutput, err error) {
 	if len(tagsToAdd) > 0 {
 		so, err = Sync(putItemsInput, true)
 		if err != nil {
-			return
+			return ato, err
 		}
 
 		var eTagsToAdd items.EncryptedItems
 
 		eTagsToAdd, err = tagsToAdd.Encrypt(ati.session.Gosn())
 		if err != nil {
-			return
+			return ato, err
 		}
 
 		err = cache.SaveEncryptedItems(so.DB, eTagsToAdd, true)
 		if err != nil {
-			return
+			return ato, err
 		}
 
 		so, err = Sync(putItemsInput, true)
 		if err != nil {
-			return
+			return ato, err
 		}
 
 		err = so.DB.Close()
 		if err != nil {
-			return
+			return ato, err
 		}
 	}
 
