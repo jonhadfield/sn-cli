@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/asdine/storm/v3 v3.2.1
-	github.com/briandowns/spinner v1.23.0
+	github.com/briandowns/spinner v1.23.2
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/ryanuber/columnize v2.1.2+incompatible
