@@ -43,7 +43,7 @@ require (
 	github.com/gookit/color v1.5.4
 	github.com/jonhadfield/gosn-v2 v0.0.0-20250526132044-88ccf41de756
 	github.com/pterm/pterm v0.12.81
-	github.com/urfave/cli/v2 v2.27.6
+	github.com/urfave/cli/v2 v2.27.7
 )
 
 require (
