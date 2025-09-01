@@ -38,7 +38,7 @@ require (
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/divan/num2words v1.0.1
+	github.com/divan/num2words v1.0.3
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.5.4
 	github.com/jonhadfield/gosn-v2 v0.0.0-20250526132044-88ccf41de756
