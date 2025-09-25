@@ -108,44 +108,27 @@ func TestMain(m *testing.M) {
 		signIn(SNServerURL, email, password)
 	}
 
-	fmt.Printf("DEBUG: Access token format: %s\n", gTtestSession.AccessToken[:min(len(gTtestSession.AccessToken), 20)]+"...")
-	fmt.Printf("DEBUG: Server: %s\n", gTtestSession.Server)
-
 	// Add delay to prevent rate limiting during initial sync
 	time.Sleep(2 * time.Second)
-
-	// Try to do a minimal sync to get items keys from the server
-	log.Printf("DEBUG: Attempting minimal sync to get account items keys...")
 
 	si := items.SyncInput{
 		Session: gTtestSession,
 	}
 
-	so, syncErr := items.Sync(si)
+	_, syncErr := items.Sync(si)
 	if syncErr != nil {
 		log.Printf("WARNING: Initial sync failed: %v", syncErr)
-		log.Printf("DEBUG: Creating local items key for testing...")
 
 		newKey, createErr := items.CreateItemsKey()
 		if createErr != nil {
 			log.Printf("ERROR: Failed to create new items key: %v", createErr)
 			gTtestSession.DefaultItemsKey.ItemsKey = "test-placeholder-key"
 		} else {
-			log.Printf("DEBUG: Successfully created local items key with UUID: %s", newKey.UUID)
 			gTtestSession.DefaultItemsKey = session.SessionItemsKey{
 				ItemsKey: newKey.Content.ItemsKey,
 				UUID:     newKey.UUID,
 			}
 			gTtestSession.ItemsKeys = append(gTtestSession.ItemsKeys, gTtestSession.DefaultItemsKey)
-			log.Printf("DEBUG: Created local items key for testing")
-		}
-	} else {
-		log.Printf("DEBUG: Sync successful, got %d items", len(so.Items))
-		// Extract items keys from the sync response
-		if len(gTtestSession.ItemsKeys) > 0 {
-			log.Printf("DEBUG: Using server items keys, DefaultItemsKey.UUID: %s", gTtestSession.DefaultItemsKey.UUID)
-		} else {
-			log.Printf("WARNING: No items keys found in server response")
 		}
 	}
 
@@ -180,7 +163,6 @@ func TestMain(m *testing.M) {
 	// Copy the items keys from gTtestSession to testSession
 	testSession.Session.DefaultItemsKey = gTtestSession.DefaultItemsKey
 	testSession.Session.ItemsKeys = gTtestSession.ItemsKeys
-	log.Printf("DEBUG: Copied items keys to cache session - DefaultItemsKey.UUID: %s", testSession.Session.DefaultItemsKey.UUID)
 
 	testSession.CacheDBPath, importErr = cache.GenCacheDBPath(*testSession, "", common.LibName)
 	if importErr != nil {
@@ -193,7 +175,6 @@ func TestMain(m *testing.M) {
 	// Clean up before exiting
 	// Close any open cache database connections
 	if testSession != nil && testSession.CacheDB != nil {
-		log.Printf("DEBUG: Closing cache database before exit")
 		if err := testSession.CacheDB.Close(); err != nil {
 			log.Printf("WARNING: Failed to close cache database: %v", err)
 		}
@@ -201,7 +182,6 @@ func TestMain(m *testing.M) {
 
 	// Remove the cache database file
 	if testSession != nil && testSession.CacheDBPath != "" {
-		log.Printf("DEBUG: Removing cache database file: %s", testSession.CacheDBPath)
 		if err := os.Remove(testSession.CacheDBPath); err != nil && !os.IsNotExist(err) {
 			log.Printf("WARNING: Failed to remove cache database file: %v", err)
 		}

@@ -88,10 +88,6 @@ func TestCreateNotesWithSimplifiedSync(t *testing.T) {
 
 	defer cleanUp(*testSession)
 
-	// Debug: Print the actual DefaultItemsKey state
-	t.Logf("DEBUG: DefaultItemsKey.ItemsKey length = %d", len(testSession.Session.DefaultItemsKey.ItemsKey))
-	t.Logf("DEBUG: DefaultItemsKey.UUID = '%s'", testSession.Session.DefaultItemsKey.UUID)
-
 	// Check if we have a valid default items key (not the placeholder)
 	if testSession.Session.DefaultItemsKey.ItemsKey == "test-placeholder-key" || testSession.Session.DefaultItemsKey.UUID == "" {
 		t.Skip("Skipping createNotes test because account sync timed out - cannot test note creation without valid items key")
@@ -670,8 +666,6 @@ func deleteUserContent(session *session.Session) error {
 	}
 
 	if len(itemsToDelete) > 0 {
-		fmt.Printf("DEBUG: Deleting %d user-created items (notes/tags only)\n", len(itemsToDelete))
-
 		si.Items = itemsToDelete
 		_, err = items.Sync(si)
 		if err != nil {
