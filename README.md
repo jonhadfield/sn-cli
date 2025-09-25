@@ -1,147 +1,180 @@
-# sn-cli
-a command-line interface for [Standard Notes](https://standardnotes.org/).
+# 📝 sn-cli
 
-[![Build Status](https://www.travis-ci.org/jonhadfield/sn-cli.svg?branch=master)](https://www.travis-ci.org/jonhadfield/sn-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/jonhadfield/sn-cli)](https://goreportcard.com/report/github.com/jonhadfield/sn-cli)
+> A modern command-line interface for [Standard Notes](https://standardnotes.org/)
 
-## latest updates
+[![Build Status](https://www.travis-ci.org/jonhadfield/sn-cli.svg?branch=master)](https://www.travis-ci.org/jonhadfield/sn-cli) [![Go Report Card](https://goreportcard.com/badge/github.com/jonhadfield/sn-cli)](https://goreportcard.com/report/github.com/jonhadfield/sn-cli) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-### version 0.3.5 - 2024-01-08
+## ✨ Features
 
-- fix conflict warning handling
-- add helper tests
-- minor code simplification
+- **📋 Notes & Tasks**: Create, edit, and manage notes and checklists
+- **🏷️ Tags**: Organize content with flexible tagging
+- **📊 Statistics**: Detailed analytics about your notes and usage
+- **🔐 Secure Sessions**: Keychain integration for macOS and Linux
+- **⚡ Fast Sync**: Efficient synchronization with Standard Notes servers
+- **🔄 Multi-Platform**: Windows, macOS, and Linux support
 
+## 🚀 Quick Start
 
-### version 0.3.4 - 2024-01-07
+### Installation
 
-- fix command completion and update instructions
+**Download the latest release:**
+```bash
+# macOS/Linux
+curl -L https://github.com/jonhadfield/sn-cli/releases/latest/download/sncli_$(uname -s)_$(uname -m) -o sn
+chmod +x sn && sudo mv sn /usr/local/bin/
 
-### version 0.3.3 - 2024-01-07
-
-- add `task` command for management of Checklists and Advanced Checklists
-
-### version 0.3.2 - 2024-01-06
-
-- bug fixes and sync speed increases
-
-### version 0.3.1 - 2023-12-20
-
-- various output improvements, including stats
-
-### version 0.3.0 - 2023-12-14
-
-- bug fixes and item schema tests
-
-### version 0.2.8 - 2023-12-07
-
-- stored sessions are now auto-renewed when expired, or nearing expiry
-
-### version 0.2.7 - 2023-12-06
-
-- various release packaging updates - thanks: [@clayrosenthal](https://github.com/clayrosenthal)
-
-
-
-## current features
-
-```
-COMMANDS:
-     add        add items
-     delete     delete items
-     edit       edit notes
-     tag        tag items
-     task       manage checklists and tasks
-     session    store session to
-     register   register an account
-     resync     delete and repopulate cache
-     get        get item data
-     stats      show statistics
-     wipe       deletes all tags and notes
-     test-data  create test data (hidden option)
-```
-*note: export and import currently disabled due to recent StandardNotes API changes*
-
-## installation
-Download the latest release here: https://github.com/jonhadfield/sn-cli/releases
-
-### macOS and Linux
-
-Install:
-``` console
-$ install <sn-cli binary> /usr/local/bin/sn
+# Or via direct download
+# Visit: https://github.com/jonhadfield/sn-cli/releases
 ```
 
-### Windows
+### First Run
 
-An installer is planned, but for now...
-Download the binary 'sncli_windows_amd64.exe' and rename to sn.exe
+```bash
+# See all available commands
+sn --help
 
-## running
+# Add a note
+sn add note --title "My First Note" --text "Hello, Standard Notes!"
 
-To see commands and options:
-``` console
-$ sn --help
-```
-### authentication
+# List your notes
+sn get notes
 
-By default, your credentials will be requested every time, but you can store them using either environment variables or, on MacOS and Linux, store your session using the native Keychain application.
-
-#### environment variables
-Note: if using 2FA, the token value will be requested each time
-``` shell
-export SN_EMAIL=<email address>
-export SN_PASSWORD=<password>
-export SN_SERVER=<https://myserver.example.com>   # optional, if running personal server
+# View statistics
+sn stats
 ```
 
-#### session (macOS Keychain / Gnome Keyring)
-Using a session is different from storing credentials as you no longer need to authenticate. As a result, if using 2FA (Two Factor Authentication), you won't need to enter your token value each time.
-##### add session
-```
-sn session --add   # session will be stored after successful authentication
-```
-To encrypt your session when adding:
-```
-sn session --add --session-key   # either enter key as part of command, or '.' to hide its input
-```
-##### using a session
-Prefix any command with ```--use-session``` to automatically retrieve and use the session.
-If your session is encrypted, you will be prompted for the session key. To specify the key on the command line:
-```
-sn --use-session --session-key <key> <command>
-```
-To use your session automatically, set the environment variable ```SN_USE_SESSION``` to ```true```
+## 📋 Commands
 
-## known issues
+| Command | Description |
+|---------|-------------|
+| `add` | Add notes, tags, or tasks |
+| `delete` | Delete items by title or UUID |
+| `edit` | Edit existing notes |
+| `get` | Retrieve notes, tags, or tasks |
+| `tag` | Manage tags and tagging |
+| `task` | Manage checklists and advanced checklists |
+| `stats` | Display detailed statistics |
+| `session` | Manage stored sessions |
+| `register` | Register a new Standard Notes account |
+| `resync` | Refresh local cache |
+| `wipe` | Delete all notes and tags |
 
-- accounts registered via sn-cli are initialised without initial encryption key(s). The workaround is to log in via the offical web/desktop app, to create these keys, after initial registration.
+*Note: Export and import are temporarily disabled due to recent Standard Notes API changes*
 
-## bash autocompletion
+## 🔐 Authentication
 
-#### tool
-the bash completion tool should be installed by default on most Linux installations.
-
-To install on macOS (Homebrew)
-``` console
-$ brew install bash_completion
-```
-then add the following to ~/.bash_profile:
-``` bash
-[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-```
-#### installing completion script ([found here](https://github.com/jonhadfield/sn-cli/tree/master/autocomplete/bash_autocomplete))
-##### macOS
-``` console
-$ cp bash_autocomplete /usr/local/etc/bash_completion.d/sn
-$ echo "source /usr/local/etc/bash_completion.d/sn" | tee -a ~/.bashrc
-```
-##### Linux
-``` console
-$ cp bash_autocomplete /etc/bash_completion.d/sn
-$ echo "source /etc/bash_completion.d/sn" | tee -a ~/.bashrc
+### Environment Variables
+```bash
+export SN_EMAIL="your-email@example.com"
+export SN_PASSWORD="your-password"
+export SN_SERVER="https://api.standardnotes.com"  # Optional for self-hosted
 ```
 
-##### autocomplete commands
-``` console
-$ sn <tab>
+### Session Storage (Recommended)
+Store encrypted sessions in your system keychain:
+
+```bash
+# Add session (supports 2FA)
+sn session --add
+
+# Add encrypted session
+sn session --add --session-key
+
+# Use session automatically
+export SN_USE_SESSION=true
+# or
+sn --use-session get notes
 ```
+
+## 🆕 Recent Updates
+
+### Version 0.3.5 (2024-01-08)
+- 🐛 **Fixed**: Conflict warning handling
+- ✅ **Added**: Helper tests
+- 🔧 **Improved**: Code simplification
+
+### Version 0.3.4 (2024-01-07)
+- 🐛 **Fixed**: Command completion and updated instructions
+
+**[View full changelog →](CHANGELOG.md)**
+
+## 💡 Examples
+
+```bash
+# Create a note with tags
+sn add note --title "Meeting Notes" --text "Important discussion points" --tag work,meetings
+
+# Find notes by tag
+sn get notes --tag work
+
+# Create a checklist
+sn add task --title "Todo List" --text "- Buy groceries\n- Call dentist\n- Finish project"
+
+# View your note statistics
+sn stats
+
+# Edit a note
+sn edit note --title "Meeting Notes" --text "Updated content"
+```
+
+## ⚙️ Advanced Configuration
+
+### Bash Completion
+
+#### macOS (Homebrew)
+```bash
+brew install bash-completion
+echo '[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion' >> ~/.bash_profile
+```
+
+#### Install completion script
+```bash
+# macOS
+cp bash_autocomplete /usr/local/etc/bash_completion.d/sn
+echo "source /usr/local/etc/bash_completion.d/sn" >> ~/.bashrc
+
+# Linux
+cp bash_autocomplete /etc/bash_completion.d/sn
+echo "source /etc/bash_completion.d/sn" >> ~/.bashrc
+```
+
+### Self-Hosted Servers
+```bash
+export SN_SERVER="https://your-standardnotes-server.com"
+```
+
+## 🔧 Development
+
+```bash
+# Build from source
+git clone https://github.com/jonhadfield/sn-cli.git
+cd sn-cli
+make build
+
+# Run tests
+make test
+
+# View all make targets
+make help
+```
+
+## ⚠️ Known Issues
+
+- New accounts registered via sn-cli require initial login through the official web/desktop app to initialize encryption keys
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- [Standard Notes](https://standardnotes.org/) - The note-taking app this CLI supports
+- [Releases](https://github.com/jonhadfield/sn-cli/releases) - Download the latest version
+- [Issues](https://github.com/jonhadfield/sn-cli/issues) - Report bugs or request features
+
+---
+
