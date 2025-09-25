@@ -3,18 +3,6 @@ module github.com/jonhadfield/sn-cli
 go 1.25.1
 
 require (
-	github.com/asdine/storm/v3 v3.2.1
-	github.com/briandowns/spinner v1.23.2
-	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/ryanuber/columnize v2.1.2+incompatible
-	github.com/spf13/viper v1.21.0
-	github.com/stretchr/testify v1.11.1
-	golang.org/x/crypto v0.38.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0
-)
-
-require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -38,12 +26,18 @@ require (
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
+	github.com/asdine/storm/v3 v3.2.1
+	github.com/briandowns/spinner v1.23.2
 	github.com/divan/num2words v1.0.3
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.6.0
 	github.com/jonhadfield/gosn-v2 v0.0.0-20250927060655-14d6fdc78ea9
 	github.com/pterm/pterm v0.12.81
+	github.com/ryanuber/columnize v2.1.2+incompatible
+	github.com/spf13/viper v1.21.0
+	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.27.7
+	gopkg.in/yaml.v2 v2.2.4
 )
 
 require (
@@ -53,7 +47,9 @@ require (
 	atomicgo.dev/schedule v0.1.0 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/fatih/color v1.16.0 // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
@@ -67,6 +63,7 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	golang.org/x/crypto v0.38.0 // indirect
 )
 
 //replace github.com/jonhadfield/gosn-v2 => ../gosn-v2
