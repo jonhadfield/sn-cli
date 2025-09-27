@@ -25,25 +25,25 @@ universal_binaries:
     name_template: "sn"
     replace: true
     mod_timestamp: "{{ .CommitTimestamp }}"
-    hooks:
-      post: |
-        sh -c 'cat <<EOF > /tmp/sn-cli-gon-universal.hcl
-            source = ["./dist/sn-macos-universal_darwin_all/sn"]
-            bundle_id = "uk.co.lessknown.sn-cli"
-            apple_id {
-              username = "jon@lessknown.co.uk"
-              password = "@env:AC_PASSWORD"
-              team_id = "VBZY8FBYR5"
-            }
-            sign {
-              application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
-            }
-            zip {
-              output_path = "./dist/sn-cli_Darwin_all.zip"
-            }
-        EOF
-        gon /tmp/sn-cli-gon-universal.hcl
-        '
+    # Disable gon signing for now - can be enabled when properly configured
+    # hooks:
+    #   post: |
+    #     sh -c 'cat <<EOF > /tmp/sn-cli-gon-universal.hcl
+    #         source = ["./dist/sn-macos-universal_darwin_all/sn"]
+    #         bundle_id = "uk.co.lessknown.sn-cli"
+    #         apple_id {
+    #           username = "jon@lessknown.co.uk"
+    #           password = "@env:AC_PASSWORD"
+    #         }
+    #         sign {
+    #           application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
+    #         }
+    #         zip {
+    #           output_path = "./dist/sn-cli_Darwin_all.zip"
+    #         }
+    #     EOF
+    #     gon /tmp/sn-cli-gon-universal.hcl
+    #     '
 
 builds:
   - id: sn-macos-amd64
@@ -126,7 +126,6 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     builds:
       - sn-linux-windows
-    format: tar.gz
     format_overrides:
       - goos: windows
         format: zip
@@ -139,7 +138,6 @@ archives:
     name_template: "{{ .ProjectName }}_Darwin_universal"
     builds:
       - sn-macos-universal
-    format: tar.gz
     files:
       - LICENSE
       - README.md
@@ -232,35 +230,35 @@ sboms:
     documents:
       - "{{ .ProjectName }}_{{ .Version }}_sbom.spdx.json"
 
-# Code signing for macOS
-signs:
-  - cmd: cosign
-    artifacts: checksum
-    output: true
-    args:
-      - "sign-blob"
-      - "--key"
-      - "cosign.key"
-      - "--output-signature"
-      - "${artifact}.sig"
-      - "${artifact}"
-      - "--yes"
-    env:
-      - COSIGN_PASSWORD={{ .Env.COSIGN_PASSWORD }}
+# Code signing for macOS (disabled - uncomment when cosign is configured)
+# signs:
+#   - cmd: cosign
+#     artifacts: checksum
+#     output: true
+#     args:
+#       - "sign-blob"
+#       - "--key"
+#       - "cosign.key"
+#       - "--output-signature"
+#       - "${artifact}.sig"
+#       - "${artifact}"
+#       - "--yes"
+#     env:
+#       - COSIGN_PASSWORD={{ .Env.COSIGN_PASSWORD }}
 
-# Docker configuration (optional)
-dockers:
-  - skip_push: true
-    image_templates:
-      - "ghcr.io/jonhadfield/{{ .ProjectName }}:{{ .Version }}"
-      - "ghcr.io/jonhadfield/{{ .ProjectName }}:latest"
-    dockerfile: Dockerfile
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
+# Docker configuration (optional - uncomment when Docker support is needed)
+# dockers:
+#   - skip_push: true
+#     image_templates:
+#       - "ghcr.io/jonhadfield/{{ .ProjectName }}:{{ .Version }}"
+#       - "ghcr.io/jonhadfield/{{ .ProjectName }}:latest"
+#     dockerfile: Dockerfile
+#     build_flag_templates:
+#       - "--pull"
+#       - "--label=org.opencontainers.image.created={{ .Date }}"
+#       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+#       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+#       - "--label=org.opencontainers.image.version={{ .Version }}"
 
 # Metadata
 metadata:
