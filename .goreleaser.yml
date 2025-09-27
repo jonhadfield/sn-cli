@@ -1,3 +1,8 @@
+# GoReleaser configuration - v2 syntax
+# Documentation: https://goreleaser.com
+
+version: 2
+
 project_name: sn-cli
 
 env:
@@ -9,20 +14,21 @@ before:
   hooks:
     - make clean
     - go mod tidy
+    - go mod download
 
-# join mac binaries into one
+# Universal macOS binaries
 universal_binaries:
-  - id: sn-macos
+  - id: sn-macos-universal
     ids:
       - sn-macos-amd64
-      - sn-macos-arm
+      - sn-macos-arm64
     name_template: "sn"
     replace: true
     mod_timestamp: "{{ .CommitTimestamp }}"
     hooks:
       post: |
         sh -c 'cat <<EOF > /tmp/sn-cli-gon-universal.hcl
-            source = ["./dist/sn-macos_darwin_all/sn"]
+            source = ["./dist/sn-macos-universal_darwin_all/sn"]
             bundle_id = "uk.co.lessknown.sn-cli"
             apple_id {
               username = "jon@lessknown.co.uk"
@@ -49,9 +55,15 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.sha={{ .ShortCommit }}
+      - -X main.buildDate={{ .Date }}
+      - -X main.tag={{ .Tag }}
+    env:
+      - CGO_ENABLED=0
 
-  - id: sn-macos-arm
+  - id: sn-macos-arm64
     main: ./cmd/sncli/
     binary: sn
     goos:
@@ -61,68 +73,194 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.sha={{ .ShortCommit }}
+      - -X main.buildDate={{ .Date }}
+      - -X main.tag={{ .Tag }}
+    env:
+      - CGO_ENABLED=0
 
-  - id: sn
+  - id: sn-linux-windows
     main: ./cmd/sncli/
     binary: sn
     goos:
       - linux
       - windows
+      - freebsd
+      - openbsd
     goarch:
       - amd64
       - arm64
+      - 386
     goarm:
-      - 6
-      - 7
+      - "6"
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: freebsd
+        goarch: arm64
+      - goos: openbsd
+        goarch: arm64
     flags:
       - -trimpath
     ldflags:
-      - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.sha={{ .ShortCommit }}
+      - -X main.buildDate={{ .Date }}
+      - -X main.tag={{ .Tag }}
+    env:
+      - CGO_ENABLED=0
 
 archives:
-  - name_template: >-
+  - id: default
+    name_template: >-
       {{ .ProjectName }}_
-      {{- if eq .Os "linux" }}Linux_
-      {{- else if eq .Os "windows" }}Windows_
-      {{- else }}{{- tolower .Os }}_{{ end -}}
+      {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end -}}
-      {{ if .Arm }}v{{ .Arm }}{{ end -}}
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
     builds:
-      - sn
+      - sn-linux-windows
     format: tar.gz
     format_overrides:
       - goos: windows
         format: zip
     files:
-      - none*
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+
+  - id: macos
+    name_template: "{{ .ProjectName }}_Darwin_universal"
+    builds:
+      - sn-macos-universal
+    format: tar.gz
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
 
 release:
   github:
     owner: jonhadfield
     name: sn-cli
+
   prerelease: auto
-  name_template: '{{ .Tag }}'
+  name_template: "v{{ .Version }}"
+
+  header: |
+    ## sn-cli v{{ .Version }}
+
+    Standard Notes CLI - Manage your notes from the terminal
+
+  footer: |
+    ---
+    **Full documentation:** https://github.com/jonhadfield/sn-cli
+
+    **Installation:** See README for platform-specific instructions
+
   extra_files:
     - glob: ./dist/sn-cli_Darwin*.zip
 
 announce:
-  skip: true
+  skip: false
+
+  discord:
+    enabled: false
+
+  slack:
+    enabled: false
+
+  telegram:
+    enabled: false
 
 snapshot:
-  name_template: "{{ .Tag }}-devel"
+  version_template: "{{ .Tag }}-next"
 
 changelog:
+  use: github
   sort: asc
+  abbrev: 7
+
+  groups:
+    - title: "✨ Features"
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "🐛 Bug Fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "📚 Documentation"
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: "🧹 Chores"
+      regexp: '^.*?chore(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: "Other Changes"
+      order: 999
+
   filters:
+    include:
+      - "^feat"
+      - "^fix"
+      - "^docs"
+      - "^chore"
+      - "^perf"
+      - "^refactor"
+      - "^style"
+      - "^test"
     exclude:
-    - README
-    - test
-    - ignore
+      - "^Merge"
+      - "^merge"
+      - "typo"
+      - "^wip"
+      - "^WIP"
 
 checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
   extra_files:
     - glob: ./dist/sn-cli_Darwin*.zip
-  name_template: 'checksums.txt'
+
+sboms:
+  - id: source
+    artifacts: source
+    documents:
+      - "{{ .ProjectName }}_{{ .Version }}_sbom.spdx.json"
+
+# Code signing for macOS
+signs:
+  - cmd: cosign
+    artifacts: checksum
+    output: true
+    args:
+      - "sign-blob"
+      - "--key"
+      - "cosign.key"
+      - "--output-signature"
+      - "${artifact}.sig"
+      - "${artifact}"
+      - "--yes"
+    env:
+      - COSIGN_PASSWORD={{ .Env.COSIGN_PASSWORD }}
+
+# Docker configuration (optional)
+dockers:
+  - skip_push: true
+    image_templates:
+      - "ghcr.io/jonhadfield/{{ .ProjectName }}:{{ .Version }}"
+      - "ghcr.io/jonhadfield/{{ .ProjectName }}:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+
+# Metadata
+metadata:
+  mod_timestamp: "{{ .CommitTimestamp }}"
