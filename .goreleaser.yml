@@ -33,6 +33,7 @@ universal_binaries:
             apple_id {
               username = "jon@lessknown.co.uk"
               password = "@env:AC_PASSWORD"
+              team_id = "VBZY8FBYR5"
             }
             sign {
               application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
