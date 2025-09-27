@@ -2,7 +2,6 @@ package sncli
 
 import (
 	"os"
-	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/gookit/color"
@@ -22,13 +21,13 @@ const (
 type ItemReferenceYAML struct {
 	UUID          string `yaml:"uuid"`
 	ContentType   string `yaml:"content_type"`
-	ReferenceType string `yaml:"reference_type",omitempty`
+	ReferenceType string `yaml:"reference_type,omitempty"`
 }
 
 type ItemReferenceJSON struct {
 	UUID          string `json:"uuid"`
 	ContentType   string `json:"content_type"`
-	ReferenceType string `json:"reference_type",omitempty`
+	ReferenceType string `json:"reference_type,omitempty"`
 }
 
 type OrgStandardNotesSNDetailJSON struct {

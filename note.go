@@ -70,6 +70,8 @@ func loadNoteContentFromFile(filePath string) (string, error) {
 }
 
 func addNote(i addNoteInput) (string, error) {
+	var err error
+
 	// if file path provided, try loading content as note text
 	if i.filePath != "" {
 		if i.noteText, err = loadNoteContentFromFile(i.filePath); err != nil {
@@ -237,6 +239,7 @@ func (i *GetNoteConfig) Run() (items.Items, error) {
 }
 
 func deleteNotes(session *cache.Session, noteTitles []string, noteText string, noteUUIDs []string, regex bool) (int, error) {
+	var err error
 	var getNotesFilters []items.Filter
 
 	switch {
@@ -348,6 +351,7 @@ func deleteNotes(session *cache.Session, noteTitles []string, noteText string, n
 }
 
 func deleteItems(session *cache.Session, noteTitles []string, noteText string, itemUUIDs []string, regex bool) (int, error) {
+	var err error
 	var getItemsFilters []items.Filter
 
 	switch {

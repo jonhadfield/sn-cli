@@ -503,13 +503,13 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 	rawNotes = sncli.RemoveDeleted(rawNotes)
 
 	if len(rawNotes) == 0 {
-		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf(msgNoMatches))
+		_, _ = fmt.Fprint(c.App.Writer, color.Green.Sprint(msgNoMatches))
 
 		return nil
 	}
 
 	if count {
-		_, _ = fmt.Fprintf(c.App.Writer, fmt.Sprintf("%d\n", len(rawNotes)))
+		_, _ = fmt.Fprintf(c.App.Writer, "%d\n", len(rawNotes))
 
 		return nil
 	}
@@ -667,7 +667,7 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (err error) {
 		return fmt.Errorf("failed to add note: %+v", err)
 	}
 
-	_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf("%s: %s\n", msgNoteAdded, title))
+	_, _ = fmt.Fprint(c.App.Writer, color.Green.Sprintf("%s: %s\n", msgNoteAdded, title))
 
 	return nil
 }
@@ -710,12 +710,12 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (err error) {
 	}
 
 	if noDeleted <= 0 {
-		_, _ = fmt.Fprintf(c.App.Writer, color.Yellow.Sprintf(fmt.Sprintf("%s: %s", msgNoteNotFound, title)))
+		_, _ = fmt.Fprint(c.App.Writer, color.Yellow.Sprintf("%s: %s", msgNoteNotFound, title))
 
 		return nil
 	}
 
-	_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf(fmt.Sprintf("%s: %s", msgNoteDeleted, title)))
+	_, _ = fmt.Fprint(c.App.Writer, color.Green.Sprintf("%s: %s", msgNoteDeleted, title))
 
 	return nil
 }
@@ -754,8 +754,8 @@ func processDeleteItems(c *cli.Context, opts configOptsOutput) (err error) {
 		strItem = "item"
 	}
 
-	_, _ = fmt.Fprintf(c.App.Writer,
-		color.Green.Sprintf(fmt.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strItem)))
+	_, _ = fmt.Fprint(c.App.Writer,
+		color.Green.Sprintf("%s %s %s", msgDeleted, num2words.Convert(noDeleted), strItem))
 
 	return err
 }

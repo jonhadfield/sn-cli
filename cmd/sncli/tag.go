@@ -200,7 +200,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (err error) {
 		return
 	}
 
-	_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf("tag updated"))
+	_, _ = fmt.Fprint(c.App.Writer, color.Green.Sprintf("tag updated"))
 
 	return nil
 }
@@ -294,7 +294,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
 	rawTags = sncli.RemoveDeleted(rawTags)
 
 	if len(rawTags) == 0 {
-		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf(msgNoMatches))
+		_, _ = fmt.Fprint(c.App.Writer, color.Green.Sprintf(msgNoMatches))
 
 		return nil
 	}
@@ -418,14 +418,14 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (err error) {
 
 	ato, err = addTagInput.Run()
 	if err != nil {
-		_, _ = fmt.Fprintf(c.App.Writer, color.Red.Sprintf(err.Error()))
+		_, _ = fmt.Fprint(c.App.Writer, color.Red.Sprint(err.Error()))
 		return err
 	}
 
 	var msg string
 	// present results
 	if len(ato.Added) > 0 {
-		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprint(msgTagAdded+": ", strings.Join(ato.Added, ", "), "\n"))
+		_, _ = fmt.Fprint(c.App.Writer, color.Green.Sprint(msgTagAdded+": ", strings.Join(ato.Added, ", "), "\n"))
 
 		return err
 	}
@@ -436,7 +436,7 @@ func processAddTags(c *cli.Context, opts configOptsOutput) (err error) {
 			msg += "\n"
 		}
 
-		_, _ = fmt.Fprintf(c.App.Writer, color.Yellow.Sprint(msgTagAlreadyExists+": "+strings.Join(ato.Existing, ", "), "\n"))
+		_, _ = fmt.Fprint(c.App.Writer, color.Yellow.Sprint(msgTagAlreadyExists+": "+strings.Join(ato.Existing, ", "), "\n"))
 	}
 
 	_, _ = fmt.Fprintf(c.App.Writer, "%s\n", msg)
@@ -531,12 +531,12 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (err error) {
 	}
 
 	if noDeleted > 0 {
-		_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprintf(fmt.Sprintf("%s: %s", msgTagDeleted, titleIn)))
+		_, _ = fmt.Fprint(c.App.Writer, color.Green.Sprintf("%s: %s", msgTagDeleted, titleIn))
 
 		return nil
 	}
 
-	_, _ = fmt.Fprintf(c.App.Writer, color.Yellow.Sprintf("%s: %s", msgTagNotFound, titleIn))
+	_, _ = fmt.Fprint(c.App.Writer, color.Yellow.Sprintf("%s: %s", msgTagNotFound, titleIn))
 
 	return nil
 }
@@ -588,7 +588,7 @@ func cmdTag() *cli.Command {
 				return err
 			}
 
-			_, _ = fmt.Fprintf(c.App.Writer, color.Green.Sprint(msgTagSuccess, "\n"))
+			_, _ = fmt.Fprint(c.App.Writer, color.Green.Sprint(msgTagSuccess, "\n"))
 
 			return nil
 		},

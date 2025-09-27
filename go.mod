@@ -31,7 +31,7 @@ require (
 	github.com/divan/num2words v1.0.3
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.6.0
-	github.com/jonhadfield/gosn-v2 v0.0.0-20250927060655-14d6fdc78ea9
+	github.com/jonhadfield/gosn-v2 v0.0.0-20250927082113-33b7d8a30098
 	github.com/pterm/pterm v0.12.81
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/viper v1.21.0
@@ -63,7 +63,7 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
 )
 
 //replace github.com/jonhadfield/gosn-v2 => ../gosn-v2

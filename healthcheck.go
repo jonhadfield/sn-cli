@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/gookit/color"

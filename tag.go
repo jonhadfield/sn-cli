@@ -254,6 +254,8 @@ func (i *DeleteTagConfig) Run() (int, error) {
 }
 
 func deleteTags(session *cache.Session, tagTitles []string, tagUUIDs []string) (int, error) {
+	var err error
+
 	deleteTagsFilter := items.Filter{
 		Type: common.SNItemTypeTag,
 	}

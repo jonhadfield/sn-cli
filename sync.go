@@ -2,7 +2,6 @@ package sncli
 
 import (
 	"os"
-	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/gookit/color"
