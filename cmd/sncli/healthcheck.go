@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/jonhadfield/gosn-v2/session"
+	"github.com/jonhadfield/gosn-v2/cache"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli/v2"
 )
@@ -46,14 +46,15 @@ func cmdHealthcheck() *cli.Command {
 					opts := getOpts(c)
 					// useStdOut = opts.useStdOut
 
-					var sess session.Session
-
-					sess, _, err := session.GetSession(nil, opts.useSession, opts.sessKey, opts.server, opts.debug)
+					sess, _, err := cache.GetSession(nil, opts.useSession, opts.sessKey, opts.server, opts.debug)
 					if err != nil {
 						return err
 					}
+
+					gs := sess.Gosn()
+
 					err = sncli.ItemKeysHealthcheck(sncli.ItemsKeysHealthcheckInput{
-						Session:       sess,
+						Session:       gs,
 						UseStdOut:     opts.useStdOut,
 						DeleteInvalid: c.Bool("delete-invalid"),
 					})

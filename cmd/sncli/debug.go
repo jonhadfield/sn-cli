@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/jonhadfield/gosn-v2/session"
+	"github.com/jonhadfield/gosn-v2/cache"
 	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli/v2"
 )
@@ -51,13 +51,16 @@ func cmdDebug() *cli.Command {
 
 					opts := getOpts(c)
 
-					sess, _, err := session.GetSession(nil, opts.useSession, opts.sessKey, opts.server, opts.debug)
+					sess, _, err := cache.GetSession(nil, opts.useSession, opts.sessKey, opts.server, opts.debug)
 					if err != nil {
 						return err
 					}
+
+					gs := sess.Gosn()
+
 					// var res string
 					_, err = sncli.DecryptString(sncli.DecryptStringInput{
-						Session:   sess,
+						Session:   gs,
 						UseStdOut: opts.useStdOut,
 						Key:       c.String("key"),
 						In:        str,
