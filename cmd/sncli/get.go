@@ -269,7 +269,21 @@ func cmdGet() *cli.Command {
 					&cli.StringFlag{
 						Name:  "output",
 						Value: "json",
-						Usage: "output format",
+						Usage: "output format (json, yaml, table, rich)",
+					},
+					&cli.BoolFlag{
+						Name:    "rich",
+						Aliases: []string{"r"},
+						Usage:   "display notes with rich markdown formatting",
+					},
+					&cli.BoolFlag{
+						Name:    "preview",
+						Aliases: []string{"p"},
+						Usage:   "show preview in table view",
+					},
+					&cli.BoolFlag{
+						Name:  "metadata",
+						Usage: "show metadata in rich view",
 					},
 				},
 				Action: func(c *cli.Context) error {

@@ -514,6 +514,22 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 		return nil
 	}
 
+	// Handle rich markdown display
+	if c.Bool("rich") || output == "rich" {
+		if len(rawNotes) == 1 {
+			// Single note - show full rich content
+			note := rawNotes[0].(*items.Note)
+			return RichNoteDisplay(note, c.Bool("metadata"))
+		}
+		// Multiple notes - show rich list with preview
+		return RichNoteList(rawNotes, true)
+	}
+
+	// Handle table display
+	if output == "table" {
+		return RichNoteList(rawNotes, c.Bool("preview"))
+	}
+
 	var numResults int
 
 	var notesYAML []sncli.NoteYAML

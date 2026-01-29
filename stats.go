@@ -458,6 +458,11 @@ type typeCounter struct {
 	counts map[string]int64
 }
 
+// Counts returns the internal counts map for external access
+func (in *typeCounter) Counts() map[string]int64 {
+	return in.counts
+}
+
 func (in *typeCounter) update(itemType string) {
 	var found bool
 
