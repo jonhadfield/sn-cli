@@ -224,6 +224,23 @@ func ShowTagCloud(opts configOptsOutput) error {
 
 	if opts.debug {
 		pterm.Debug.Printf("Retrieved %d tags and %d notes from cache\n", len(rawTags), len(rawNotes))
+
+		// Check first few notes for references
+		if len(rawNotes) > 0 {
+			for i := 0; i < 10 && i < len(rawNotes); i++ {
+				sampleNote := rawNotes[i].(*items.Note)
+				refs := sampleNote.Content.References()
+				if len(refs) > 0 {
+					pterm.Debug.Printf("Note %d (UUID: %s) has %d references:\n", i, sampleNote.UUID[:12]+"...", len(refs))
+					for j, ref := range refs {
+						if j < 3 {
+							pterm.Debug.Printf("  Ref: ContentType='%s', UUID='%s'\n", ref.ContentType, ref.UUID[:12]+"...")
+						}
+					}
+					break
+				}
+			}
+		}
 	}
 
 	// Build tag statistics
