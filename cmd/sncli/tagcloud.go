@@ -63,17 +63,30 @@ func getItemsFromCache(session *cache.Session, debug bool) (items.Items, items.I
 	var tags items.Items
 	var notes items.Items
 
+	if debug {
+		pterm.Debug.Printf("Total items in cache: %d\n", len(allItems))
+	}
+
 	for _, item := range allItems {
 		if item.IsDeleted() {
 			continue
 		}
 
-		switch item.GetContentType() {
+		contentType := item.GetContentType()
+		if debug {
+			pterm.Debug.Printf("Item type: %s, UUID: %s\n", contentType, item.GetUUID())
+		}
+
+		switch contentType {
 		case common.SNItemTypeTag:
 			tags = append(tags, item)
 		case common.SNItemTypeNote:
 			notes = append(notes, item)
 		}
+	}
+
+	if debug {
+		pterm.Debug.Printf("Found %d tags and %d notes\n", len(tags), len(notes))
 	}
 
 	return tags, notes, nil
@@ -197,13 +210,21 @@ func ShowTagCloud(opts configOptsOutput) error {
 		return err
 	}
 
+	if opts.debug {
+		pterm.Debug.Printf("Retrieved %d tags and %d notes from cache\n", len(rawTags), len(rawNotes))
+	}
+
 	// Build tag statistics
 	tagStats := make(map[string]*TagStats)
 
 	for _, item := range rawTags {
 		tag := item.(*items.Tag)
+		title := tag.Content.GetTitle()
+		if opts.debug {
+			pterm.Debug.Printf("Processing tag: %s (UUID: %s)\n", title, tag.UUID)
+		}
 		tagStats[tag.UUID] = &TagStats{
-			Title:     tag.Content.GetTitle(),
+			Title:     title,
 			UUID:      tag.UUID,
 			NoteCount: 0,
 			CreatedAt: tag.CreatedAt,
