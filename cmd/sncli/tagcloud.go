@@ -191,6 +191,18 @@ func mergeItemsKeysSlices(existing, new []session.SessionItemsKey) []session.Ses
 	return result
 }
 
+// getTagUUIDs returns a slice of tag UUIDs for debugging
+func getTagUUIDs(tagStats map[string]*TagStats) []string {
+	var uuids []string
+	for uuid := range tagStats {
+		uuids = append(uuids, uuid)
+		if len(uuids) >= 10 {
+			break
+		}
+	}
+	return uuids
+}
+
 // ShowTagCloud displays tags as a visual cloud
 func ShowTagCloud(opts configOptsOutput) error {
 	// Get session
@@ -235,16 +247,24 @@ func ShowTagCloud(opts configOptsOutput) error {
 	totalRefs := 0
 	matchedRefs := 0
 	refTypesSeen := make(map[string]int)
+	notesWithRefs := 0
 
-	for i, item := range rawNotes {
+	for _, item := range rawNotes {
 		note := item.(*items.Note)
 		refs := note.Content.References()
 
-		if opts.debug && i < 3 && len(refs) > 0 {
-			pterm.Debug.Printf("Sample note %d has %d references\n", i, len(refs))
-			for j, ref := range refs {
-				if j < 3 {
-					pterm.Debug.Printf("  Ref %d: Type='%s', UUID='%s'\n", j, ref.ContentType, ref.UUID[:8]+"...")
+		if len(refs) > 0 {
+			notesWithRefs++
+			if opts.debug && notesWithRefs <= 3 {
+				pterm.Debug.Printf("Note with refs #%d (of %d total notes) has %d references:\n", notesWithRefs, len(rawNotes), len(refs))
+				for j, ref := range refs {
+					if j < 5 {
+						shortUUID := ref.UUID
+						if len(shortUUID) > 12 {
+							shortUUID = shortUUID[:12] + "..."
+						}
+						pterm.Debug.Printf("  Ref %d: ContentType='%s', UUID='%s'\n", j, ref.ContentType, shortUUID)
+					}
 				}
 			}
 		}
@@ -258,16 +278,29 @@ func ShowTagCloud(opts configOptsOutput) error {
 					stats.NoteCount++
 					matchedRefs++
 				} else if opts.debug && totalRefs <= 5 {
-					pterm.Debug.Printf("Tag reference not found: %s\n", ref.UUID)
+					pterm.Debug.Printf("Unmatched tag ref UUID: %s\n", ref.UUID)
+					// Check if any tag UUID starts with the same prefix
+					found := false
+					for tagUUID := range tagStats {
+						if len(ref.UUID) > 8 && len(tagUUID) > 8 && ref.UUID[:8] == tagUUID[:8] {
+							pterm.Debug.Printf("  Similar tag UUID found: %s\n", tagUUID)
+							found = true
+						}
+					}
+					if !found && len(tagStats) <= 10 {
+						pterm.Debug.Printf("  Available tag UUIDs: %v\n", getTagUUIDs(tagStats))
+					}
 				}
 			}
 		}
 	}
 
 	if opts.debug {
-		pterm.Debug.Printf("Reference types seen: %v\n", refTypesSeen)
-		pterm.Debug.Printf("SNItemTypeTag constant = '%s'\n", common.SNItemTypeTag)
-		pterm.Debug.Printf("Total tag references: %d, Matched: %d, Unmatched: %d\n", totalRefs, matchedRefs, totalRefs-matchedRefs)
+		pterm.Debug.Printf("\nSummary:\n")
+		pterm.Debug.Printf("  Notes with references: %d / %d\n", notesWithRefs, len(rawNotes))
+		pterm.Debug.Printf("  Reference types seen: %v\n", refTypesSeen)
+		pterm.Debug.Printf("  SNItemTypeTag constant = '%s'\n", common.SNItemTypeTag)
+		pterm.Debug.Printf("  Total tag references: %d, Matched: %d, Unmatched: %d\n", totalRefs, matchedRefs, totalRefs-matchedRefs)
 	}
 
 	// Convert to slice for sorting
