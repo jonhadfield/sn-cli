@@ -6,12 +6,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/asdine/storm/v3"
 	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/pterm/pterm"
-	sncli "github.com/jonhadfield/sn-cli"
 )
 
 // TagStats holds statistics about a tag
@@ -20,6 +20,47 @@ type TagStats struct {
 	UUID      string
 	NoteCount int
 	CreatedAt string
+}
+
+// getItemsFromCache reads tags and notes directly from cache without syncing
+func getItemsFromCache(session *cache.Session, debug bool) (items.Items, items.Items, error) {
+	// Open cache database
+	cacheDB, err := storm.Open(session.CacheDBPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open cache database: %w", err)
+	}
+	defer cacheDB.Close()
+
+	// Get all items from cache
+	var allPersistedItems cache.Items
+	if err = cacheDB.All(&allPersistedItems); err != nil {
+		return nil, nil, fmt.Errorf("failed to read cached items: %w", err)
+	}
+
+	// Convert to items
+	allItems, err := allPersistedItems.ToItems(session)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to convert cached items: %w", err)
+	}
+
+	// Separate tags and notes
+	var tags items.Items
+	var notes items.Items
+
+	for _, item := range allItems {
+		if item.IsDeleted() {
+			continue
+		}
+
+		switch item.GetContentType() {
+		case common.SNItemTypeTag:
+			tags = append(tags, item)
+		case common.SNItemTypeNote:
+			notes = append(notes, item)
+		}
+	}
+
+	return tags, notes, nil
 }
 
 // ShowTagCloud displays tags as a visual cloud
@@ -35,57 +76,8 @@ func ShowTagCloud(opts configOptsOutput) error {
 		return err
 	}
 
-	// Try to sync to get latest data, but continue with cached data if sync fails
-	si := cache.SyncInput{
-		Session: &session,
-		Close:   false,
-	}
-
-	so, err := cache.Sync(si)
-	if err != nil {
-		// Sync failed, use cached data
-		pterm.Warning.Println("Sync failed, using cached data")
-		if opts.debug {
-			pterm.Debug.Printf("Sync error: %v\n", err)
-		}
-	} else {
-		defer so.DB.Close()
-	}
-
-	// Get all tags and notes
-	tagFilter := items.Filter{
-		Type: common.SNItemTypeTag,
-	}
-
-	getTagConfig := sncli.GetTagConfig{
-		Session: &session,
-		Filters: items.ItemFilters{
-			MatchAny: false,
-			Filters:  []items.Filter{tagFilter},
-		},
-		Debug: opts.debug,
-	}
-
-	rawTags, err := getTagConfig.Run()
-	if err != nil {
-		return err
-	}
-
-	// Get all notes to count references
-	noteFilter := items.Filter{
-		Type: common.SNItemTypeNote,
-	}
-
-	getNoteConfig := sncli.GetNoteConfig{
-		Session: &session,
-		Filters: items.ItemFilters{
-			MatchAny: false,
-			Filters:  []items.Filter{noteFilter},
-		},
-		Debug: opts.debug,
-	}
-
-	rawNotes, err := getNoteConfig.Run()
+	// Get tags and notes directly from cache without syncing
+	rawTags, rawNotes, err := getItemsFromCache(&session, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -266,57 +258,8 @@ func ShowTagStats(opts configOptsOutput) error {
 		return err
 	}
 
-	// Try to sync to get latest data, but continue with cached data if sync fails
-	si := cache.SyncInput{
-		Session: &session,
-		Close:   false,
-	}
-
-	so, err := cache.Sync(si)
-	if err != nil {
-		// Sync failed, use cached data
-		pterm.Warning.Println("Sync failed, using cached data")
-		if opts.debug {
-			pterm.Debug.Printf("Sync error: %v\n", err)
-		}
-	} else {
-		defer so.DB.Close()
-	}
-
-	// Get all tags
-	tagFilter := items.Filter{
-		Type: common.SNItemTypeTag,
-	}
-
-	getTagConfig := sncli.GetTagConfig{
-		Session: &session,
-		Filters: items.ItemFilters{
-			MatchAny: false,
-			Filters:  []items.Filter{tagFilter},
-		},
-		Debug: opts.debug,
-	}
-
-	rawTags, err := getTagConfig.Run()
-	if err != nil {
-		return err
-	}
-
-	// Get all notes
-	noteFilter := items.Filter{
-		Type: common.SNItemTypeNote,
-	}
-
-	getNoteConfig := sncli.GetNoteConfig{
-		Session: &session,
-		Filters: items.ItemFilters{
-			MatchAny: false,
-			Filters:  []items.Filter{noteFilter},
-		},
-		Debug: opts.debug,
-	}
-
-	rawNotes, err := getNoteConfig.Run()
+	// Get tags and notes directly from cache without syncing
+	rawTags, rawNotes, err := getItemsFromCache(&session, opts.debug)
 	if err != nil {
 		return err
 	}
