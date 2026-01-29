@@ -544,7 +544,7 @@ func processDeleteTags(c *cli.Context, opts configOptsOutput) (err error) {
 func cmdTag() *cli.Command {
 	return &cli.Command{
 		Name:  "tag",
-		Usage: "tag items",
+		Usage: "tag items and visualize tags",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "find-title",
@@ -580,6 +580,26 @@ func cmdTag() *cli.Command {
 			} {
 				fmt.Println(t)
 			}
+		},
+		Subcommands: []*cli.Command{
+			{
+				Name:    "cloud",
+				Aliases: []string{"c"},
+				Usage:   "display tag cloud visualization",
+				Action: func(c *cli.Context) error {
+					opts := getOpts(c)
+					return ShowTagCloud(opts)
+				},
+			},
+			{
+				Name:    "stats",
+				Aliases: []string{"s"},
+				Usage:   "display tag statistics table",
+				Action: func(c *cli.Context) error {
+					opts := getOpts(c)
+					return ShowTagStats(opts)
+				},
+			},
 		},
 		Action: func(c *cli.Context) error {
 			opts := getOpts(c)

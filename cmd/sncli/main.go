@@ -142,6 +142,7 @@ func appSetup() (app *cli.App) {
 		cmdStats(),
 		cmdTask(),
 		cmdTag(),
+		cmdTemplate(),
 		cmdWipe(),
 	}
 
