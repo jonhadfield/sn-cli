@@ -12,7 +12,6 @@ import (
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/jonhadfield/gosn-v2/session"
-	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/pterm/pterm"
 )
 
@@ -24,62 +23,61 @@ type TagStats struct {
 	CreatedAt string
 }
 
-// getItemsViaSync uses the standard sync approach that properly processes items
+// getItemsViaSync uses cache.Sync to properly load items, handling network errors gracefully
 func getItemsViaSync(session *cache.Session, debug bool) (items.Items, items.Items, error) {
-	// Try to sync, but continue even if it fails (will use cached data)
+	// Sync to load items from cache (and server if available)
 	si := cache.SyncInput{
 		Session: session,
 		Close:   false,
 	}
 
-	so, err := cache.Sync(si)
-	// Don't fail on sync error - just log it
-	if err != nil && debug {
-		pterm.Warning.Printf("Sync failed, using cached data: %v\n", err)
+	so, syncErr := cache.Sync(si)
+
+	// Check if we got a database connection even if sync failed
+	if so.DB == nil {
+		if syncErr != nil {
+			return nil, nil, fmt.Errorf("failed to open cache database: %w", syncErr)
+		}
+		return nil, nil, fmt.Errorf("no cache database available")
 	}
-	if so.DB != nil {
-		defer so.DB.Close()
+	defer so.DB.Close()
+
+	// If sync failed but we have DB, just warn and continue with cache
+	if syncErr != nil {
+		if debug {
+			pterm.Warning.Printf("Sync failed, using cached data only: %v\n", syncErr)
+		}
 	}
 
-	// Get tags using the standard approach
-	tagFilter := items.Filter{
-		Type: common.SNItemTypeTag,
+	// Get all items from database
+	var allPersistedItems cache.Items
+	if err := so.DB.All(&allPersistedItems); err != nil {
+		return nil, nil, fmt.Errorf("failed to read from cache: %w", err)
 	}
 
-	getTagConfig := sncli.GetTagConfig{
-		Session: session,
-		Filters: items.ItemFilters{
-			MatchAny: false,
-			Filters:  []items.Filter{tagFilter},
-		},
-		Debug: debug,
-	}
-
-	rawTags, err := getTagConfig.Run()
+	// Convert to items (session now has keys from sync)
+	allItems, err := allPersistedItems.ToItems(session)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get tags: %w", err)
+		return nil, nil, fmt.Errorf("failed to decrypt items: %w", err)
 	}
 
-	// Get notes using the standard approach
-	noteFilter := items.Filter{
-		Type: common.SNItemTypeNote,
+	// Separate tags and notes
+	var tags items.Items
+	var notes items.Items
+
+	for _, item := range allItems {
+		if item.IsDeleted() {
+			continue
+		}
+		switch item.GetContentType() {
+		case common.SNItemTypeTag:
+			tags = append(tags, item)
+		case common.SNItemTypeNote:
+			notes = append(notes, item)
+		}
 	}
 
-	getNoteConfig := sncli.GetNoteConfig{
-		Session: session,
-		Filters: items.ItemFilters{
-			MatchAny: false,
-			Filters:  []items.Filter{noteFilter},
-		},
-		Debug: debug,
-	}
-
-	rawNotes, err := getNoteConfig.Run()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get notes: %w", err)
-	}
-
-	return rawTags, rawNotes, nil
+	return tags, notes, nil
 }
 
 // getItemsFromCache reads tags and notes directly from cache without syncing
