@@ -69,23 +69,14 @@ func processSearch(c *cli.Context, opts configOptsOutput) error {
 		return fmt.Errorf("search query is required")
 	}
 
-	// Show progress spinner
-	spinner, _ := ShowProgress(fmt.Sprintf("🔍 Searching for '%s'...", query))
-
 	// Get session
 	session, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
-		if spinner != nil {
-			spinner.Fail("Failed to get session")
-		}
 		return err
 	}
 
 	session.CacheDBPath, err = cache.GenCacheDBPath(session, opts.cacheDBDir, snAppName)
 	if err != nil {
-		if spinner != nil {
-			spinner.Fail("Failed to generate cache path")
-		}
 		return err
 	}
 
@@ -97,9 +88,6 @@ func processSearch(c *cli.Context, opts configOptsOutput) error {
 
 	so, err := cache.Sync(si)
 	if err != nil {
-		if spinner != nil {
-			spinner.Fail("Failed to sync")
-		}
 		return err
 	}
 	defer so.DB.Close()
@@ -141,22 +129,11 @@ func processSearch(c *cli.Context, opts configOptsOutput) error {
 
 	rawNotes, err := getNoteConfig.Run()
 	if err != nil {
-		if spinner != nil {
-			spinner.Fail("Failed to retrieve notes")
-		}
 		return err
-	}
-
-	if spinner != nil {
-		spinner.UpdateText(fmt.Sprintf("🔍 Searching %d notes...", len(rawNotes)))
 	}
 
 	// Perform search
 	results := searchNotes(rawNotes, query, c.Bool("content"), c.Bool("fuzzy"), c.Bool("case-sensitive"))
-
-	if spinner != nil {
-		spinner.Success(fmt.Sprintf("Found %d result(s)", len(results)))
-	}
 
 	// Apply limit if specified
 	limit := c.Int("limit")

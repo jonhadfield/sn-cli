@@ -186,21 +186,5 @@ func formatTime(timestamp string) string {
 	return timestamp
 }
 
-// ShowProgress displays a spinner with a message
-func ShowProgress(message string) (*pterm.SpinnerPrinter, error) {
-	spinner, err := pterm.DefaultSpinner.Start(message)
-	if err != nil {
-		return nil, err
-	}
-	return spinner, nil
-}
-
-// ProgressBar creates a progress bar for operations
-func ProgressBar(title string, total int) *pterm.ProgressbarPrinter {
-	pb, _ := pterm.DefaultProgressbar.
-		WithTitle(title).
-		WithTotal(total).
-		WithShowCount(true).
-		Start()
-	return pb
-}
+// Note: Progress indicator functions removed to avoid conflicts with existing implementation
+// ShowProgress and ProgressBar functions were removed per user request

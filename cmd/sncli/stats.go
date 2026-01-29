@@ -26,22 +26,13 @@ func cmdStats() *cli.Command {
 		Action: func(c *cli.Context) error {
 			opts := getOpts(c)
 
-			// Show progress spinner while loading
-			spinner, _ := ShowProgress("📊 Loading statistics...")
-
 			sess, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 			if err != nil {
-				if spinner != nil {
-					spinner.Fail("Failed to get session")
-				}
 				return err
 			}
 
 			sess.CacheDBPath, err = cache.GenCacheDBPath(sess, opts.cacheDBDir, snAppName)
 			if err != nil {
-				if spinner != nil {
-					spinner.Fail("Failed to generate cache path")
-				}
 				return err
 			}
 
@@ -49,18 +40,12 @@ func cmdStats() *cli.Command {
 				Session: sess,
 			}
 
-			// Get the data
-			data, err := statsConfig.GetData()
-			if spinner != nil {
-				if err != nil {
-					spinner.Fail("Failed to load statistics")
-					return err
-				}
-				spinner.Success("Statistics loaded")
-			}
-
 			// Display stats
 			if c.Bool("visual") {
+				data, err := statsConfig.GetData()
+				if err != nil {
+					return err
+				}
 				return ShowVisualStats(data)
 			}
 
