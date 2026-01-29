@@ -11,6 +11,7 @@ import (
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
+	"github.com/jonhadfield/gosn-v2/session"
 	"github.com/pterm/pterm"
 )
 
@@ -24,20 +25,35 @@ type TagStats struct {
 
 // getItemsFromCache reads tags and notes directly from cache without syncing
 func getItemsFromCache(session *cache.Session, debug bool) (items.Items, items.Items, error) {
-	// Open cache database
+	// Open cache database directly
 	cacheDB, err := storm.Open(session.CacheDBPath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open cache database: %w", err)
+		return nil, nil, fmt.Errorf("failed to open cache database: %w (have you run a sync recently?)", err)
 	}
 	defer cacheDB.Close()
 
-	// Get all items from cache
+	// Get all cached items
 	var allPersistedItems cache.Items
 	if err = cacheDB.All(&allPersistedItems); err != nil {
 		return nil, nil, fmt.Errorf("failed to read cached items: %w", err)
 	}
 
-	// Convert to items
+	if len(allPersistedItems) == 0 {
+		// No cached data - need to sync first
+		return nil, nil, fmt.Errorf("no cached data found - please run 'sncli get note' first to populate cache")
+	}
+
+	// Load items keys from cache (mimics cache.Sync behavior)
+	cachedKeys, err := retrieveItemsKeysFromCache(session.Session, allPersistedItems)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to retrieve items keys from cache: %w", err)
+	}
+
+	if err = processCachedItemsKeys(session, cachedKeys); err != nil {
+		return nil, nil, fmt.Errorf("failed to process cached items keys: %w", err)
+	}
+
+	// Convert to items (session now has keys)
 	allItems, err := allPersistedItems.ToItems(session)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to convert cached items: %w", err)
@@ -61,6 +77,76 @@ func getItemsFromCache(session *cache.Session, debug bool) (items.Items, items.I
 	}
 
 	return tags, notes, nil
+}
+
+// retrieveItemsKeysFromCache gets items keys from cached items (from gosn-v2/cache)
+func retrieveItemsKeysFromCache(s *session.Session, cachedItems cache.Items) (items.EncryptedItems, error) {
+	var itemsKeys items.EncryptedItems
+
+	for _, ci := range cachedItems {
+		if ci.ContentType == common.SNItemTypeItemsKey && !ci.Deleted {
+			itemsKeys = append(itemsKeys, items.EncryptedItem{
+				UUID:        ci.UUID,
+				Content:     ci.Content,
+				ContentType: ci.ContentType,
+				ItemsKeyID:  ci.ItemsKeyID,
+				EncItemKey:  ci.EncItemKey,
+			})
+		}
+	}
+
+	return itemsKeys, nil
+}
+
+// processCachedItemsKeys processes items keys and adds to session (from gosn-v2/cache)
+func processCachedItemsKeys(cs *cache.Session, eiks items.EncryptedItems) error {
+	if len(eiks) == 0 {
+		return nil
+	}
+
+	// Decrypt and parse items keys
+	iks, err := items.DecryptAndParseItemKeys(cs.MasterKey, eiks)
+	if err != nil {
+		return err
+	}
+
+	// Convert to session items keys
+	var syncedItemsKeys []session.SessionItemsKey
+	for x := range iks {
+		syncedItemsKeys = append(syncedItemsKeys, session.SessionItemsKey{
+			UUID:               iks[x].UUID,
+			ItemsKey:           iks[x].ItemsKey,
+			UpdatedAtTimestamp: iks[x].UpdatedAtTimestamp,
+			CreatedAtTimestamp: iks[x].CreatedAtTimestamp,
+		})
+	}
+
+	// Merge with existing items keys in session
+	cs.Session.ItemsKeys = mergeItemsKeysSlices(cs.Session.ItemsKeys, syncedItemsKeys)
+
+	return nil
+}
+
+// mergeItemsKeysSlices merges two slices of items keys (from gosn-v2/cache)
+func mergeItemsKeysSlices(existing, new []session.SessionItemsKey) []session.SessionItemsKey {
+	// Create map of existing keys by UUID
+	existingMap := make(map[string]session.SessionItemsKey)
+	for _, k := range existing {
+		existingMap[k.UUID] = k
+	}
+
+	// Add or update with new keys
+	for _, k := range new {
+		existingMap[k.UUID] = k
+	}
+
+	// Convert back to slice
+	var result []session.SessionItemsKey
+	for _, k := range existingMap {
+		result = append(result, k)
+	}
+
+	return result
 }
 
 // ShowTagCloud displays tags as a visual cloud
