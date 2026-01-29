@@ -12,6 +12,7 @@ import (
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/jonhadfield/gosn-v2/session"
+	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/pterm/pterm"
 )
 
@@ -21,6 +22,64 @@ type TagStats struct {
 	UUID      string
 	NoteCount int
 	CreatedAt string
+}
+
+// getItemsViaSync uses the standard sync approach that properly processes items
+func getItemsViaSync(session *cache.Session, debug bool) (items.Items, items.Items, error) {
+	// Try to sync, but continue even if it fails (will use cached data)
+	si := cache.SyncInput{
+		Session: session,
+		Close:   false,
+	}
+
+	so, err := cache.Sync(si)
+	// Don't fail on sync error - just log it
+	if err != nil && debug {
+		pterm.Warning.Printf("Sync failed, using cached data: %v\n", err)
+	}
+	if so.DB != nil {
+		defer so.DB.Close()
+	}
+
+	// Get tags using the standard approach
+	tagFilter := items.Filter{
+		Type: common.SNItemTypeTag,
+	}
+
+	getTagConfig := sncli.GetTagConfig{
+		Session: session,
+		Filters: items.ItemFilters{
+			MatchAny: false,
+			Filters:  []items.Filter{tagFilter},
+		},
+		Debug: debug,
+	}
+
+	rawTags, err := getTagConfig.Run()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get tags: %w", err)
+	}
+
+	// Get notes using the standard approach
+	noteFilter := items.Filter{
+		Type: common.SNItemTypeNote,
+	}
+
+	getNoteConfig := sncli.GetNoteConfig{
+		Session: session,
+		Filters: items.ItemFilters{
+			MatchAny: false,
+			Filters:  []items.Filter{noteFilter},
+		},
+		Debug: debug,
+	}
+
+	rawNotes, err := getNoteConfig.Run()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get notes: %w", err)
+	}
+
+	return rawTags, rawNotes, nil
 }
 
 // getItemsFromCache reads tags and notes directly from cache without syncing
@@ -216,8 +275,9 @@ func ShowTagCloud(opts configOptsOutput) error {
 		return err
 	}
 
-	// Get tags and notes directly from cache without syncing
-	rawTags, rawNotes, err := getItemsFromCache(&session, opts.debug)
+	// Use existing sync-based approach that works for other commands
+	// This ensures all processing steps are applied correctly
+	rawTags, rawNotes, err := getItemsViaSync(&session, opts.debug)
 	if err != nil {
 		return err
 	}
@@ -484,8 +544,8 @@ func ShowTagStats(opts configOptsOutput) error {
 		return err
 	}
 
-	// Get tags and notes directly from cache without syncing
-	rawTags, rawNotes, err := getItemsFromCache(&session, opts.debug)
+	// Use existing sync-based approach that works for other commands
+	rawTags, rawNotes, err := getItemsViaSync(&session, opts.debug)
 	if err != nil {
 		return err
 	}
