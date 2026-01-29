@@ -35,7 +35,7 @@ func ShowTagCloud(opts configOptsOutput) error {
 		return err
 	}
 
-	// Sync to get latest data
+	// Try to sync to get latest data, but continue with cached data if sync fails
 	si := cache.SyncInput{
 		Session: &session,
 		Close:   false,
@@ -43,9 +43,14 @@ func ShowTagCloud(opts configOptsOutput) error {
 
 	so, err := cache.Sync(si)
 	if err != nil {
-		return err
+		// Sync failed, use cached data
+		pterm.Warning.Println("Sync failed, using cached data")
+		if opts.debug {
+			pterm.Debug.Printf("Sync error: %v\n", err)
+		}
+	} else {
+		defer so.DB.Close()
 	}
-	defer so.DB.Close()
 
 	// Get all tags and notes
 	tagFilter := items.Filter{
@@ -261,7 +266,7 @@ func ShowTagStats(opts configOptsOutput) error {
 		return err
 	}
 
-	// Sync to get latest data
+	// Try to sync to get latest data, but continue with cached data if sync fails
 	si := cache.SyncInput{
 		Session: &session,
 		Close:   false,
@@ -269,9 +274,14 @@ func ShowTagStats(opts configOptsOutput) error {
 
 	so, err := cache.Sync(si)
 	if err != nil {
-		return err
+		// Sync failed, use cached data
+		pterm.Warning.Println("Sync failed, using cached data")
+		if opts.debug {
+			pterm.Debug.Printf("Sync error: %v\n", err)
+		}
+	} else {
+		defer so.DB.Close()
 	}
-	defer so.DB.Close()
 
 	// Get all tags
 	tagFilter := items.Filter{
