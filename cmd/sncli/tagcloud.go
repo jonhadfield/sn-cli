@@ -234,17 +234,30 @@ func ShowTagCloud(opts configOptsOutput) error {
 	// Count note references for each tag
 	totalRefs := 0
 	matchedRefs := 0
-	for _, item := range rawNotes {
+	refTypesSeen := make(map[string]int)
+
+	for i, item := range rawNotes {
 		note := item.(*items.Note)
 		refs := note.Content.References()
 
+		if opts.debug && i < 3 && len(refs) > 0 {
+			pterm.Debug.Printf("Sample note %d has %d references\n", i, len(refs))
+			for j, ref := range refs {
+				if j < 3 {
+					pterm.Debug.Printf("  Ref %d: Type='%s', UUID='%s'\n", j, ref.ContentType, ref.UUID[:8]+"...")
+				}
+			}
+		}
+
 		for _, ref := range refs {
+			refTypesSeen[ref.ContentType]++
+
 			if ref.ContentType == common.SNItemTypeTag {
 				totalRefs++
 				if stats, ok := tagStats[ref.UUID]; ok {
 					stats.NoteCount++
 					matchedRefs++
-				} else if opts.debug {
+				} else if opts.debug && totalRefs <= 5 {
 					pterm.Debug.Printf("Tag reference not found: %s\n", ref.UUID)
 				}
 			}
@@ -252,6 +265,8 @@ func ShowTagCloud(opts configOptsOutput) error {
 	}
 
 	if opts.debug {
+		pterm.Debug.Printf("Reference types seen: %v\n", refTypesSeen)
+		pterm.Debug.Printf("SNItemTypeTag constant = '%s'\n", common.SNItemTypeTag)
 		pterm.Debug.Printf("Total tag references: %d, Matched: %d, Unmatched: %d\n", totalRefs, matchedRefs, totalRefs-matchedRefs)
 	}
 
