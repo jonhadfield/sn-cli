@@ -232,17 +232,27 @@ func ShowTagCloud(opts configOptsOutput) error {
 	}
 
 	// Count note references for each tag
+	totalRefs := 0
+	matchedRefs := 0
 	for _, item := range rawNotes {
 		note := item.(*items.Note)
 		refs := note.Content.References()
 
 		for _, ref := range refs {
 			if ref.ContentType == common.SNItemTypeTag {
+				totalRefs++
 				if stats, ok := tagStats[ref.UUID]; ok {
 					stats.NoteCount++
+					matchedRefs++
+				} else if opts.debug {
+					pterm.Debug.Printf("Tag reference not found: %s\n", ref.UUID)
 				}
 			}
 		}
+	}
+
+	if opts.debug {
+		pterm.Debug.Printf("Total tag references: %d, Matched: %d, Unmatched: %d\n", totalRefs, matchedRefs, totalRefs-matchedRefs)
 	}
 
 	// Convert to slice for sorting
@@ -261,6 +271,18 @@ func ShowTagCloud(opts configOptsOutput) error {
 		return nil
 	}
 
+	// Count tags with notes
+	tagsWithNotes := 0
+	for _, s := range stats {
+		if s.NoteCount > 0 {
+			tagsWithNotes++
+		}
+	}
+
+	if opts.debug {
+		pterm.Debug.Printf("Tags with notes: %d, Tags without notes: %d\n", tagsWithNotes, len(stats)-tagsWithNotes)
+	}
+
 	// Display cloud
 	pterm.DefaultHeader.WithBackgroundStyle(pterm.NewStyle(pterm.BgMagenta)).
 		WithMargin(10).
@@ -271,6 +293,9 @@ func ShowTagCloud(opts configOptsOutput) error {
 
 	pterm.Println()
 	pterm.Info.Printf("Total: %d tag(s), %d note(s)\n", len(stats), len(rawNotes))
+	if tagsWithNotes < len(stats) {
+		pterm.Info.Printf("Note: %d unused tag(s) hidden from cloud view\n", len(stats)-tagsWithNotes)
+	}
 
 	return nil
 }
