@@ -280,102 +280,124 @@ func ShowTagCloud(opts configOptsOutput) error {
 		return err
 	}
 
-	if opts.debug {
-		pterm.Debug.Printf("Retrieved %d tags and %d notes from cache\n", len(rawTags), len(rawNotes))
-
-		// Check first few notes for references
-		if len(rawNotes) > 0 {
-			for i := 0; i < 10 && i < len(rawNotes); i++ {
-				sampleNote := rawNotes[i].(*items.Note)
-				refs := sampleNote.Content.References()
-				if len(refs) > 0 {
-					pterm.Debug.Printf("Note %d (UUID: %s) has %d references:\n", i, sampleNote.UUID[:12]+"...", len(refs))
-					for j, ref := range refs {
-						if j < 3 {
-							pterm.Debug.Printf("  Ref: ContentType='%s', UUID='%s'\n", ref.ContentType, ref.UUID[:12]+"...")
+	// Check first 10 notes for references (always show)
+	fmt.Printf("Checking first 10 notes for references...\n")
+	foundRefs := false
+	if len(rawNotes) > 0 {
+		for i := 0; i < 10 && i < len(rawNotes); i++ {
+			sampleNote := rawNotes[i].(*items.Note)
+			refs := sampleNote.Content.References()
+			if len(refs) > 0 {
+				foundRefs = true
+				fmt.Printf("  Note %d has %d references:\n", i, len(refs))
+				for j, ref := range refs {
+					if j < 3 {
+						shortUUID := ref.UUID
+						if len(shortUUID) > 12 {
+							shortUUID = shortUUID[:12] + "..."
 						}
+						fmt.Printf("    Ref %d: Type='%s', UUID='%s'\n", j, ref.ContentType, shortUUID)
 					}
+				}
+				break
+			}
+		}
+	}
+	if !foundRefs {
+		fmt.Printf("  No references found in first 10 notes\n")
+	}
+
+	// CRITICAL: Check if TAGS have references to NOTES (reverse direction)
+	fmt.Printf("\nChecking first 10 tags for references to notes...\n")
+	foundTagRefs := false
+	if len(rawTags) > 0 {
+		for i := 0; i < 10 && i < len(rawTags); i++ {
+			sampleTag := rawTags[i].(*items.Tag)
+			refs := sampleTag.Content.References()
+			if len(refs) > 0 {
+				foundTagRefs = true
+				fmt.Printf("  Tag '%s' has %d references:\n", sampleTag.Content.GetTitle(), len(refs))
+				for j, ref := range refs {
+					if j < 3 {
+						shortUUID := ref.UUID
+						if len(shortUUID) > 12 {
+							shortUUID = shortUUID[:12] + "..."
+						}
+						fmt.Printf("    Ref %d: Type='%s', UUID='%s'\n", j, ref.ContentType, shortUUID)
+					}
+				}
+				if !foundTagRefs {
 					break
 				}
 			}
 		}
 	}
+	if !foundTagRefs {
+		fmt.Printf("  No references found in first 10 tags\n")
+	}
 
-	// Build tag statistics
+	// Build tag statistics and count from tags (Tag → Note references)
 	tagStats := make(map[string]*TagStats)
+	noteUUIDs := make(map[string]bool)
+
+	// Build note UUID map for validation
+	for _, item := range rawNotes {
+		note := item.(*items.Note)
+		noteUUIDs[note.UUID] = true
+	}
+
+	// Count references FROM tags TO notes
+	totalRefs := 0
+	matchedRefs := 0
+	refTypesSeen := make(map[string]int)
+	tagsWithRefs := 0
 
 	for _, item := range rawTags {
 		tag := item.(*items.Tag)
 		title := tag.Content.GetTitle()
-		if opts.debug {
-			pterm.Debug.Printf("Processing tag: %s (UUID: %s)\n", title, tag.UUID)
+		refs := tag.Content.References()
+
+		noteCount := 0
+
+		// Count Note-type references from this tag
+		for _, ref := range refs {
+			refTypesSeen[ref.ContentType]++
+
+			if ref.ContentType == common.SNItemTypeNote {
+				totalRefs++
+				// Check if this note UUID exists in our note list
+				if noteUUIDs[ref.UUID] {
+					noteCount++
+					matchedRefs++
+				}
+			}
 		}
+
+		if len(refs) > 0 {
+			tagsWithRefs++
+		}
+
+		if opts.debug {
+			pterm.Debug.Printf("Tag '%s': %d references, %d matched notes\n", title, len(refs), noteCount)
+		}
+
 		tagStats[tag.UUID] = &TagStats{
 			Title:     title,
 			UUID:      tag.UUID,
-			NoteCount: 0,
+			NoteCount: noteCount,
 			CreatedAt: tag.CreatedAt,
 		}
 	}
 
-	// Count note references for each tag
-	totalRefs := 0
-	matchedRefs := 0
-	refTypesSeen := make(map[string]int)
-	notesWithRefs := 0
-
-	for _, item := range rawNotes {
-		note := item.(*items.Note)
-		refs := note.Content.References()
-
-		if len(refs) > 0 {
-			notesWithRefs++
-			if opts.debug && notesWithRefs <= 3 {
-				pterm.Debug.Printf("Note with refs #%d (of %d total notes) has %d references:\n", notesWithRefs, len(rawNotes), len(refs))
-				for j, ref := range refs {
-					if j < 5 {
-						shortUUID := ref.UUID
-						if len(shortUUID) > 12 {
-							shortUUID = shortUUID[:12] + "..."
-						}
-						pterm.Debug.Printf("  Ref %d: ContentType='%s', UUID='%s'\n", j, ref.ContentType, shortUUID)
-					}
-				}
-			}
-		}
-
-		for _, ref := range refs {
-			refTypesSeen[ref.ContentType]++
-
-			if ref.ContentType == common.SNItemTypeTag {
-				totalRefs++
-				if stats, ok := tagStats[ref.UUID]; ok {
-					stats.NoteCount++
-					matchedRefs++
-				} else if opts.debug && totalRefs <= 5 {
-					pterm.Debug.Printf("Unmatched tag ref UUID: %s\n", ref.UUID)
-					// Check if any tag UUID starts with the same prefix
-					found := false
-					for tagUUID := range tagStats {
-						if len(ref.UUID) > 8 && len(tagUUID) > 8 && ref.UUID[:8] == tagUUID[:8] {
-							pterm.Debug.Printf("  Similar tag UUID found: %s\n", tagUUID)
-							found = true
-						}
-					}
-					if !found && len(tagStats) <= 10 {
-						pterm.Debug.Printf("  Available tag UUIDs: %v\n", getTagUUIDs(tagStats))
-					}
-				}
-			}
-		}
-	}
+	// Always show summary to help diagnose
+	fmt.Printf("\nDiagnostics (Tag → Note counting):\n")
+	fmt.Printf("  Tags with references: %d / %d\n", tagsWithRefs, len(rawTags))
+	fmt.Printf("  Reference types seen in tags: %v\n", refTypesSeen)
+	fmt.Printf("  SNItemTypeNote constant = '%s'\n", common.SNItemTypeNote)
+	fmt.Printf("  Total note references from tags: %d, Matched: %d, Unmatched: %d\n", totalRefs, matchedRefs, totalRefs-matchedRefs)
 
 	if opts.debug {
-		pterm.Debug.Printf("\nSummary:\n")
-		pterm.Debug.Printf("  Notes with references: %d / %d\n", notesWithRefs, len(rawNotes))
-		pterm.Debug.Printf("  Reference types seen: %v\n", refTypesSeen)
-		pterm.Debug.Printf("  SNItemTypeTag constant = '%s'\n", common.SNItemTypeTag)
-		pterm.Debug.Printf("  Total tag references: %d, Matched: %d, Unmatched: %d\n", totalRefs, matchedRefs, totalRefs-matchedRefs)
+		pterm.Debug.Printf("\nAdditional debug info above\n")
 	}
 
 	// Convert to slice for sorting
@@ -548,30 +570,38 @@ func ShowTagStats(opts configOptsOutput) error {
 		return err
 	}
 
-	// Build statistics
+	// Build statistics - count from tags (Tag → Note references)
 	tagStats := make(map[string]*TagStats)
+	noteUUIDs := make(map[string]bool)
 
+	// Build note UUID map for validation
+	for _, item := range rawNotes {
+		note := item.(*items.Note)
+		noteUUIDs[note.UUID] = true
+	}
+
+	// Count references FROM tags TO notes
 	for _, item := range rawTags {
 		tag := item.(*items.Tag)
+		refs := tag.Content.References()
+
+		noteCount := 0
+
+		// Count Note-type references from this tag
+		for _, ref := range refs {
+			if ref.ContentType == common.SNItemTypeNote {
+				// Check if this note UUID exists in our note list
+				if noteUUIDs[ref.UUID] {
+					noteCount++
+				}
+			}
+		}
+
 		tagStats[tag.UUID] = &TagStats{
 			Title:     tag.Content.GetTitle(),
 			UUID:      tag.UUID,
-			NoteCount: 0,
+			NoteCount: noteCount,
 			CreatedAt: tag.CreatedAt,
-		}
-	}
-
-	// Count references
-	for _, item := range rawNotes {
-		note := item.(*items.Note)
-		refs := note.Content.References()
-
-		for _, ref := range refs {
-			if ref.ContentType == common.SNItemTypeTag {
-				if stats, ok := tagStats[ref.UUID]; ok {
-					stats.NoteCount++
-				}
-			}
 		}
 	}
 
