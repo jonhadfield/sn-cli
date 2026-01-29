@@ -134,6 +134,7 @@ func appSetup() (app *cli.App) {
 		cmdEdit(),
 		cmdGet(),
 		cmdHealthcheck(),
+		cmdOrganize(),
 		cmdRegister(),
 		cmdResync(),
 		cmdSession(),
