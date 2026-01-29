@@ -116,6 +116,7 @@ func processCachedItemsKeys(cs *cache.Session, eiks items.EncryptedItems) error 
 		syncedItemsKeys = append(syncedItemsKeys, session.SessionItemsKey{
 			UUID:               iks[x].UUID,
 			ItemsKey:           iks[x].ItemsKey,
+			Default:            iks[x].Default,
 			UpdatedAtTimestamp: iks[x].UpdatedAtTimestamp,
 			CreatedAtTimestamp: iks[x].CreatedAtTimestamp,
 		})
@@ -123,6 +124,34 @@ func processCachedItemsKeys(cs *cache.Session, eiks items.EncryptedItems) error 
 
 	// Merge with existing items keys in session
 	cs.Session.ItemsKeys = mergeItemsKeysSlices(cs.Session.ItemsKeys, syncedItemsKeys)
+
+	// Set default items key using Standard Notes priority logic:
+	// 1. Prioritize keys marked as default
+	// 2. Fall back to most recent by timestamp
+	var defaultItemsKey session.SessionItemsKey
+	var latestItemsKey session.SessionItemsKey
+
+	for x := range cs.Session.ItemsKeys {
+		key := cs.Session.ItemsKeys[x]
+
+		// Track the most recent key regardless
+		if key.CreatedAtTimestamp > latestItemsKey.CreatedAtTimestamp {
+			latestItemsKey = key
+		}
+
+		// Prefer keys marked as default
+		if key.Default {
+			defaultItemsKey = key
+			break
+		}
+	}
+
+	// Use default key if found, otherwise use most recent
+	if defaultItemsKey.UUID != "" {
+		cs.Session.DefaultItemsKey = defaultItemsKey
+	} else if latestItemsKey.UUID != "" {
+		cs.Session.DefaultItemsKey = latestItemsKey
+	}
 
 	return nil
 }
