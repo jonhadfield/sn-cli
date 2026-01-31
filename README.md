@@ -123,24 +123,25 @@ sn edit note --title "Meeting Notes" --text "Updated content"
 
 ## ⚙️ Advanced Configuration
 
-### Bash Completion
+### Shell Completion
 
-#### macOS (Homebrew)
+Tab completion is available for Bash, Zsh, Fish, and PowerShell.
+
+**Quick Install (Bash on macOS):**
 ```bash
-brew install bash-completion
+brew install bash-completion@2
+sudo cp autocomplete/bash_autocomplete /usr/local/etc/bash_completion.d/sncli
 echo '[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion' >> ~/.bash_profile
+source ~/.bash_profile
 ```
 
-#### Install completion script
+**Quick Install (Fish):**
 ```bash
-# macOS
-cp bash_autocomplete /usr/local/etc/bash_completion.d/sn
-echo "source /usr/local/etc/bash_completion.d/sn" >> ~/.bashrc
-
-# Linux
-cp bash_autocomplete /etc/bash_completion.d/sn
-echo "source /etc/bash_completion.d/sn" >> ~/.bashrc
+mkdir -p ~/.config/fish/completions
+cp autocomplete/fish_autocomplete.fish ~/.config/fish/completions/sncli.fish
 ```
+
+📖 **For detailed installation instructions for all shells, see [autocomplete/README.md](autocomplete/README.md)**
 
 ### Self-Hosted Servers
 ```bash
