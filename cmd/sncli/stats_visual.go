@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gookit/color"
-	sncli "github.com/jonhadfield/sn-cli"
+	sncli "github.com/jonhadfield/sn-cli/internal/sncli"
 	"github.com/pterm/pterm"
 )
 

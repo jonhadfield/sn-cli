@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	sncli "github.com/jonhadfield/sn-cli"
+	sncli "github.com/jonhadfield/sn-cli/internal/sncli"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/term"

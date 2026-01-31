@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jonhadfield/gosn-v2/cache"
-	sncli "github.com/jonhadfield/sn-cli"
+	sncli "github.com/jonhadfield/sn-cli/internal/sncli"
 	"github.com/urfave/cli/v2"
 )
 

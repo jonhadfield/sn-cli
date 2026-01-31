@@ -12,7 +12,7 @@ import (
 	"github.com/gookit/color"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/common"
-	sncli "github.com/jonhadfield/sn-cli"
+	sncli "github.com/jonhadfield/sn-cli/internal/sncli"
 	"github.com/urfave/cli/v2"
 )
 
