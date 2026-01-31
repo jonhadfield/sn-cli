@@ -88,13 +88,17 @@ sn --use-session get notes
 
 ## 🆕 Recent Updates
 
-### Version 0.3.5 (2024-01-08)
-- 🐛 **Fixed**: Conflict warning handling
-- ✅ **Added**: Helper tests
-- 🔧 **Improved**: Code simplification
+### Version 0.4.1 (2026-01-30)
+- 🔐 **Fixed**: Authentication issues with updated dependencies
+- 🏷️ **Improved**: Tag cloud visualization with offline support
+- 🛡️ **Enhanced**: Network error handling and graceful degradation
+- 🐛 **Fixed**: Tag reference matching and display issues
 
-### Version 0.3.4 (2024-01-07)
-- 🐛 **Fixed**: Command completion and updated instructions
+### Version 0.4.0 (2026-01-29)
+- 💾 **Added**: Backup and restore functionality
+- 📤 **Added**: Enhanced export with multiple formats
+- 🎨 **Added**: Tag cloud visualization
+- 📝 **Added**: Note templates system
 
 **[View full changelog →](CHANGELOG.md)**
 

@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-01-30
+
+### Fixed
+- Authentication issues by updating gosn-v2 dependency to fix cookie-based auth
+- Tag cloud to properly use Tag→Note references instead of Note→Tag
+- Tag cloud to work completely offline using cached data
+- Network error handling in tag cloud with graceful degradation
+- Tag reference matching and display issues
+
+### Improved
+- Tag cloud now supports offline operation with cached items
+- Enhanced debugging for note reference detection
+- Better error messages for network failures
+
+## [0.4.0] - 2026-01-29
+
+### Added
+- Backup and restore functionality with optional encryption
+- Enhanced export with multiple format support (Markdown, HTML, static site)
+- Tag cloud visualization for exploring note relationships
+- Note templates system for quick note creation
+- Visual improvements with better progress indicators
+
+### Changed
+- Updated authentication to use cache.GetSession for better session management
+
 ## [0.3.5] - 2024-01-08
 
 ### Fixed
