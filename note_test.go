@@ -2,7 +2,6 @@ package sncli
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -159,8 +158,7 @@ func TestDirectItemsSyncVsCacheSync(t *testing.T) {
 	t.Logf("=== Testing with SN_POST_SYNC_REQUEST_DELAY ===")
 
 	// Set environment variable and test with delay
-	os.Setenv("SN_POST_SYNC_REQUEST_DELAY", "1000") // 1 second delay
-	defer os.Unsetenv("SN_POST_SYNC_REQUEST_DELAY")
+	t.Setenv("SN_POST_SYNC_REQUEST_DELAY", "1000") // 1 second delay
 
 	for i := 1; i <= 3; i++ {
 		t.Logf("--- cache.Sync with delay #%d ---", i)

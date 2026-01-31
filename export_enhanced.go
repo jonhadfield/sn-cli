@@ -24,14 +24,14 @@ const (
 
 // ExportEnhancedConfig holds enhanced export configuration
 type ExportEnhancedConfig struct {
-	Session       *cache.Session
-	OutputDir     string
-	Format        ExportFormat
-	ByTags        bool
-	WithMetadata  bool
-	StaticSite    string // hugo, jekyll, or empty
+	Session        *cache.Session
+	OutputDir      string
+	Format         ExportFormat
+	ByTags         bool
+	WithMetadata   bool
+	StaticSite     string // hugo, jekyll, or empty
 	IncludeTrashed bool
-	Debug         bool
+	Debug          bool
 }
 
 // ExportedNote represents a note for export with metadata

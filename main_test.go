@@ -2,7 +2,7 @@ package sncli
 
 import (
 	"fmt"
-	"log"
+	"log" // nolint:depguard // log is acceptable in test files for setup/teardown
 	"os"
 	"strconv"
 	"strings"

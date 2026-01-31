@@ -87,14 +87,14 @@ func runExport(c *cli.Context, opts configOptsOutput) error {
 
 	// Create export config
 	exportConfig := sncli.ExportEnhancedConfig{
-		Session:       &session,
-		OutputDir:     c.String("output"),
-		Format:        format,
-		ByTags:        c.Bool("by-tags"),
-		WithMetadata:  c.Bool("metadata") || staticSite != "",
-		StaticSite:    staticSite,
+		Session:        &session,
+		OutputDir:      c.String("output"),
+		Format:         format,
+		ByTags:         c.Bool("by-tags"),
+		WithMetadata:   c.Bool("metadata") || staticSite != "",
+		StaticSite:     staticSite,
 		IncludeTrashed: c.Bool("include-trashed"),
-		Debug:         opts.debug,
+		Debug:          opts.debug,
 	}
 
 	// Show configuration

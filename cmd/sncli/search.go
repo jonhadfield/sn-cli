@@ -8,9 +8,9 @@ import (
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
+	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/pterm/pterm"
 	"github.com/sahilm/fuzzy"
-	sncli "github.com/jonhadfield/sn-cli"
 	"github.com/urfave/cli/v2"
 )
 
@@ -310,7 +310,7 @@ func displaySearchResults(results []SearchResult, query string) error {
 	}
 
 	for i, result := range results {
-		matchType := ""
+		var matchType string
 		if result.MatchInTitle && result.MatchInBody {
 			matchType = color.Green.Sprint("Title + Body")
 		} else if result.MatchInTitle {

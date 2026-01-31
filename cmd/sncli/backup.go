@@ -129,13 +129,13 @@ func runBackupCreate(c *cli.Context, opts configOptsOutput) error {
 
 	// Create backup config
 	backupConfig := sncli.BackupConfig{
-		Session:       &session,
-		OutputFile:    c.String("output"),
-		Incremental:   c.Bool("incremental"),
+		Session:        &session,
+		OutputFile:     c.String("output"),
+		Incremental:    c.Bool("incremental"),
 		LastBackupTime: c.String("since"),
-		Encrypt:       c.Bool("encrypt"),
-		Password:      password,
-		Debug:         opts.debug,
+		Encrypt:        c.Bool("encrypt"),
+		Password:       password,
+		Debug:          opts.debug,
 	}
 
 	// Show configuration

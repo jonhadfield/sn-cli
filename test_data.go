@@ -2,9 +2,8 @@ package sncli
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
-	"time"
 
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/items"
@@ -63,8 +62,7 @@ var testParas = []string{
 }
 
 func randInt(min int, max int) int {
-	rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
-	return min + rand.Intn(max-min)
+	return min + rand.IntN(max-min)
 }
 
 func genRandomText(paragraphs int) string {

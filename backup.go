@@ -20,31 +20,31 @@ import (
 
 // BackupConfig holds backup configuration
 type BackupConfig struct {
-	Session       *cache.Session
-	OutputFile    string
-	Incremental   bool
+	Session        *cache.Session
+	OutputFile     string
+	Incremental    bool
 	LastBackupTime string
-	Encrypt       bool
-	Password      string
-	Debug         bool
+	Encrypt        bool
+	Password       string
+	Debug          bool
 }
 
 // RestoreConfig holds restore configuration
 type RestoreConfig struct {
-	Session    *cache.Session
-	InputFile  string
-	DryRun     bool
-	Password   string
-	Debug      bool
+	Session   *cache.Session
+	InputFile string
+	DryRun    bool
+	Password  string
+	Debug     bool
 }
 
 // BackupManifest contains metadata about the backup
 type BackupManifest struct {
-	Timestamp   string `json:"timestamp"`
+	Timestamp   string         `json:"timestamp"`
 	ItemCounts  map[string]int `json:"item_counts"`
-	Incremental bool   `json:"incremental"`
-	Encrypted   bool   `json:"encrypted"`
-	Version     string `json:"version"`
+	Incremental bool           `json:"incremental"`
+	Encrypted   bool           `json:"encrypted"`
+	Version     string         `json:"version"`
 }
 
 // BackupItem represents an item in the backup
