@@ -158,6 +158,8 @@ github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUq
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
 github.com/jonhadfield/gosn-v2 v0.0.0-20260129121224-3e1eadbafef0 h1:6RIULVZsf38XQfoVv9J4raS4476CfH5y+jwDUH6dShI=
 github.com/jonhadfield/gosn-v2 v0.0.0-20260129121224-3e1eadbafef0/go.mod h1:94CA6Ap/fCqN22QiamgqWExJXl3fk5CzRLgxb4vA+Dc=
+github.com/jonhadfield/gosn-v2 v0.0.0-20260201122858-61f9943e11f9 h1:pdKIs5kgVW3veda9v7MhkZlso6rNhktsX4Xd8xPlD4E=
+github.com/jonhadfield/gosn-v2 v0.0.0-20260201122858-61f9943e11f9/go.mod h1:94CA6Ap/fCqN22QiamgqWExJXl3fk5CzRLgxb4vA+Dc=
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
 github.com/klauspost/cpuid/v2 v2.0.10/go.mod h1:g2LTdtYhdyuGPqyWyv7qRAmj1WBqxuObKfj5c0PQa7c=
 github.com/klauspost/cpuid/v2 v2.0.12/go.mod h1:g2LTdtYhdyuGPqyWyv7qRAmj1WBqxuObKfj5c0PQa7c=

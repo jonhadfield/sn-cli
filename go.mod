@@ -32,7 +32,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/generative-ai-go v0.20.1
 	github.com/gookit/color v1.6.0
-	github.com/jonhadfield/gosn-v2 v0.0.0-20260129121224-3e1eadbafef0
+	github.com/jonhadfield/gosn-v2 v0.0.0-20260201122858-61f9943e11f9
 	github.com/pterm/pterm v0.12.82
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/sahilm/fuzzy v0.1.1

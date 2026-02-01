@@ -264,7 +264,7 @@ func (m *MigrateConfig) Run() (*MigrationResult, error) {
 		mocConfig := MOCConfig{
 			Style:          m.MOCStyle,
 			MaxDepth:       m.MOCDepth,
-			MinNotesPerMOC: 3,
+			MinNotesPerMOC: 2, // Lowered threshold for more inclusive MOC generation
 			IncludeStats:   true,
 			IncludeRecent:  true,
 			RecentCount:    5,

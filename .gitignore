@@ -34,3 +34,4 @@ dist
 # Test migration output
 my-vault/
 *-vault/
+my-vault2/
