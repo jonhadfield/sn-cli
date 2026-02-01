@@ -7,6 +7,8 @@
 ## ✨ Features
 
 - **📋 Notes & Tasks**: Create, edit, and manage notes and checklists
+- **🔍 Full-Text Search**: Search across titles and content with fuzzy matching and regex support
+- **📤 Migration**: Export to Obsidian with automatic Maps of Content (MOC) generation
 - **🏷️ Tags**: Organize content with flexible tagging
 - **📊 Statistics**: Detailed analytics about your notes and usage
 - **🔐 Secure Sessions**: Keychain integration for macOS and Linux
@@ -51,6 +53,8 @@ sn stats
 | `delete` | Delete items by title or UUID |
 | `edit` | Edit existing notes |
 | `get` | Retrieve notes, tags, or tasks |
+| `search` | Full-text search across notes (supports fuzzy matching and regex) |
+| `migrate` | Migrate notes to other applications (Obsidian, etc.) with MOC generation |
 | `tag` | Manage tags and tagging |
 | `task` | Manage checklists and advanced checklists |
 | `stats` | Display detailed statistics |
@@ -111,6 +115,18 @@ sn add note --title "Meeting Notes" --text "Important discussion points" --tag w
 # Find notes by tag
 sn get notes --tag work
 
+# Search for notes (searches both title and content)
+sn search --query "meeting"
+
+# Fuzzy search with limit
+sn search --query "mtng" --fuzzy --limit 5
+
+# Case-sensitive regex search
+sn search --query "TODO|FIXME" --regex --case-sensitive
+
+# Search within specific tags
+sn search --query "project" --tag work
+
 # Create a checklist
 sn add task --title "Todo List" --text "- Buy groceries\n- Call dentist\n- Finish project"
 
@@ -119,6 +135,87 @@ sn stats
 
 # Edit a note
 sn edit note --title "Meeting Notes" --text "Updated content"
+```
+
+### 🔍 Search Feature
+
+The `search` command provides powerful full-text search across all your notes:
+
+**Basic Usage:**
+```bash
+# Simple search
+sn search --query "keyword"
+sn search -q "keyword"  # Short form
+```
+
+**Search Options:**
+```bash
+--query, -q     Search query (required)
+--content, -c   Search in note content (default: true)
+--fuzzy, -f     Enable fuzzy matching for typo tolerance
+--case-sensitive  Make search case-sensitive (default: false)
+--tag           Filter results by tag
+--limit, -l     Limit number of results (default: unlimited)
+--output        Output format: table, rich, json, yaml (default: table)
+```
+
+**Advanced Examples:**
+```bash
+# Regex pattern matching
+sn search -q "bug-[0-9]+" --regex
+
+# Fuzzy search (matches similar terms)
+sn search -q "imprtant" --fuzzy
+
+# Case-sensitive search in work-tagged notes
+sn search -q "Project" --case-sensitive --tag work
+
+# Get top 10 results in rich format
+sn search -q "todo" --limit 10 --output rich
+
+# Search only in titles (faster)
+sn search -q "meeting" --content=false
+```
+
+**Search Features:**
+- Searches both note titles and content by default
+- Highlights matching terms in results
+- Shows context snippets around matches
+- Sorts results by relevance (title matches score higher)
+- Supports multiple output formats with syntax highlighting
+
+### 📤 Migration to Other Applications
+
+Export your notes to other platforms with intelligent organization:
+
+```bash
+# Basic export to Obsidian
+sn migrate obsidian --output ./my-vault
+
+# Export with automatic MOC generation
+sn migrate obsidian --output ./vault --moc
+
+# Export specific tags only
+sn migrate obsidian --output ./vault --tag-filter work,projects
+
+# Preview migration without writing files
+sn migrate obsidian --output ./vault --dry-run
+```
+
+**Features:**
+- Automatic MOC (Maps of Content) generation
+- Tag preservation in YAML frontmatter
+- Metadata preservation (dates, UUIDs)
+- Multiple organizational styles
+- Wikilink formatting
+
+**Output Structure:**
+```
+my-vault/
+├── Home.md              # Main entry point
+├── Work MOC.md          # Category MOCs
+├── Learning MOC.md
+└── ... (all your notes)
 ```
 
 ## ⚙️ Advanced Configuration

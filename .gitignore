@@ -30,3 +30,7 @@ dist
 
 # vscode
 .vscode/
+
+# Test migration output
+my-vault/
+*-vault/
