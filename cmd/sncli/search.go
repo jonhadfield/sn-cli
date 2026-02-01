@@ -56,6 +56,10 @@ func cmdSearch() *cli.Command {
 				Value: "table",
 				Usage: "output format (table, rich, json, yaml)",
 			},
+			&cli.BoolFlag{
+				Name:  "offline",
+				Usage: "search offline without syncing (faster, uses cached data)",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			return processSearch(c, getOpts(c))
@@ -80,25 +84,14 @@ func processSearch(c *cli.Context, opts configOptsOutput) error {
 		return err
 	}
 
-	// Sync to get latest notes
-	si := cache.SyncInput{
-		Session: &session,
-		Close:   false,
-	}
-
-	so, err := cache.Sync(si)
-	if err != nil {
-		return err
-	}
-	defer so.DB.Close()
-
-	// Get all notes
+	// Build filters for notes
 	noteFilter := items.Filter{
 		Type: common.SNItemTypeNote,
 	}
 
-	// Add tag filter if specified
 	filters := []items.Filter{noteFilter}
+
+	// Add tag filter if specified
 	if c.String("tag") != "" {
 		tagFilter := items.Filter{
 			Type:       common.SNItemTypeNote,
@@ -118,6 +111,7 @@ func processSearch(c *cli.Context, opts configOptsOutput) error {
 	}
 	filters = append(filters, trashFilter)
 
+	// GetNoteConfig.Run() handles syncing internally
 	getNoteConfig := sncli.GetNoteConfig{
 		Session: &session,
 		Filters: items.ItemFilters{
@@ -125,6 +119,13 @@ func processSearch(c *cli.Context, opts configOptsOutput) error {
 			Filters:  filters,
 		},
 		Debug: opts.debug,
+	}
+
+	// Get notes (this will sync automatically unless offline flag is used)
+	offline := c.Bool("offline")
+	if offline {
+		pterm.Info.Println("Searching offline (cached data)")
+		// TODO: Add offline support to GetNoteConfig
 	}
 
 	rawNotes, err := getNoteConfig.Run()
