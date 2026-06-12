@@ -22,8 +22,8 @@
 **Download the latest release:**
 ```bash
 # macOS/Linux
-curl -L https://github.com/jonhadfield/sn-cli/releases/latest/download/sncli_$(uname -s)_$(uname -m) -o sn
-chmod +x sn && sudo mv sn /usr/local/bin/
+curl -L https://github.com/jonhadfield/sn-cli/releases/latest/download/sn-cli_$(uname -s)_$(uname -m).tar.gz -o sn.tar.gz
+tar -xvK sn -f sn-cli_$(uname -s)_$(uname -m).tar.gz && sudo mv sn /usr/local/bin/
 
 # Or via direct download
 # Visit: https://github.com/jonhadfield/sn-cli/releases
