@@ -11,6 +11,7 @@ jobs:
       group: test
       cancel-in-progress: true
     strategy:
+      fail-fast: false
       max-parallel: 1
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -30,10 +31,7 @@ jobs:
         name: Tests
         run: |
           go mod tidy
-          go install github.com/axw/gocov/gocov@latest
-          go install github.com/AlekSi/gocov-xml@latest
-          go test -cover -v -failfast -p 1 $(go list ./...) -coverprofile cover.out
-          gocov convert cover.out | gocov-xml > coverage.xml
+          go test -cover -v -failfast -p 1 ./... -coverprofile cover.out
         if: runner.os != 'Windows'
         env:
           SN_SERVER: ${{ secrets.SN_SERVER }}
@@ -43,7 +41,8 @@ jobs:
         name: Codacy Coverage Reporter
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
-          coverage-reports: coverage.xml
+          coverage-reports: cover.out
+          force-coverage-parser: go
         if: runner.os != 'Windows'
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
