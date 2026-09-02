@@ -18,22 +18,20 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       -
         name: Set up Go
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.24
+          go-version-file: go.mod
       -
         name: Tests
         run: |
           go mod tidy
-          go get github.com/axw/gocov/gocov
-          go get github.com/AlekSi/gocov-xml
-          go install github.com/axw/gocov/gocov
-          go install github.com/AlekSi/gocov-xml
+          go install github.com/axw/gocov/gocov@latest
+          go install github.com/AlekSi/gocov-xml@latest
           go test -cover -v -failfast -p 1 $(go list ./...) -coverprofile cover.out
           gocov convert cover.out | gocov-xml > coverage.xml
         if: runner.os != 'Windows'
@@ -53,8 +51,8 @@ jobs:
         name: Windows Tests
         run: |
           go mod tidy
-          go test -v -failfast -p 1 $(go list ./...)
-        if: runner.os != 'Windows'
+          go test -v -failfast -p 1 ./...
+        if: runner.os == 'Windows'
         env:
           SN_SERVER: ${{ secrets.SN_SERVER }}
           SN_EMAIL: ${{ secrets.SN_EMAIL }}
