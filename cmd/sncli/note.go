@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -134,7 +133,7 @@ func openInEditor(filename, editor string) error {
 }
 
 func captureInputFromEditor(title, text, editor string) ([]byte, error) {
-	file, err := ioutil.TempFile(os.TempDir(), "*")
+	file, err := os.CreateTemp("", "*")
 	if err != nil {
 		return []byte{}, err
 	}
@@ -156,7 +155,7 @@ func captureInputFromEditor(title, text, editor string) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	bytes, err := ioutil.ReadFile(filename)
+	bytes, err := os.ReadFile(filename)
 	if err != nil {
 		return []byte{}, err
 	}

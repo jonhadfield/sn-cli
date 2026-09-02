@@ -10,6 +10,8 @@ import (
 
 // TestGetDataWithLargeDataset tests GetData with >150 items to reproduce multi-sync issues
 func TestGetDataWithLargeDataset(t *testing.T) {
+	requireIntegration(t)
+
 	testDelay()
 
 	defer cleanUp(*testSession)

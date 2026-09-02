@@ -8,12 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/generative-ai-go/genai"
 	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
-	"google.golang.org/api/option"
+	"google.golang.org/genai"
 )
+
+// geminiModel is the Gemini model used to analyse notes.
+const geminiModel = "gemini-2.5-flash"
 
 // OrganizeConfig holds configuration for the organize operation.
 type OrganizeConfig struct {
@@ -66,13 +68,13 @@ func (i *OrganizeConfig) Run() (OrganizeOutput, error) {
 
 	// 2. Initialize Gemini client
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, option.WithAPIKey(i.GeminiKey))
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  i.GeminiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
 	if err != nil {
 		return output, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
-	defer client.Close()
-
-	model := client.GenerativeModel("gemini-1.5-flash")
 
 	// 3. Sync and get all existing tags
 	syncInput := cache.SyncInput{Session: i.Session}
@@ -128,7 +130,7 @@ func (i *OrganizeConfig) Run() (OrganizeOutput, error) {
 		noteTags := getTagsForNote(note, existingTags)
 
 		// Call Gemini API
-		change, err := analyzeNoteWithGemini(ctx, model, note, noteTags, tagTitles, i.Debug)
+		change, err := analyzeNoteWithGemini(ctx, client, note, noteTags, tagTitles, i.Debug)
 		if err != nil {
 			if i.Debug {
 				fmt.Printf("Error analyzing note %s: %v\n", note.UUID, err)
@@ -220,7 +222,7 @@ func getTagsForNote(note items.Note, allTags []items.Tag) []string {
 // analyzeNoteWithGemini calls Gemini API to analyze a note and suggest improvements.
 func analyzeNoteWithGemini(
 	ctx context.Context,
-	model *genai.GenerativeModel,
+	client *genai.Client,
 	note items.Note,
 	currentTags []string,
 	allExistingTags []string,
@@ -241,45 +243,47 @@ func analyzeNoteWithGemini(
 	}
 
 	// Configure JSON response
-	model.ResponseMIMEType = "application/json"
-	model.ResponseSchema = &genai.Schema{
-		Type: genai.TypeObject,
-		Properties: map[string]*genai.Schema{
-			"title": {
-				Type:        genai.TypeString,
-				Description: "Improved title (empty string if current title is good)",
+	config := &genai.GenerateContentConfig{
+		ResponseMIMEType: "application/json",
+		ResponseSchema: &genai.Schema{
+			Type: genai.TypeObject,
+			Properties: map[string]*genai.Schema{
+				"title": {
+					Type:        genai.TypeString,
+					Description: "Improved title (empty string if current title is good)",
+				},
+				"tags": {
+					Type:        genai.TypeArray,
+					Items:       &genai.Schema{Type: genai.TypeString},
+					Description: "Array of tag titles to apply",
+				},
+				"create_new": {
+					Type:        genai.TypeArray,
+					Items:       &genai.Schema{Type: genai.TypeString},
+					Description: "Array of new tag titles that don't exist yet",
+				},
+				"reasoning": {
+					Type:        genai.TypeString,
+					Description: "Brief explanation of changes",
+				},
 			},
-			"tags": {
-				Type:        genai.TypeArray,
-				Items:       &genai.Schema{Type: genai.TypeString},
-				Description: "Array of tag titles to apply",
-			},
-			"create_new": {
-				Type:        genai.TypeArray,
-				Items:       &genai.Schema{Type: genai.TypeString},
-				Description: "Array of new tag titles that don't exist yet",
-			},
-			"reasoning": {
-				Type:        genai.TypeString,
-				Description: "Brief explanation of changes",
-			},
+			Required: []string{"tags", "create_new", "reasoning"},
 		},
-		Required: []string{"tags", "create_new", "reasoning"},
 	}
 
 	// Call Gemini API
-	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
+	resp, err := client.Models.GenerateContent(ctx, geminiModel, genai.Text(prompt), config)
 	if err != nil {
 		return change, fmt.Errorf("Gemini API error: %w", err)
 	}
 
-	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-		return change, errors.New("empty response from Gemini")
-	}
-
 	// Parse JSON response
 	var geminiResp GeminiResponse
-	responseText := fmt.Sprintf("%v", resp.Candidates[0].Content.Parts[0])
+
+	responseText := resp.Text()
+	if responseText == "" {
+		return change, errors.New("empty response from Gemini")
+	}
 
 	if debug {
 		fmt.Printf("Gemini response: %s\n", responseText)

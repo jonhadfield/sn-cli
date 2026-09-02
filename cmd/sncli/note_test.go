@@ -10,6 +10,8 @@ import (
 )
 
 func TestAddDeleteNote(t *testing.T) {
+	requireIntegration(t)
+
 	time.Sleep(250 * time.Millisecond)
 
 	var outputBuffer bytes.Buffer
@@ -39,6 +41,8 @@ func TestAddDeleteNote(t *testing.T) {
 }
 
 func TestGetMissingNote(t *testing.T) {
+	requireIntegration(t)
+
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app := appSetup()
@@ -56,6 +60,8 @@ func TestGetMissingNote(t *testing.T) {
 }
 
 func TestDeleteNonExistantNote(t *testing.T) {
+	requireIntegration(t)
+
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app := appSetup()

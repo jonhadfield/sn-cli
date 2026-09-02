@@ -21,8 +21,15 @@
 
 **Download the latest release:**
 ```bash
-# macOS/Linux
-curl -L https://github.com/jonhadfield/sn-cli/releases/latest/download/sncli_$(uname -s)_$(uname -m) -o sn
+# macOS/Linux - pick the archive matching your platform
+case "$(uname -s)-$(uname -m)" in
+  Darwin-*)                 ASSET=sn-cli_Darwin_universal.tar.gz ;;
+  Linux-x86_64)             ASSET=sn-cli_Linux_x86_64.tar.gz ;;
+  Linux-aarch64|Linux-arm64) ASSET=sn-cli_Linux_arm64.tar.gz ;;
+  *) echo "No prebuilt binary for $(uname -s) $(uname -m)"; ASSET= ;;
+esac
+curl -fsSL "https://github.com/jonhadfield/sn-cli/releases/latest/download/$ASSET" -o sn.tar.gz
+tar -xzf sn.tar.gz sn
 chmod +x sn && sudo mv sn /usr/local/bin/
 
 # Or via direct download
@@ -253,11 +260,19 @@ git clone https://github.com/jonhadfield/sn-cli.git
 cd sn-cli
 make build
 
-# Run tests
+# Run tests (unit tests only)
 make test
 
 # View all make targets
 make help
+```
+
+Tests that talk to a real Standard Notes account are opt-in, because they
+create and delete live items. `make test` and CI run only the offline unit
+tests. To run the live ones as well:
+
+```bash
+SN_INTEGRATION_TESTS=1 SN_EMAIL=you@example.com SN_PASSWORD=... go test ./...
 ```
 
 ## ⚠️ Known Issues

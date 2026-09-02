@@ -3,6 +3,7 @@ package sncli
 import (
 	"testing"
 
+	"github.com/jonhadfield/gosn-v2/cache"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,7 @@ func TestMigrateConfig_Validate(t *testing.T) {
 		{
 			name: "missing provider",
 			config: MigrateConfig{
-				Session:   &struct{}{}, // dummy session
+				Session:   &cache.Session{},
 				OutputDir: "/tmp/test",
 			},
 			wantErr: true,
@@ -33,7 +34,7 @@ func TestMigrateConfig_Validate(t *testing.T) {
 		{
 			name: "missing output dir",
 			config: MigrateConfig{
-				Session:  &struct{}{},
+				Session:  &cache.Session{},
 				Provider: "obsidian",
 			},
 			wantErr: true,
@@ -41,7 +42,7 @@ func TestMigrateConfig_Validate(t *testing.T) {
 		{
 			name: "invalid MOC style",
 			config: MigrateConfig{
-				Session:      &struct{}{},
+				Session:      &cache.Session{},
 				Provider:     "obsidian",
 				OutputDir:    "/tmp/test",
 				GenerateMOCs: true,
@@ -52,7 +53,7 @@ func TestMigrateConfig_Validate(t *testing.T) {
 		{
 			name: "invalid MOC depth",
 			config: MigrateConfig{
-				Session:      &struct{}{},
+				Session:      &cache.Session{},
 				Provider:     "obsidian",
 				OutputDir:    "/tmp/test",
 				GenerateMOCs: true,
@@ -124,8 +125,8 @@ func TestObsidianExporter_SanitizeFilename(t *testing.T) {
 
 func TestExtractNoteTags(t *testing.T) {
 	// Create test notes and tags
-	tag1, _ := items.NewTag("work")
-	tag2, _ := items.NewTag("personal")
+	tag1, _ := items.NewTag("work", nil)
+	tag2, _ := items.NewTag("personal", nil)
 
 	note, _ := items.NewNote("Test Note", "Test content", nil)
 	note.Content.UpsertReferences(items.ItemReferences{
@@ -144,9 +145,9 @@ func TestExtractNoteTags(t *testing.T) {
 
 func TestMOCBuilder_IdentifyTopLevelTags(t *testing.T) {
 	// Create test data
-	tag1, _ := items.NewTag("work")
-	tag2, _ := items.NewTag("personal")
-	tag3, _ := items.NewTag("rarely-used")
+	tag1, _ := items.NewTag("work", nil)
+	tag2, _ := items.NewTag("personal", nil)
+	tag3, _ := items.NewTag("rarely-used", nil)
 
 	// Create 10 notes with work tag, 5 with personal, 1 with rarely-used
 	var allItems items.Items
@@ -216,7 +217,7 @@ func TestEscapeYAMLString(t *testing.T) {
 
 func TestMOCBuilder_Generate(t *testing.T) {
 	// Create minimal test data
-	tag1, _ := items.NewTag("work")
+	tag1, _ := items.NewTag("work", nil)
 
 	var allItems items.Items
 	allItems = append(allItems, &tag1)

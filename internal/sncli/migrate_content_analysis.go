@@ -13,21 +13,21 @@ import (
 
 // ContentTheme represents a discovered theme from content analysis.
 type ContentTheme struct {
-	Name       string
-	Keywords   []string
-	Phrases    []string
-	NoteCount  int
-	Relevance  float64
+	Name         string
+	Keywords     []string
+	Phrases      []string
+	NoteCount    int
+	Relevance    float64
 	RelatedNotes []string // Note UUIDs
 }
 
 // ContentAnalyzer performs content analysis on notes to discover themes.
 type ContentAnalyzer struct {
-	notes           items.Items
-	stopWords       map[string]bool
-	minKeywordFreq  int
-	minPhraseFreq   int
-	minThemeNotes   int
+	notes          items.Items
+	stopWords      map[string]bool
+	minKeywordFreq int
+	minPhraseFreq  int
+	minThemeNotes  int
 }
 
 // NewContentAnalyzer creates a content analyzer.

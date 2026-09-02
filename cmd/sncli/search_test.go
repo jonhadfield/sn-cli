@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/jonhadfield/gosn-v2/items"
@@ -10,7 +11,9 @@ import (
 func TestSearchNotes(t *testing.T) {
 	// Create mock notes
 	note1, _ := items.NewNote("Test Note One", "This is a test note with some content", nil)
-	note2, _ := items.NewNote("Another Note", "Different content here", nil)
+	// Lower-case "test" so the content-search case finds this note while the
+	// title-only and case-sensitive ("Test") cases still do not.
+	note2, _ := items.NewNote("Another Note", "Different content here, with a test reference", nil)
 	note3, _ := items.NewNote("Test Note Two", "More test content", nil)
 
 	notes := items.Items{&note1, &note2, &note3}
@@ -71,35 +74,44 @@ func TestGenerateSearchPreview(t *testing.T) {
 		text          string
 		query         string
 		caseSensitive bool
-		expectSnippet bool
+		expectMatch   bool
+		// Text shorter than the context window is returned whole, so only
+		// long text is windowed down and elided.
+		expectTruncated bool
 	}{
 		{
 			name:          "match found",
 			text:          "The quick brown fox jumps over the lazy dog",
 			query:         "fox",
 			caseSensitive: false,
-			expectSnippet: true,
+			expectMatch:   true,
 		},
 		{
 			name:          "no match",
 			text:          "The quick brown dog",
 			query:         "cat",
 			caseSensitive: false,
-			expectSnippet: false,
 		},
 		{
 			name:          "case sensitive match",
 			text:          "The Quick Brown Fox",
 			query:         "Quick",
 			caseSensitive: true,
-			expectSnippet: true,
+			expectMatch:   true,
 		},
 		{
 			name:          "case sensitive no match",
 			text:          "The Quick Brown Fox",
 			query:         "quick",
 			caseSensitive: true,
-			expectSnippet: false,
+		},
+		{
+			name:            "long text windowed around match",
+			text:            strings.Repeat("filler words ", 20) + "needle" + strings.Repeat(" trailing words", 20),
+			query:           "needle",
+			caseSensitive:   false,
+			expectMatch:     true,
+			expectTruncated: true,
 		},
 	}
 
@@ -108,9 +120,19 @@ func TestGenerateSearchPreview(t *testing.T) {
 			preview := generateSearchPreview(tt.text, tt.query, tt.caseSensitive)
 			assert.NotEmpty(t, preview, "Preview should not be empty")
 
-			if tt.expectSnippet {
-				// When match is found, preview should contain context around the match
-				assert.NotEqual(t, tt.text, preview, "Preview should be different from original text when match found")
+			if tt.expectMatch {
+				// The preview is centred on the match, so it must contain it.
+				haystack, needle := preview, tt.query
+				if !tt.caseSensitive {
+					haystack, needle = strings.ToLower(haystack), strings.ToLower(needle)
+				}
+
+				assert.Contains(t, haystack, needle, "Preview should contain the match")
+			}
+
+			if tt.expectTruncated {
+				assert.NotEqual(t, tt.text, preview, "Long text should be windowed")
+				assert.Contains(t, preview, "...", "Windowed preview should be elided")
 			}
 		})
 	}

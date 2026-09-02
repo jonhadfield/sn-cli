@@ -11,6 +11,7 @@ jobs:
       group: test
       cancel-in-progress: true
     strategy:
+      fail-fast: false
       max-parallel: 1
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -18,24 +19,22 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       -
         name: Set up Go
-        uses: actions/setup-go@v5.5.0
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.24
+          go-version-file: go.mod
       -
+        # Live-server tests are opt-in via SN_INTEGRATION_TESTS; CI runs the
+        # offline unit tests only so it does not create items on a real
+        # account. Set that variable here to run the full suite.
         name: Tests
         run: |
           go mod tidy
-          go get github.com/axw/gocov/gocov
-          go get github.com/AlekSi/gocov-xml
-          go install github.com/axw/gocov/gocov
-          go install github.com/AlekSi/gocov-xml
-          go test -cover -v -failfast -p 1 $(go list ./...) -coverprofile cover.out
-          gocov convert cover.out | gocov-xml > coverage.xml
+          go test -cover -v -failfast -p 1 ./... -coverprofile cover.out
         if: runner.os != 'Windows'
         env:
           SN_SERVER: ${{ secrets.SN_SERVER }}
@@ -45,7 +44,8 @@ jobs:
         name: Codacy Coverage Reporter
         uses: codacy/codacy-coverage-reporter-action@v1.3.0
         with:
-          coverage-reports: coverage.xml
+          coverage-reports: cover.out
+          force-coverage-parser: go
         if: runner.os != 'Windows'
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
@@ -53,8 +53,8 @@ jobs:
         name: Windows Tests
         run: |
           go mod tidy
-          go test -v -failfast -p 1 $(go list ./...)
-        if: runner.os != 'Windows'
+          go test -v -failfast -p 1 ./...
+        if: runner.os == 'Windows'
         env:
           SN_SERVER: ${{ secrets.SN_SERVER }}
           SN_EMAIL: ${{ secrets.SN_EMAIL }}

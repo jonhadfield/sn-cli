@@ -14,6 +14,8 @@ import (
 )
 
 func TestAddDeleteNoteByUUID(t *testing.T) {
+	requireIntegration(t)
+
 	// Test the AddNoteInput and DeleteNoteConfig logic without external API dependency
 	testDelay()
 
@@ -47,6 +49,8 @@ func TestAddDeleteNoteByUUID(t *testing.T) {
 }
 
 func TestReplaceNote(t *testing.T) {
+	requireIntegration(t)
+
 	// Test the note replacement configuration logic without external API dependency
 
 	// No cleanup needed since this test doesn't use any resources
@@ -82,6 +86,8 @@ func TestReplaceNote(t *testing.T) {
 }
 
 func TestCreateNotesWithSimplifiedSync(t *testing.T) {
+	requireIntegration(t)
+
 	// This test validates that the fixed createNotes function works reliably
 	testDelay()
 
@@ -116,6 +122,8 @@ func TestCreateNotesWithSimplifiedSync(t *testing.T) {
 }
 
 func TestDirectItemsSyncVsCacheSync(t *testing.T) {
+	requireIntegration(t)
+
 	// Compare direct items.Sync (which works) vs cache.Sync (which times out)
 	testDelay()
 
@@ -185,6 +193,8 @@ func TestDirectItemsSyncVsCacheSync(t *testing.T) {
 }
 
 func TestSyncWithNewNote(t *testing.T) {
+	requireIntegration(t)
+
 	// Test proper integration with API using the gosn-v2 pattern
 	testDelay()
 
@@ -317,6 +327,8 @@ func TestSyncWithNewNote(t *testing.T) {
 //}
 
 func TestGetNote(t *testing.T) {
+	requireIntegration(t)
+
 	testDelay()
 
 	defer cleanUp(*testSession)
@@ -458,6 +470,8 @@ func TestGetNote(t *testing.T) {
 //}
 
 func TestConsecutiveSyncOperations(t *testing.T) {
+	requireIntegration(t)
+
 	// Test consecutive sync operations to reproduce hanging issue
 	// This creates notes, then makes rapid consecutive items.Sync calls with page limits
 	testDelay()
@@ -675,6 +689,8 @@ func deleteUserContent(session *session.Session) error {
 }
 
 func TestAddDeleteNoteByTitleRegex(t *testing.T) {
+	requireIntegration(t)
+
 	testDelay()
 
 	defer cleanUp(*testSession)

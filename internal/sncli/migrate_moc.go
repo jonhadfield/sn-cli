@@ -74,6 +74,10 @@ func (mb *MOCBuilder) Generate() ([]MOCFile, error) {
 		return mb.generatePARAMOCs()
 	case MOCStyleTopicBased:
 		return mb.generateTopicMOCs()
+	case MOCStyleAuto:
+		// "auto" currently resolves to the flat layout, which already runs
+		// content analysis to discover themes.
+		return mb.generateFlatMOCs()
 	default:
 		return mb.generateFlatMOCs()
 	}
@@ -362,21 +366,21 @@ func (mb *MOCBuilder) getRecentNotes(count int) []*items.Note {
 // getIconForTag returns an appropriate emoji icon for a tag.
 func (mb *MOCBuilder) getIconForTag(tag string) string {
 	icons := map[string]string{
-		"work":     "💼",
-		"personal": "🏠",
-		"learning": "📚",
-		"projects": "🚀",
-		"ideas":    "💡",
+		"work":      "💼",
+		"personal":  "🏠",
+		"learning":  "📚",
+		"projects":  "🚀",
+		"ideas":     "💡",
 		"reference": "📖",
-		"meetings": "🤝",
-		"planning": "📋",
-		"security": "🔐",
-		"code":     "💻",
-		"design":   "🎨",
-		"research": "🔬",
-		"health":   "🏥",
-		"finance":  "💰",
-		"travel":   "✈️",
+		"meetings":  "🤝",
+		"planning":  "📋",
+		"security":  "🔐",
+		"code":      "💻",
+		"design":    "🎨",
+		"research":  "🔬",
+		"health":    "🏥",
+		"finance":   "💰",
+		"travel":    "✈️",
 	}
 
 	if icon, exists := icons[strings.ToLower(tag)]; exists {
