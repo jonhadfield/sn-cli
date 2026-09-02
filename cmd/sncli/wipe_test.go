@@ -9,6 +9,8 @@ import (
 )
 
 func TestWipe(t *testing.T) {
+	requireIntegration(t)
+
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app := appSetup()

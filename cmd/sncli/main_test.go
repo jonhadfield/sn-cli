@@ -111,13 +111,25 @@ func integrationCredentialsAvailable() bool {
 	return os.Getenv("SN_EMAIL") != "" && os.Getenv("SN_PASSWORD") != ""
 }
 
+// requireIntegration skips a test that needs a live Standard Notes server.
+func requireIntegration(t *testing.T) {
+	t.Helper()
+
+	if !integrationCredentialsAvailable() {
+		t.Skip("integration test: set SN_EMAIL and SN_PASSWORD, " +
+			"or point SN_SERVER at a ramea instance, to run it")
+	}
+}
+
 func TestMain(m *testing.M) {
+	// Without credentials there is no session to build, but the unit tests in
+	// this package do not need one, so still run them. Tests that do need a
+	// server call requireIntegration and skip themselves.
 	if !integrationCredentialsAvailable() {
 		fmt.Fprintln(os.Stderr,
-			"skipping cmd/sncli integration tests: set SN_EMAIL and SN_PASSWORD, "+
-				"or point SN_SERVER at a ramea instance, to run them")
+			"no SN credentials in environment: running cmd/sncli unit tests only")
 
-		os.Exit(0)
+		os.Exit(m.Run())
 	}
 
 	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {

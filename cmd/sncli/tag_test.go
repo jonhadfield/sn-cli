@@ -10,6 +10,8 @@ import (
 )
 
 func TestGetMissingTag(t *testing.T) {
+	requireIntegration(t)
+
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app := appSetup()
@@ -22,6 +24,8 @@ func TestGetMissingTag(t *testing.T) {
 }
 
 func TestAddTag(t *testing.T) {
+	requireIntegration(t)
+
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app := appSetup()
@@ -50,6 +54,8 @@ func TestAddTag(t *testing.T) {
 }
 
 func TestAddGetTag(t *testing.T) {
+	requireIntegration(t)
+
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app := appSetup()
@@ -92,6 +98,8 @@ func TestAddGetTag(t *testing.T) {
 // }
 
 func TestAddDeleteTag(t *testing.T) {
+	requireIntegration(t)
+
 	time.Sleep(250 * time.Millisecond)
 	var outputBuffer bytes.Buffer
 	app := appSetup()
@@ -157,11 +165,15 @@ func TestAddDeleteTag(t *testing.T) {
 // }
 
 func TestAddTagErrorMissingTitle(t *testing.T) {
+	requireIntegration(t)
+
 	err := startCLI([]string{"sncli", "add", "tag"})
 	require.Error(t, err, "error should be returned if title is unspecified")
 }
 
 func TestDeleteTagErrorMissingTitle(t *testing.T) {
+	requireIntegration(t)
+
 	err := startCLI([]string{"sncli", "delete", "tag"})
 	require.Error(t, err, "error should be returned if title is unspecified")
 }
