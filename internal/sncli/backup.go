@@ -6,6 +6,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,6 +17,20 @@ import (
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"golang.org/x/crypto/pbkdf2"
+)
+
+const (
+	// backupFormatVersion is written into the manifest. Version 1.0 sealed the
+	// manifest itself, which made encrypted backups impossible to restore, and
+	// derived the key from a salt shared by every backup.
+	backupFormatVersion = "2.0"
+
+	// backupKDFIterations follows the OWASP guidance for PBKDF2-HMAC-SHA256.
+	backupKDFIterations = 600000
+
+	backupKDFName  = "pbkdf2-hmac-sha256"
+	backupSaltSize = 32
+	backupKeySize  = 32
 )
 
 // BackupConfig holds backup configuration
@@ -45,6 +60,44 @@ type BackupManifest struct {
 	Incremental bool           `json:"incremental"`
 	Encrypted   bool           `json:"encrypted"`
 	Version     string         `json:"version"`
+
+	// Key-derivation parameters, present only on encrypted backups. These are
+	// not secret: the salt exists to stop one precomputed table from attacking
+	// every backup, so it is stored alongside the ciphertext.
+	KDF        string `json:"kdf,omitempty"`
+	Salt       string `json:"salt,omitempty"`
+	Iterations int    `json:"iterations,omitempty"`
+}
+
+// deriveBackupKey derives the AES key for a backup from its password and the
+// key-derivation parameters recorded in its manifest.
+func deriveBackupKey(password string, salt []byte, iterations int) []byte {
+	return pbkdf2.Key([]byte(password), salt, iterations, backupKeySize, sha256.New)
+}
+
+// newBackupSalt returns a fresh random salt for a single backup.
+func newBackupSalt() ([]byte, error) {
+	salt := make([]byte, backupSaltSize)
+	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+		return nil, fmt.Errorf("failed to generate salt: %w", err)
+	}
+
+	return salt, nil
+}
+
+// newGCM builds the AEAD used to seal and open backup members.
+func newGCM(key []byte) (cipher.AEAD, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GCM: %w", err)
+	}
+
+	return gcm, nil
 }
 
 // BackupItem represents an item in the backup
@@ -67,6 +120,7 @@ func (b *BackupConfig) Run() error {
 
 	var writer io.Writer = zipFile
 	var gcm cipher.AEAD
+	var salt []byte
 
 	// Set up encryption if requested
 	if b.Encrypt {
@@ -74,18 +128,15 @@ func (b *BackupConfig) Run() error {
 			return fmt.Errorf("password required for encrypted backup")
 		}
 
-		// Derive key from password
-		key := pbkdf2.Key([]byte(b.Password), []byte("sn-cli-backup-salt"), 100000, 32, sha256.New)
-
-		// Create AES cipher
-		block, err := aes.NewCipher(key)
+		// A fresh salt per backup, so one precomputed table cannot attack them all.
+		salt, err = newBackupSalt()
 		if err != nil {
-			return fmt.Errorf("failed to create cipher: %w", err)
+			return err
 		}
 
-		gcm, err = cipher.NewGCM(block)
+		gcm, err = newGCM(deriveBackupKey(b.Password, salt, backupKDFIterations))
 		if err != nil {
-			return fmt.Errorf("failed to create GCM: %w", err)
+			return err
 		}
 	}
 
@@ -98,7 +149,13 @@ func (b *BackupConfig) Run() error {
 		ItemCounts:  make(map[string]int),
 		Incremental: b.Incremental,
 		Encrypted:   b.Encrypt,
-		Version:     "1.0",
+		Version:     backupFormatVersion,
+	}
+
+	if b.Encrypt {
+		manifest.KDF = backupKDFName
+		manifest.Salt = base64.StdEncoding.EncodeToString(salt)
+		manifest.Iterations = backupKDFIterations
 	}
 
 	// Backup notes
@@ -117,7 +174,9 @@ func (b *BackupConfig) Run() error {
 		return fmt.Errorf("failed to marshal manifest: %w", err)
 	}
 
-	if err := b.writeZipFile(zipWriter, "manifest.json", manifestData, gcm); err != nil {
+	// The manifest stays in the clear: it carries the parameters needed to
+	// derive the key, so it has to be readable before the key exists.
+	if err := b.writeZipFile(zipWriter, "manifest.json", manifestData, nil); err != nil {
 		return fmt.Errorf("failed to write manifest: %w", err)
 	}
 
@@ -288,15 +347,21 @@ func (r *RestoreConfig) Run() (RestoreResult, error) {
 	}
 	defer zipReader.Close()
 
-	// Read manifest
-	manifestData, encrypted, err := r.readZipFile(&zipReader.Reader, "manifest.json")
+	// Read manifest. It is always stored in the clear.
+	manifestData, err := r.readZipFile(&zipReader.Reader, "manifest.json")
 	if err != nil {
 		return result, fmt.Errorf("failed to read manifest: %w", err)
 	}
 
 	var manifest BackupManifest
 	if err := json.Unmarshal(manifestData, &manifest); err != nil {
-		return result, fmt.Errorf("failed to parse manifest: %w", err)
+		// Version 1.0 sealed the manifest too, so it never parsed here and the
+		// backup could not be restored at all. Say so rather than reporting a
+		// stray byte from the ciphertext.
+		return result, fmt.Errorf(
+			"failed to parse manifest: %w (if this is an encrypted backup written by "+
+				"sn-cli 0.4.3 or earlier, it was produced by a version that could not "+
+				"restore its own output)", err)
 	}
 
 	result.Manifest = manifest
@@ -306,25 +371,28 @@ func (r *RestoreConfig) Run() (RestoreResult, error) {
 		return result, fmt.Errorf("password required for encrypted backup")
 	}
 
+	encrypted := manifest.Encrypted
+
 	var gcm cipher.AEAD
 	if manifest.Encrypted {
-		// Derive key from password
-		key := pbkdf2.Key([]byte(r.Password), []byte("sn-cli-backup-salt"), 100000, 32, sha256.New)
-
-		// Create AES cipher
-		block, err := aes.NewCipher(key)
-		if err != nil {
-			return result, fmt.Errorf("failed to create cipher: %w", err)
+		salt, decErr := base64.StdEncoding.DecodeString(manifest.Salt)
+		if decErr != nil || len(salt) == 0 {
+			return result, fmt.Errorf("backup manifest has no usable key-derivation salt")
 		}
 
-		gcm, err = cipher.NewGCM(block)
+		iterations := manifest.Iterations
+		if iterations <= 0 {
+			return result, fmt.Errorf("backup manifest has no usable iteration count")
+		}
+
+		gcm, err = newGCM(deriveBackupKey(r.Password, salt, iterations))
 		if err != nil {
-			return result, fmt.Errorf("failed to create GCM: %w", err)
+			return result, err
 		}
 	}
 
 	// Read notes
-	notesData, _, err := r.readZipFile(&zipReader.Reader, "notes.json")
+	notesData, err := r.readZipFile(&zipReader.Reader, "notes.json")
 	if err != nil {
 		return result, fmt.Errorf("failed to read notes: %w", err)
 	}
@@ -345,7 +413,7 @@ func (r *RestoreConfig) Run() (RestoreResult, error) {
 	result.NotesCount = len(notes)
 
 	// Read tags
-	tagsData, _, err := r.readZipFile(&zipReader.Reader, "tags.json")
+	tagsData, err := r.readZipFile(&zipReader.Reader, "tags.json")
 	if err != nil {
 		return result, fmt.Errorf("failed to read tags: %w", err)
 	}
@@ -371,28 +439,27 @@ func (r *RestoreConfig) Run() (RestoreResult, error) {
 	return result, nil
 }
 
-// readZipFile reads a file from the zip archive
-func (r *RestoreConfig) readZipFile(zipReader *zip.Reader, filename string) ([]byte, bool, error) {
+// readZipFile reads a member of the archive verbatim. Whether it is encrypted
+// is recorded in the manifest, not guessed from its length.
+func (r *RestoreConfig) readZipFile(zipReader *zip.Reader, filename string) ([]byte, error) {
 	for _, file := range zipReader.File {
 		if file.Name == filename {
 			rc, err := file.Open()
 			if err != nil {
-				return nil, false, err
+				return nil, err
 			}
 			defer rc.Close()
 
 			data, err := io.ReadAll(rc)
 			if err != nil {
-				return nil, false, err
+				return nil, err
 			}
 
-			// Check if encrypted (has nonce prefix)
-			encrypted := len(data) > 12 // Minimal size for nonce + ciphertext
-			return data, encrypted, nil
+			return data, nil
 		}
 	}
 
-	return nil, false, fmt.Errorf("file %s not found in backup", filename)
+	return nil, fmt.Errorf("file %s not found in backup", filename)
 }
 
 // decrypt decrypts data using GCM
