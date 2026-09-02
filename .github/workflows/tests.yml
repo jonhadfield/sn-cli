@@ -28,6 +28,9 @@ jobs:
         with:
           go-version-file: go.mod
       -
+        # Live-server tests are opt-in via SN_INTEGRATION_TESTS; CI runs the
+        # offline unit tests only so it does not create items on a real
+        # account. Set that variable here to run the full suite.
         name: Tests
         run: |
           go mod tidy

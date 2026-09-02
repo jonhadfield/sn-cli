@@ -99,10 +99,16 @@ func signIn(server, email, password string) {
 	}
 }
 
-// integrationCredentialsAvailable reports whether the environment supplies what
-// these tests need to reach a Standard Notes server. Everything in this package
-// is an integration test, so without credentials there is nothing to run.
+// integrationCredentialsAvailable reports whether the live-server tests should
+// run. They add and delete real items on a real Standard Notes account, so they
+// are opt-in: set SN_INTEGRATION_TESTS=1 as well as supplying credentials.
 func integrationCredentialsAvailable() bool {
+	switch strings.ToLower(os.Getenv("SN_INTEGRATION_TESTS")) {
+	case "1", "true", "yes":
+	default:
+		return false
+	}
+
 	// The local ramea server registers a throwaway account of its own.
 	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
 		return true
@@ -116,8 +122,8 @@ func requireIntegration(t *testing.T) {
 	t.Helper()
 
 	if !integrationCredentialsAvailable() {
-		t.Skip("integration test: set SN_EMAIL and SN_PASSWORD, " +
-			"or point SN_SERVER at a ramea instance, to run it")
+		t.Skip("live-server test: set SN_INTEGRATION_TESTS=1 with SN_EMAIL " +
+			"and SN_PASSWORD to run it")
 	}
 }
 
@@ -127,7 +133,7 @@ func TestMain(m *testing.M) {
 	// server call requireIntegration and skip themselves.
 	if !integrationCredentialsAvailable() {
 		fmt.Fprintln(os.Stderr,
-			"no SN credentials in environment: running cmd/sncli unit tests only")
+			"SN_INTEGRATION_TESTS not set: running cmd/sncli unit tests only")
 
 		os.Exit(m.Run())
 	}

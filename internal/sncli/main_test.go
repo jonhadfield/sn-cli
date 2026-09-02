@@ -92,8 +92,38 @@ func signIn(server, email, password string) {
 	}
 }
 
+// integrationEnabled reports whether the live-server tests should run.
+//
+// They create and delete real items on a real Standard Notes account (one case
+// makes 200 notes), so they are opt-in: set SN_INTEGRATION_TESTS=1 to run them.
+// Without it only the offline unit tests run.
+func integrationEnabled() bool {
+	switch strings.ToLower(os.Getenv("SN_INTEGRATION_TESTS")) {
+	case "1", "true", "yes":
+		return true
+	default:
+		return false
+	}
+}
+
+// requireIntegration skips a test that needs a live Standard Notes server.
+func requireIntegration(t *testing.T) {
+	t.Helper()
+
+	if !integrationEnabled() {
+		t.Skip("live-server test: set SN_INTEGRATION_TESTS=1 to run it")
+	}
+}
+
 func TestMain(m *testing.M) {
-	// if os.Getenv("SN_SERVER") == "" || strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
+	// Do not sign in, sync, or touch a real account unless asked to.
+	if !integrationEnabled() {
+		fmt.Fprintln(os.Stderr,
+			"SN_INTEGRATION_TESTS not set: running internal/sncli unit tests only")
+
+		os.Exit(m.Run())
+	}
+
 	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
 		localTestMain()
 	} else {

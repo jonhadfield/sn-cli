@@ -10,6 +10,8 @@ import (
 )
 
 func TestAddDeleteTagByTitle(t *testing.T) {
+	requireIntegration(t)
+
 	defer cleanUp(*testSession)
 
 	testDelay()
@@ -37,6 +39,8 @@ func TestAddDeleteTagByTitle(t *testing.T) {
 }
 
 func TestAddTagWithParent(t *testing.T) {
+	requireIntegration(t)
+
 	defer cleanUp(*testSession)
 
 	testDelay()
@@ -74,6 +78,8 @@ func TestAddTagWithParent(t *testing.T) {
 }
 
 func TestGetTag(t *testing.T) {
+	requireIntegration(t)
+
 	testDelay()
 
 	defer cleanUp(*testSession)
@@ -161,6 +167,8 @@ func _deleteTagsByTitle(session cache.Session, input []string) (noDeleted int, e
 }
 
 func TestTaggingOfNotes(t *testing.T) {
+	requireIntegration(t)
+
 	testDelay()
 	defer cleanUp(*testSession)
 
@@ -219,6 +227,8 @@ func TestTaggingOfNotes(t *testing.T) {
 }
 
 func TestGetTagsByTitleAndUUID(t *testing.T) {
+	requireIntegration(t)
+
 	addTagConfig := AddTagsInput{
 		Session: testSession,
 		Tags:    []string{"TestTagOne", "TestTagTwo"},

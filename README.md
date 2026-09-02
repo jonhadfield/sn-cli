@@ -260,11 +260,19 @@ git clone https://github.com/jonhadfield/sn-cli.git
 cd sn-cli
 make build
 
-# Run tests
+# Run tests (unit tests only)
 make test
 
 # View all make targets
 make help
+```
+
+Tests that talk to a real Standard Notes account are opt-in, because they
+create and delete live items. `make test` and CI run only the offline unit
+tests. To run the live ones as well:
+
+```bash
+SN_INTEGRATION_TESTS=1 SN_EMAIL=you@example.com SN_PASSWORD=... go test ./...
 ```
 
 ## ⚠️ Known Issues
