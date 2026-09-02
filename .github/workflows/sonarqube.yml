@@ -1,4 +1,8 @@
-on: push
+on:
+  push:
+  # Allows re-running the scan without pushing a commit, e.g. after
+  # rotating SONAR_TOKEN.
+  workflow_dispatch:
 name: sonarqube
 jobs:
   sonarcloud:
