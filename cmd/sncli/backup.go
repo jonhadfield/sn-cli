@@ -180,7 +180,7 @@ func runBackupRestore(c *cli.Context, opts configOptsOutput) error {
 	}
 
 	// Get backup info first
-	manifest, err := sncli.GetBackupInfo(c.String("input"), "")
+	manifest, err := sncli.GetBackupInfo(c.String("input"))
 	if err != nil {
 		return fmt.Errorf("failed to read backup info: %w", err)
 	}
@@ -270,7 +270,7 @@ func runBackupRestore(c *cli.Context, opts configOptsOutput) error {
 func runBackupInfo(c *cli.Context) error {
 	filename := c.String("file")
 
-	manifest, err := sncli.GetBackupInfo(filename, "")
+	manifest, err := sncli.GetBackupInfo(filename)
 	if err != nil {
 		return err
 	}

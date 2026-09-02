@@ -146,7 +146,7 @@ func TestGetBackupInfoOnEncryptedBackup(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "backup.zip")
 	writeBackupArchive(t, path, "hunter2", true)
 
-	info, err := GetBackupInfo(path, "hunter2")
+	info, err := GetBackupInfo(path)
 	require.NoError(t, err)
 	require.True(t, info.Encrypted)
 	require.Equal(t, backupKDFName, info.KDF)

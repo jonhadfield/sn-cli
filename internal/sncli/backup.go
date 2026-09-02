@@ -486,8 +486,9 @@ type RestoreResult struct {
 	TagsCount  int
 }
 
-// GetBackupInfo reads backup metadata without restoring
-func GetBackupInfo(filename string, password string) (BackupManifest, error) {
+// GetBackupInfo reads backup metadata without restoring. No password is needed:
+// the manifest is stored in the clear.
+func GetBackupInfo(filename string) (BackupManifest, error) {
 	zipReader, err := zip.OpenReader(filename)
 	if err != nil {
 		return BackupManifest{}, fmt.Errorf("failed to open backup file: %w", err)
