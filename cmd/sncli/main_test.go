@@ -77,7 +77,7 @@ func signIn(server, email, password string) {
 		MasterKey:         ts.MasterKey,
 		ItemsKeys:         nil,
 		DefaultItemsKey:   session.SessionItemsKey{},
-		KeyParams:         auth.KeyParams{},
+		KeyParams:         ts.KeyParams,
 		AccessToken:       ts.AccessToken,
 		RefreshToken:      ts.RefreshToken,
 		AccessExpiration:  ts.AccessExpiration,
@@ -85,6 +85,11 @@ func signIn(server, email, password string) {
 		ReadOnlyAccess:    ts.ReadOnlyAccess,
 		PasswordNonce:     ts.PasswordNonce,
 		Schemas:           nil,
+		// Standard Notes issues "2:"-prefixed cookie-based access tokens, and
+		// the sync request only authenticates if the Cookie header goes with
+		// the bearer token. Dropping these yields a 401 from syncItemsViaAPI.
+		AccessTokenCookie:  ts.AccessTokenCookie,
+		RefreshTokenCookie: ts.RefreshTokenCookie,
 	}
 
 	testSession = &cache.Session{
@@ -94,8 +99,27 @@ func signIn(server, email, password string) {
 	}
 }
 
+// integrationCredentialsAvailable reports whether the environment supplies what
+// these tests need to reach a Standard Notes server. Everything in this package
+// is an integration test, so without credentials there is nothing to run.
+func integrationCredentialsAvailable() bool {
+	// The local ramea server registers a throwaway account of its own.
+	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
+		return true
+	}
+
+	return os.Getenv("SN_EMAIL") != "" && os.Getenv("SN_PASSWORD") != ""
+}
+
 func TestMain(m *testing.M) {
-	// if os.Getenv("SN_SERVER") == "" || strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
+	if !integrationCredentialsAvailable() {
+		fmt.Fprintln(os.Stderr,
+			"skipping cmd/sncli integration tests: set SN_EMAIL and SN_PASSWORD, "+
+				"or point SN_SERVER at a ramea instance, to run them")
+
+		os.Exit(0)
+	}
+
 	if strings.Contains(os.Getenv("SN_SERVER"), "ramea") {
 		localTestMain()
 	} else {
@@ -131,9 +155,14 @@ func TestMain(m *testing.M) {
 		RefreshExpiration: gTtestSession.RefreshExpiration,
 		ReadOnlyAccess:    gTtestSession.ReadOnlyAccess,
 		PasswordNonce:     gTtestSession.PasswordNonce,
+
+		AccessTokenCookie:  gTtestSession.AccessTokenCookie,
+		RefreshTokenCookie: gTtestSession.RefreshTokenCookie,
 	}, "")
 	if err != nil {
-		return
+		fmt.Println(err)
+
+		os.Exit(1)
 	}
 
 	testSession.CacheDBPath, err = cache.GenCacheDBPath(*testSession, "", common.LibName)
