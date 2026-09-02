@@ -129,12 +129,15 @@ func TestMain(m *testing.M) {
 	} else {
 		email := os.Getenv("SN_EMAIL")
 		password := os.Getenv("SN_PASSWORD")
-		if email == "" {
-			email = "gosn-v2-202509231858@lessknown.co.uk"
+
+		if email == "" || password == "" {
+			fmt.Fprintln(os.Stderr,
+				"SN_INTEGRATION_TESTS is set but SN_EMAIL and SN_PASSWORD are not: "+
+					"set both, or point SN_SERVER at a ramea instance")
+
+			os.Exit(1)
 		}
-		if password == "" {
-			password = "gosn-v2-202509231858@lessknown.co.uk"
-		}
+
 		signIn(SNServerURL, email, password)
 	}
 
