@@ -18,6 +18,7 @@ func writeBackupArchive(t *testing.T, path, password string, encrypt bool) {
 
 	b := &BackupConfig{OutputFile: path, Encrypt: encrypt, Password: password}
 
+	// #nosec G304 -- path is a file inside the test's own t.TempDir().
 	f, err := os.Create(path)
 	require.NoError(t, err)
 	defer f.Close()
