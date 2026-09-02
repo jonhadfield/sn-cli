@@ -124,11 +124,11 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    builds:
+    ids:
       - sn-linux-windows
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [ zip ]
     files:
       - LICENSE
       - README.md
@@ -136,7 +136,7 @@ archives:
 
   - id: macos
     name_template: "{{ .ProjectName }}_Darwin_universal"
-    builds:
+    ids:
       - sn-macos-universal
     files:
       - LICENSE

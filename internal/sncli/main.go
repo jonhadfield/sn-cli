@@ -310,7 +310,7 @@ func filterCacheItemsByTypes(ei cache.Items, types []string) cache.Items {
 var supportedContentTypes = []string{common.SNItemTypeNote, common.SNItemTypeTag, common.SNItemTypeComponent}
 
 func (i *WipeConfig) Run() (int, error) {
-	i.Session.RemoveDB()
+	_ = i.Session.RemoveDB()
 	if !i.Session.Debug && i.UseStdOut {
 		prefix := color.HiWhite.Sprintf("wiping ")
 

@@ -117,7 +117,7 @@ func processMigrateObsidian(c *cli.Context, opts configOptsOutput) error {
 	// Execute migration
 	result, err := migrateConfig.Run()
 	if spinner != nil {
-		spinner.Stop()
+		_ = spinner.Stop()
 	}
 
 	if err != nil {
