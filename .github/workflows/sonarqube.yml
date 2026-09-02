@@ -21,6 +21,9 @@ jobs:
       - name: Run tests
         run: go test -coverprofile=cover.out -covermode=atomic ./...
       - name: SonarCloud Scan
+        # nosemgrep: generic.secrets.security.detected-sonarqube-docs-api-key
+        # The hex string is this action's pinned commit SHA, not a key. Pinning
+        # is what SonarCloud's githubactions:S7637 asks for.
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
