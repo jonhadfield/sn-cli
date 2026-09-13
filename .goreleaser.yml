@@ -143,6 +143,24 @@ archives:
       - README.md
       - CHANGELOG.md
 
+homebrew_casks:
+  - name: sn-cli
+    binaries: [sn]
+    repository:
+      owner: jonhadfield
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/jonhadfield/sn-cli
+    description: A command-line interface for Standard Notes
+    hooks:
+      post:
+        # The darwin binaries are not signed, and casks set the quarantine flag
+        # on download, so Gatekeeper blocks the first run. Clear it here.
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/sn"]
+          end
+
 release:
   github:
     owner: jonhadfield
