@@ -13,6 +13,8 @@ import (
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/jonhadfield/gosn-v2/session"
+	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli/v2"
 )
 
 var (
@@ -189,4 +191,31 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(m.Run())
+}
+
+// An unknown subcommand should produce help for the command the user was in,
+// not for the application, so the options listed are the relevant ones.
+func TestInSubcommand(t *testing.T) {
+	app := cli.NewApp()
+	app.Name = "sn"
+
+	// urfave/cli wraps the application in a synthetic root command named after
+	// the app, so a context sitting at the top level looks like this.
+	root := cli.NewContext(app, nil, nil)
+	root.Command = &cli.Command{Name: app.Name}
+	require.False(t, inSubcommand(root), "top level should fall back to app help")
+
+	sub := cli.NewContext(app, nil, nil)
+	sub.Command = &cli.Command{Name: "get"}
+	require.True(t, inSubcommand(sub), "a subcommand should show its own help")
+
+	nested := cli.NewContext(app, nil, nil)
+	nested.Command = &cli.Command{Name: "task add"}
+	require.True(t, inSubcommand(nested), "a nested subcommand should show its own help")
+
+	unnamed := cli.NewContext(app, nil, nil)
+	unnamed.Command = &cli.Command{}
+	require.False(t, inSubcommand(unnamed), "an unnamed command has no help of its own")
+
+	require.False(t, inSubcommand(nil), "a nil context must not panic")
 }

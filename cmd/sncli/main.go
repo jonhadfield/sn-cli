@@ -152,10 +152,28 @@ func appSetup() (app *cli.App) {
 
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		_, _ = fmt.Fprintf(c.App.Writer, "\ninvalid command: \"%s\" \n\n", command)
+
+		// Show help for wherever the user actually was. An unknown subcommand
+		// of "get" should list what "get" accepts, not the top-level commands.
+		if inSubcommand(c) {
+			cli.ShowSubcommandHelpAndExit(c, 1)
+		}
+
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 
 	return app
+}
+
+// inSubcommand reports whether the context belongs to a subcommand rather than
+// the application itself. urfave/cli wraps the app in a synthetic root command
+// named after the app, so that name is what distinguishes the two.
+func inSubcommand(c *cli.Context) bool {
+	if c == nil || c.Command == nil {
+		return false
+	}
+
+	return c.Command.Name != "" && c.Command.Name != c.App.Name
 }
 
 func startCLI(args []string) (err error) {
