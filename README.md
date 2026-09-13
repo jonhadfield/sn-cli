@@ -31,6 +31,10 @@ That installs the `sn` binary and clears the macOS quarantine flag for you.
 its checksum against the published list, and installs to `/usr/local/bin`
 (prompting for sudo only for that last step):
 
+<!-- The point of these is that they are a single pasteable line, so they
+     cannot be wrapped to the usual width. -->
+<!-- markdownlint-disable MD013 -->
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jonhadfield/sn-cli/main/install.sh | sh
 ```
@@ -41,6 +45,8 @@ Set `BIN_DIR` to install somewhere else, or `VERSION` to pin a release:
 curl -fsSL https://raw.githubusercontent.com/jonhadfield/sn-cli/main/install.sh | BIN_DIR="$HOME/.local/bin" sh
 curl -fsSL https://raw.githubusercontent.com/jonhadfield/sn-cli/main/install.sh | VERSION=0.5.0 sh
 ```
+
+<!-- markdownlint-enable MD013 -->
 
 If you would rather read it before running it, [install.sh](install.sh) is in
 this repository.
