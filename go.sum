@@ -125,8 +125,8 @@ github.com/hashicorp/go-retryablehttp v0.7.8 h1:ylXZWnqa7Lhqpk0L1P1LzDtGcCR0rPVU
 github.com/hashicorp/go-retryablehttp v0.7.8/go.mod h1:rjiScheydd+CxvumBsIrFKlx3iS0jrZ7LvzFGFmuKbw=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
-github.com/jonhadfield/gosn-v2 v0.0.0-20260523114812-28e3820a341f h1:PAWirBzGEpPNZVMuVqteKrEz5Pf23xwd9kJ5/LnhXJ0=
-github.com/jonhadfield/gosn-v2 v0.0.0-20260523114812-28e3820a341f/go.mod h1:Ze1r6hTflxHNL+XjwtCABVVLcz7/y/caxrBq7bNO/FE=
+github.com/jonhadfield/gosn-v2 v0.0.0-20260913182735-7a8cd00aa2c8 h1:uAe3aVithouXLEVkIoB1LkJKnfYxflvVS+++uEa3iNI=
+github.com/jonhadfield/gosn-v2 v0.0.0-20260913182735-7a8cd00aa2c8/go.mod h1:Ze1r6hTflxHNL+XjwtCABVVLcz7/y/caxrBq7bNO/FE=
 github.com/klauspost/cpuid/v2 v2.3.0 h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=
 github.com/klauspost/cpuid/v2 v2.3.0/go.mod h1:hqwkgyIinND0mEev00jJYCxPNVRVXFQeu1XKlok6oO0=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=

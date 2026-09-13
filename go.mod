@@ -29,7 +29,7 @@ require (
 	github.com/divan/num2words v1.0.3
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gookit/color v1.6.1
-	github.com/jonhadfield/gosn-v2 v0.0.0-20260523114812-28e3820a341f
+	github.com/jonhadfield/gosn-v2 v0.0.0-20260913182735-7a8cd00aa2c8
 	github.com/pterm/pterm v0.12.83
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/sahilm/fuzzy v0.1.3

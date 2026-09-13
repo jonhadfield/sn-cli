@@ -133,6 +133,7 @@ func appSetup() (app *cli.App) {
 		cmdDebug(),
 		cmdDelete(),
 		cmdEdit(),
+		cmdEditor(),
 		cmdExport(),
 		cmdGet(),
 		cmdHealthcheck(),

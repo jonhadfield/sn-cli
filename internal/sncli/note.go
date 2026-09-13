@@ -137,6 +137,20 @@ func addNote(i addNoteInput) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
+		// Match the apps: a new note opens in the account's default editor.
+		// Only new notes are affected, since replacing a note's text should
+		// not silently change the editor it already uses.
+		var editorIdentifier string
+
+		editorIdentifier, err = defaultEditorForSession(i.session)
+		if err != nil {
+			return "", err
+		}
+
+		noteToAdd.Content.EditorIdentifier = editorIdentifier
+		noteToAdd.Content.NoteType = editorIdentifier
+
 		noteUUID = noteToAdd.UUID
 	}
 
