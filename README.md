@@ -19,7 +19,15 @@
 
 ### Installation
 
-**Download the latest release:**
+On macOS and linux, using [homebrew](https://brew.sh):
+
+```bash
+brew install jonhadfield/tap/sn-cli
+```
+
+That installs the `sn` binary and clears the macOS quarantine flag for you.
+
+**Or download the latest release:**
 ```bash
 # macOS/Linux - pick the archive matching your platform
 case "$(uname -s)-$(uname -m)" in
@@ -34,6 +42,14 @@ chmod +x sn && sudo mv sn /usr/local/bin/
 
 # Or via direct download
 # Visit: https://github.com/jonhadfield/sn-cli/releases
+```
+
+The darwin binaries are not signed, so a tarball fetched through a browser is
+quarantined and Gatekeeper will refuse to run it. Homebrew handles this; if you
+downloaded it yourself, clear the flag:
+
+```bash
+xattr -d com.apple.quarantine /usr/local/bin/sn
 ```
 
 ### First Run
