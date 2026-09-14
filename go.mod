@@ -15,9 +15,9 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/zalando/go-keyring v0.2.8 // indirect
 	go.etcd.io/bbolt v1.5.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/term v0.45.0
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/term v0.46.0
+	golang.org/x/text v0.42.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -36,7 +36,7 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	github.com/urfave/cli/v2 v2.27.7
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.57.0
 	google.golang.org/genai v1.71.0
 	gopkg.in/yaml.v2 v2.4.0
 )
