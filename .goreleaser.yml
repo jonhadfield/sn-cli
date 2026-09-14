@@ -152,14 +152,22 @@ homebrew_casks:
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: https://github.com/jonhadfield/sn-cli
     description: A command-line interface for Standard Notes
-    hooks:
-      post:
-        # The darwin binaries are not signed, and casks set the quarantine flag
-        # on download, so Gatekeeper blocks the first run. Clear it here.
-        install: |
-          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/sn"]
-          end
+    # The darwin binaries are not signed, and casks set the quarantine flag on
+    # download, so Gatekeeper blocks the first run. Clear it here.
+    #
+    # goreleaser's hooks.post.install emits a `postflight` block, which
+    # Homebrew 7 deprecates in favour of `postflight_steps`, warning on every
+    # install and update. That is not a rename: postflight_steps takes
+    # declarative steps rather than arbitrary Ruby, so the body is rewritten
+    # and injected through custom_block instead. Revert to hooks once
+    # goreleaser emits postflight_steps itself.
+    custom_block: |
+      # staged_path is a Homebrew template token, not the Ruby method the
+      # postflight block used, and goreleaser renders this through Go's
+      # templating first, so the braces are escaped to survive it.
+      postflight_steps do
+        run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ `{{staged_path}}` }}/sn"], must_succeed: false
+      end
 
 release:
   github:
