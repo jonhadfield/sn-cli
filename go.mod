@@ -10,7 +10,7 @@ require (
 	github.com/divan/num2words v1.0.3
 	github.com/dustin/go-humanize v1.1.0
 	github.com/gookit/color v1.6.1
-	github.com/jonhadfield/gosn-v2 v0.0.0-20260919161733-b6212050711e
+	github.com/jonhadfield/gosn-v2 v0.0.0-20260919171233-83a1c125b118
 	github.com/pterm/pterm v0.12.83
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/sahilm/fuzzy v0.1.3
