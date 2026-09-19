@@ -124,6 +124,11 @@ func appSetup() (app *cli.App) {
 		&cli.StringFlag{Name: "server", Value: viper.GetString("server")},
 		&cli.BoolFlag{Name: "use-session", Value: viper.GetBool("use_session")},
 		&cli.StringFlag{Name: "session-key"},
+		&cli.StringFlag{
+			Name:  "session-file",
+			Usage: "store the session in this file instead of the system keyring, e.g. on a headless server",
+			Value: viper.GetString("session_file"),
+		},
 		&cli.BoolFlag{Name: "no-stdout", Hidden: true},
 		&cli.StringFlag{Name: "cachedb-dir", Value: viper.GetString("cachedb_dir")},
 	}
@@ -148,6 +153,10 @@ func appSetup() (app *cli.App) {
 		cmdTag(),
 		cmdTemplate(),
 		cmdWipe(),
+	}
+
+	app.Before = func(c *cli.Context) error {
+		return useSessionFile(c.String("session-file"))
 	}
 
 	app.CommandNotFound = func(c *cli.Context, command string) {
