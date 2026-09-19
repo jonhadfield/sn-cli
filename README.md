@@ -138,7 +138,11 @@ sn --use-session get notes
 ```
 
 ### Headless Servers (No Keyring)
-On machines without a keyring service, such as a headless Linux server, store the session in a file instead. Log in once interactively, entering your 2FA code if you use one. After that, the session is refreshed and saved back to the file automatically.
+
+On machines without a keyring service, such as a headless Linux server,
+store the session in a file instead. Log in once interactively, entering
+your 2FA code if you use one. After that, the session is refreshed and
+saved back to the file automatically.
 
 ```bash
 export SN_SESSION_FILE=~/.config/sncli/session
@@ -150,7 +154,10 @@ sn session --add
 sn get notes
 ```
 
-The file is written with `0600` permissions. To encrypt it, add the session with `--session-key` and pass the same key to later commands with `--session-key`. You can also set the path with `--session-file` or `session_file` in the config file.
+The file is written with `0600` permissions. To encrypt it, add the
+session with `--session-key` and pass the same key to later commands with
+`--session-key`. You can also set the path with `--session-file` or
+`session_file` in the config file.
 
 ## 🆕 Recent Updates
 
