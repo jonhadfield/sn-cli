@@ -14,7 +14,7 @@ import (
 )
 
 func processGetItems(c *cli.Context, opts configOptsOutput) (err error) {
-	inUUID := strings.TrimSpace(c.String("uuid"))
+	inUUID := strings.TrimSpace(c.String(flagUUIDName))
 
 	matchAny := true
 	if c.Bool("match-all") {
@@ -24,7 +24,7 @@ func processGetItems(c *cli.Context, opts configOptsOutput) (err error) {
 	getItemsIF := items.ItemFilters{
 		Filters: []items.Filter{
 			{
-				Key:        "uuid",
+				Key:        filterKeyUUID,
 				Comparison: "==",
 				Value:      inUUID,
 			},

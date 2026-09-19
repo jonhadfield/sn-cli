@@ -34,11 +34,11 @@ func cmdEdit() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "title of the tag",
 					},
 					&cli.StringFlag{
-						Name:  "uuid",
+						Name:  flagUUIDName,
 						Usage: "uuid of the tag",
 					},
 				},
@@ -62,11 +62,11 @@ func cmdEdit() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "title of the note",
 					},
 					&cli.StringFlag{
-						Name:  "uuid",
+						Name:  flagUUIDName,
 						Usage: "uuid of the note",
 					},
 					&cli.StringFlag{

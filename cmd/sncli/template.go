@@ -19,7 +19,7 @@ func cmdTemplate() *cli.Command {
 		Usage:   "manage note templates",
 		Subcommands: []*cli.Command{
 			{
-				Name:    "list",
+				Name:    cmdNameList,
 				Aliases: []string{"ls"},
 				Usage:   "list available templates",
 				Action: func(c *cli.Context) error {
@@ -40,7 +40,7 @@ func cmdTemplate() *cli.Command {
 						Usage: "template description",
 					},
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "note title template (supports variables like {{date}})",
 					},
 					&cli.StringFlag{
@@ -81,7 +81,7 @@ func cmdTemplate() *cli.Command {
 						Usage:    "template name to use",
 					},
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "value for {{title}} variable",
 					},
 					&cli.StringFlag{
@@ -212,7 +212,7 @@ func showTemplate(c *cli.Context) error {
 func createTemplate(c *cli.Context) error {
 	name := c.String("name")
 	description := c.String("description")
-	title := c.String("title")
+	title := c.String(flagTitleName)
 	content := c.String("content")
 	tagsStr := c.String("tags")
 
@@ -270,8 +270,8 @@ func useTemplate(c *cli.Context, opts configOptsOutput) error {
 	vars := make(map[string]string)
 
 	// Add title if provided
-	if c.String("title") != "" {
-		vars["title"] = c.String("title")
+	if c.String(flagTitleName) != "" {
+		vars["title"] = c.String(flagTitleName)
 	}
 
 	// Add custom variables

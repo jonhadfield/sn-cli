@@ -92,7 +92,7 @@ func (o *ObsidianExporter) convertToMarkdown(note *items.Note, allNotes items.It
 	// Add frontmatter
 	if config.TagStyle == TagStyleFrontmatter || config.TagStyle == TagStyleBoth {
 		sb.WriteString("---\n")
-		sb.WriteString(fmt.Sprintf("title: \"%s\"\n", escapeYAMLString(note.Content.GetTitle())))
+		fmt.Fprintf(&sb, "title: \"%s\"\n", escapeYAMLString(note.Content.GetTitle()))
 
 		// Get tags
 		tags := extractNoteTags(note, allNotes)
@@ -108,12 +108,12 @@ func (o *ObsidianExporter) convertToMarkdown(note *items.Note, allNotes items.It
 		}
 
 		// Add timestamps
-		sb.WriteString(fmt.Sprintf("created: %s\n", note.CreatedAt))
-		sb.WriteString(fmt.Sprintf("updated: %s\n", note.UpdatedAt))
+		fmt.Fprintf(&sb, "created: %s\n", note.CreatedAt)
+		fmt.Fprintf(&sb, "updated: %s\n", note.UpdatedAt)
 
 		// Add UUID if configured
 		if config.PreserveUUID {
-			sb.WriteString(fmt.Sprintf("uuid: %s\n", note.UUID))
+			fmt.Fprintf(&sb, "uuid: %s\n", note.UUID)
 		}
 
 		sb.WriteString("source: standard-notes\n")
@@ -121,7 +121,7 @@ func (o *ObsidianExporter) convertToMarkdown(note *items.Note, allNotes items.It
 	}
 
 	// Add title as heading
-	sb.WriteString(fmt.Sprintf("# %s\n\n", note.Content.GetTitle()))
+	fmt.Fprintf(&sb, "# %s\n\n", note.Content.GetTitle())
 
 	// Add content
 	content := note.Content.GetText()
@@ -134,7 +134,7 @@ func (o *ObsidianExporter) convertToMarkdown(note *items.Note, allNotes items.It
 		if len(tags) > 0 {
 			sb.WriteString("\n\n")
 			for _, tag := range tags {
-				sb.WriteString(fmt.Sprintf("#%s ", tag))
+				fmt.Fprintf(&sb, "#%s ", tag)
 			}
 		}
 	}

@@ -29,6 +29,8 @@ const (
 	flagTaskName           = "task"
 	flagGroupName          = "group"
 	flagUUIDName           = "uuid"
+	filterKeyUUID          = "uuid"
+	cmdNameList            = "list"
 	defaultShowCompleted   = false
 )
 
@@ -37,7 +39,7 @@ func cmdTask() *cli.Command {
 		Name:  "task",
 		Usage: "manage checklist tasks",
 		BashComplete: func(c *cli.Context) {
-			addTasks := []string{"add", "list", "show", "complete", "reopen", "delete"}
+			addTasks := []string{"add", cmdNameList, "show", "complete", "reopen", "delete"}
 			if c.NArg() > 0 {
 				return
 			}
@@ -58,7 +60,7 @@ func cmdTask() *cli.Command {
 
 func cmdTaskList() *cli.Command {
 	return &cli.Command{
-		Name:        "list",
+		Name:        cmdNameList,
 		Usage:       "list",
 		Subcommands: nil,
 		Action: func(c *cli.Context) error {

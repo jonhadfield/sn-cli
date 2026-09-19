@@ -43,11 +43,11 @@ Note: Your note content will be sent to Google Gemini AI for analysis.`,
 				Usage: "only process notes created before this date (RFC3339: 2024-12-31T23:59:59Z)",
 			},
 			&cli.StringFlag{
-				Name:  "uuid",
+				Name:  flagUUIDName,
 				Usage: "specific note UUID(s) to process (comma-separated)",
 			},
 			&cli.StringFlag{
-				Name:  "title",
+				Name:  flagTitleName,
 				Usage: "process notes with title containing this text (comma-separated)",
 			},
 			&cli.BoolFlag{
@@ -98,13 +98,13 @@ func processOrganize(c *cli.Context, opts configOptsOutput) error {
 
 	// 4. Parse UUID and title filters
 	var uuids []string
-	if c.String("uuid") != "" {
-		uuids = sncli.CommaSplit(c.String("uuid"))
+	if c.String(flagUUIDName) != "" {
+		uuids = sncli.CommaSplit(c.String(flagUUIDName))
 	}
 
 	var titles []string
-	if c.String("title") != "" {
-		titles = sncli.CommaSplit(c.String("title"))
+	if c.String(flagTitleName) != "" {
+		titles = sncli.CommaSplit(c.String(flagTitleName))
 	}
 
 	// 5. Build config

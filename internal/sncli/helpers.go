@@ -101,11 +101,11 @@ func writeJSON(i ExportConfig, items items.EncryptedItems) error {
 
 	// add keyParams
 	content.WriteString("\n  \"keyParams\": {")
-	content.WriteString(fmt.Sprintf("\n    \"identifier\": \"%s\",", i.Session.KeyParams.Identifier))
-	content.WriteString(fmt.Sprintf("\n    \"version\": \"%s\",", i.Session.KeyParams.Version))
-	content.WriteString(fmt.Sprintf("\n    \"origination\": \"%s\",", i.Session.KeyParams.Origination))
-	content.WriteString(fmt.Sprintf("\n    \"created\": \"%s\",", i.Session.KeyParams.Created))
-	content.WriteString(fmt.Sprintf("\n    \"pw_nonce\": \"%s\"", i.Session.KeyParams.PwNonce))
+	fmt.Fprintf(&content, "\n    \"identifier\": \"%s\",", i.Session.KeyParams.Identifier)
+	fmt.Fprintf(&content, "\n    \"version\": \"%s\",", i.Session.KeyParams.Version)
+	fmt.Fprintf(&content, "\n    \"origination\": \"%s\",", i.Session.KeyParams.Origination)
+	fmt.Fprintf(&content, "\n    \"created\": \"%s\",", i.Session.KeyParams.Created)
+	fmt.Fprintf(&content, "\n    \"pw_nonce\": \"%s\"", i.Session.KeyParams.PwNonce)
 	content.WriteString("\n  }")
 
 	content.WriteString("\n}")

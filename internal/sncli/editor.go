@@ -201,7 +201,7 @@ func DefaultEditorIdentifier(its items.Items) string {
 func defaultEditorForSession(session *cache.Session) (string, error) {
 	its, err := getAllItems(session)
 	if err != nil {
-		return items.EditorPlainText, nil //nolint:nilerr // a note is still worth adding
+		return items.EditorPlainText, nil // a note is still worth adding
 	}
 
 	return DefaultEditorIdentifier(its), nil
