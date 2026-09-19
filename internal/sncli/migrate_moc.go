@@ -148,7 +148,7 @@ func (mb *MOCBuilder) createHomeMOC(topLevelTags []string, themes []ContentTheme
 		for _, tag := range topLevelTags {
 			icon := mb.getIconForTag(tag)
 			noteCount := mb.tagCounts[tag]
-			sb.WriteString(fmt.Sprintf("- %s [[%s MOC]] (%d notes)\n", icon, tag, noteCount))
+			fmt.Fprintf(&sb, "- %s [[%s MOC]] (%d notes)\n", icon, tag, noteCount)
 		}
 		sb.WriteString("\n")
 	}
@@ -161,7 +161,7 @@ func (mb *MOCBuilder) createHomeMOC(topLevelTags []string, themes []ContentTheme
 				break // Limit to top 10 in home
 			}
 			icon := "📝"
-			sb.WriteString(fmt.Sprintf("- %s [[%s MOC]] (%d notes)\n", icon, theme.Name, theme.NoteCount))
+			fmt.Fprintf(&sb, "- %s [[%s MOC]] (%d notes)\n", icon, theme.Name, theme.NoteCount)
 		}
 		sb.WriteString("\n")
 	}
@@ -174,15 +174,15 @@ func (mb *MOCBuilder) createHomeMOC(topLevelTags []string, themes []ContentTheme
 				noteCount++
 			}
 		}
-		sb.WriteString(fmt.Sprintf("- Total Notes: %d\n", noteCount))
-		sb.WriteString(fmt.Sprintf("- Total Tags: %d\n", len(mb.tags)))
+		fmt.Fprintf(&sb, "- Total Notes: %d\n", noteCount)
+		fmt.Fprintf(&sb, "- Total Tags: %d\n", len(mb.tags))
 	}
 
 	if mb.config.IncludeRecent {
 		sb.WriteString("\n## 🔍 Recently Updated\n\n")
 		recentNotes := mb.getRecentNotes(mb.config.RecentCount)
 		for _, note := range recentNotes {
-			sb.WriteString(fmt.Sprintf("- [[%s]]\n", note.Content.GetTitle()))
+			fmt.Fprintf(&sb, "- [[%s]]\n", note.Content.GetTitle())
 		}
 	}
 
@@ -203,20 +203,20 @@ func (mb *MOCBuilder) createTagMOC(tag string) MOCFile {
 	titleTag := toTitleCase(tag)
 
 	sb.WriteString("---\n")
-	sb.WriteString(fmt.Sprintf("title: %s\n", titleTag))
-	sb.WriteString(fmt.Sprintf("tags: [moc, %s]\n", tag))
+	fmt.Fprintf(&sb, "title: %s\n", titleTag)
+	fmt.Fprintf(&sb, "tags: [moc, %s]\n", tag)
 	sb.WriteString("---\n\n")
-	sb.WriteString(fmt.Sprintf("# %s %s\n\n", mb.getIconForTag(tag), titleTag))
+	fmt.Fprintf(&sb, "# %s %s\n\n", mb.getIconForTag(tag), titleTag)
 
 	// List all notes
 	sb.WriteString("## Notes\n\n")
 	for _, item := range notes {
 		if note, ok := item.(*items.Note); ok {
-			sb.WriteString(fmt.Sprintf("- [[%s]]\n", note.Content.GetTitle()))
+			fmt.Fprintf(&sb, "- [[%s]]\n", note.Content.GetTitle())
 		}
 	}
 
-	sb.WriteString(fmt.Sprintf("\n---\n**Tagged Notes**: #%s (%d notes)\n", tag, len(notes)))
+	fmt.Fprintf(&sb, "\n---\n**Tagged Notes**: #%s (%d notes)\n", tag, len(notes))
 
 	return MOCFile{
 		Filename: fmt.Sprintf("%s MOC.md", titleTag),
@@ -232,11 +232,11 @@ func (mb *MOCBuilder) createThemeMOC(theme ContentTheme) MOCFile {
 	var sb strings.Builder
 
 	sb.WriteString("---\n")
-	sb.WriteString(fmt.Sprintf("title: %s\n", theme.Name))
-	sb.WriteString(fmt.Sprintf("tags: [moc, theme, %s]\n", strings.ToLower(theme.Name)))
+	fmt.Fprintf(&sb, "title: %s\n", theme.Name)
+	fmt.Fprintf(&sb, "tags: [moc, theme, %s]\n", strings.ToLower(theme.Name))
 	sb.WriteString("---\n\n")
-	sb.WriteString(fmt.Sprintf("# 🎯 %s\n\n", theme.Name))
-	sb.WriteString(fmt.Sprintf("*Discovered theme based on content analysis (%d notes)*\n\n", theme.NoteCount))
+	fmt.Fprintf(&sb, "# 🎯 %s\n\n", theme.Name)
+	fmt.Fprintf(&sb, "*Discovered theme based on content analysis (%d notes)*\n\n", theme.NoteCount)
 
 	// Show key phrases if available
 	if len(theme.Phrases) > 0 {
@@ -245,7 +245,7 @@ func (mb *MOCBuilder) createThemeMOC(theme ContentTheme) MOCFile {
 			if i >= 5 {
 				break
 			}
-			sb.WriteString(fmt.Sprintf("- `%s`\n", phrase))
+			fmt.Fprintf(&sb, "- `%s`\n", phrase)
 		}
 		sb.WriteString("\n")
 	}
@@ -260,13 +260,13 @@ func (mb *MOCBuilder) createThemeMOC(theme ContentTheme) MOCFile {
 			}
 			note, ok := item.(*items.Note)
 			if ok && note.UUID == noteUUID {
-				sb.WriteString(fmt.Sprintf("- [[%s]]\n", note.Content.GetTitle()))
+				fmt.Fprintf(&sb, "- [[%s]]\n", note.Content.GetTitle())
 				break
 			}
 		}
 	}
 
-	sb.WriteString(fmt.Sprintf("\n---\n**Content Theme**: %d notes connected by shared concepts\n", theme.NoteCount))
+	fmt.Fprintf(&sb, "\n---\n**Content Theme**: %d notes connected by shared concepts\n", theme.NoteCount)
 
 	return MOCFile{
 		Filename: fmt.Sprintf("%s MOC.md", theme.Name),

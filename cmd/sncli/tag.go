@@ -107,8 +107,8 @@ func getTagsByTitle(sess cache.Session, title string) (tags items.Tags, err erro
 }
 
 func processEditTag(c *cli.Context, opts configOptsOutput) (err error) {
-	inUUID := c.String("uuid")
-	inTitle := c.String("title")
+	inUUID := c.String(flagUUIDName)
+	inTitle := c.String(flagTitleName)
 
 	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
 		_ = cli.ShowSubcommandHelp(c)
@@ -206,8 +206,8 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (err error) {
 }
 
 func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
-	inTitle := strings.TrimSpace(c.String("title"))
-	inUUID := strings.TrimSpace(c.String("uuid"))
+	inTitle := strings.TrimSpace(c.String(flagTitleName))
+	inUUID := strings.TrimSpace(c.String(flagUUIDName))
 
 	matchAny := true
 	if c.Bool("match-all") {
@@ -226,7 +226,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
 		for _, uuid := range sncli.CommaSplit(inUUID) {
 			titleFilter := items.Filter{
 				Type:       common.SNItemTypeTag,
-				Key:        "uuid",
+				Key:        filterKeyUUID,
 				Comparison: "==",
 				Value:      uuid,
 			}
@@ -385,7 +385,7 @@ func processGetTags(c *cli.Context, opts configOptsOutput) (err error) {
 
 func processAddTags(c *cli.Context, opts configOptsOutput) (err error) {
 	// validate input
-	tagInput := c.String("title")
+	tagInput := c.String(flagTitleName)
 	if strings.TrimSpace(tagInput) == "" {
 		_ = cli.ShowSubcommandHelp(c)
 
@@ -448,7 +448,7 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (err error) {
 	findTitle := c.String("find-title")
 	findText := c.String("find-text")
 	findTag := c.String("find-tag")
-	newTags := c.String("title")
+	newTags := c.String(flagTitleName)
 
 	sess, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {
@@ -488,8 +488,8 @@ func processTagItems(c *cli.Context, opts configOptsOutput) (err error) {
 }
 
 func processDeleteTags(c *cli.Context, opts configOptsOutput) (err error) {
-	titleIn := strings.TrimSpace(c.String("title"))
-	uuidIn := strings.ReplaceAll(c.String("uuid"), " ", "")
+	titleIn := strings.TrimSpace(c.String(flagTitleName))
+	uuidIn := strings.ReplaceAll(c.String(flagUUIDName), " ", "")
 
 	if titleIn == "" && uuidIn == "" {
 		_ = cli.ShowSubcommandHelp(c)
@@ -559,7 +559,7 @@ func cmdTag() *cli.Command {
 				Usage: "match tag",
 			},
 			&cli.StringFlag{
-				Name:  "title",
+				Name:  flagTitleName,
 				Usage: "tag title to apply (separate multiple with commas)",
 			},
 			&cli.BoolFlag{

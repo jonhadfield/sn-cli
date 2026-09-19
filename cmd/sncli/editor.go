@@ -42,7 +42,7 @@ func editorSession(c *cli.Context) (sess cache.Session, err error) {
 
 func cmdEditorList() *cli.Command {
 	return &cli.Command{
-		Name:      "list",
+		Name:      cmdNameList,
 		Usage:     "list the editors available to this account",
 		UsageText: "sn editor list",
 		Action: func(c *cli.Context) error {

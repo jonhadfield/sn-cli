@@ -190,11 +190,11 @@ func cmdGet() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "find by title (separate multiple by commas)",
 					},
 					&cli.StringFlag{
-						Name:  "uuid",
+						Name:  flagUUIDName,
 						Usage: "find by uuid (separate multiple by commas)",
 					},
 					&cli.BoolFlag{
@@ -239,7 +239,7 @@ func cmdGet() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "find by title",
 					},
 					&cli.StringFlag{
@@ -251,7 +251,7 @@ func cmdGet() *cli.Command {
 						Usage: "find by tag",
 					},
 					&cli.StringFlag{
-						Name:  "uuid",
+						Name:  flagUUIDName,
 						Usage: "find by uuid",
 					},
 					&cli.StringFlag{
@@ -307,7 +307,7 @@ func cmdGet() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "uuid",
+						Name:  flagUUIDName,
 						Usage: "unique id of item to return (separate multiple with commas)",
 					},
 					&cli.StringFlag{
@@ -331,7 +331,7 @@ func cmdGet() *cli.Command {
 				Hidden:  true,
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "find by title",
 					},
 					&cli.StringFlag{
@@ -343,7 +343,7 @@ func cmdGet() *cli.Command {
 						Usage: "find by tag",
 					},
 					&cli.StringFlag{
-						Name:  "uuid",
+						Name:  flagUUIDName,
 						Usage: "find by uuid",
 					},
 					&cli.BoolFlag{

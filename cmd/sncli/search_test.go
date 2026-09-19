@@ -63,7 +63,7 @@ func TestSearchNotes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			results := searchNotes(notes, tt.query, tt.searchContent, tt.fuzzy, tt.caseSensitive)
-			assert.Equal(t, tt.expectedCount, len(results), "Unexpected number of results")
+			assert.Len(t, results, tt.expectedCount, "Unexpected number of results")
 		})
 	}
 }
@@ -148,7 +148,7 @@ func TestSearchResult_Sorting(t *testing.T) {
 	results := searchNotes(notes, "test", true, false, false)
 
 	// Results should be sorted by score (title matches score higher)
-	assert.True(t, len(results) > 0, "Should have results")
+	assert.NotEmpty(t, results, "Should have results")
 	if len(results) >= 2 {
 		assert.Greater(t, results[0].Score, results[1].Score,
 			"First result should have higher score than second")
@@ -164,7 +164,7 @@ func TestSearchResult_MatchTypes(t *testing.T) {
 
 	results := searchNotes(notes, "search test", true, false, false)
 
-	assert.Equal(t, 3, len(results), "Should match all three notes")
+	assert.Len(t, results, 3, "Should match all three notes")
 
 	// Find the result that matches both title and text
 	var bothMatchResult *SearchResult

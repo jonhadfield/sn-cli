@@ -32,7 +32,7 @@ func cmdAdd() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "new tag title (separate multiple with commas)",
 					},
 					&cli.StringFlag{
@@ -64,7 +64,7 @@ func cmdAdd() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "new note title",
 					},
 					&cli.StringFlag{

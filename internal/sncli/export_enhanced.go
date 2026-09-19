@@ -240,39 +240,39 @@ func (e *ExportEnhancedConfig) exportMarkdown(note ExportedNote, dir string) err
 
 		switch e.StaticSite {
 		case "hugo":
-			content.WriteString(fmt.Sprintf("title: \"%s\"\n", escapeYAML(note.Title)))
-			content.WriteString(fmt.Sprintf("date: %s\n", note.CreatedAt))
-			content.WriteString(fmt.Sprintf("lastmod: %s\n", note.UpdatedAt))
+			fmt.Fprintf(&content, "title: \"%s\"\n", escapeYAML(note.Title))
+			fmt.Fprintf(&content, "date: %s\n", note.CreatedAt)
+			fmt.Fprintf(&content, "lastmod: %s\n", note.UpdatedAt)
 			if len(note.Tags) > 0 {
 				content.WriteString("tags:\n")
 				for _, tag := range note.Tags {
-					content.WriteString(fmt.Sprintf("  - \"%s\"\n", escapeYAML(tag)))
+					fmt.Fprintf(&content, "  - \"%s\"\n", escapeYAML(tag))
 				}
 			}
 			content.WriteString("draft: false\n")
 
 		case "jekyll":
-			content.WriteString(fmt.Sprintf("title: \"%s\"\n", escapeYAML(note.Title)))
-			content.WriteString(fmt.Sprintf("date: %s\n", note.CreatedAt))
+			fmt.Fprintf(&content, "title: \"%s\"\n", escapeYAML(note.Title))
+			fmt.Fprintf(&content, "date: %s\n", note.CreatedAt)
 			if len(note.Tags) > 0 {
 				content.WriteString("tags: [")
 				for i, tag := range note.Tags {
 					if i > 0 {
 						content.WriteString(", ")
 					}
-					content.WriteString(fmt.Sprintf("\"%s\"", escapeYAML(tag)))
+					fmt.Fprintf(&content, "\"%s\"", escapeYAML(tag))
 				}
 				content.WriteString("]\n")
 			}
 
 		default:
 			// Generic frontmatter
-			content.WriteString(fmt.Sprintf("title: \"%s\"\n", escapeYAML(note.Title)))
-			content.WriteString(fmt.Sprintf("uuid: %s\n", note.UUID))
-			content.WriteString(fmt.Sprintf("created: %s\n", note.CreatedAt))
-			content.WriteString(fmt.Sprintf("updated: %s\n", note.UpdatedAt))
+			fmt.Fprintf(&content, "title: \"%s\"\n", escapeYAML(note.Title))
+			fmt.Fprintf(&content, "uuid: %s\n", note.UUID)
+			fmt.Fprintf(&content, "created: %s\n", note.CreatedAt)
+			fmt.Fprintf(&content, "updated: %s\n", note.UpdatedAt)
 			if len(note.Tags) > 0 {
-				content.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(note.Tags, ", ")))
+				fmt.Fprintf(&content, "tags: [%s]\n", strings.Join(note.Tags, ", "))
 			}
 		}
 
@@ -283,7 +283,7 @@ func (e *ExportEnhancedConfig) exportMarkdown(note ExportedNote, dir string) err
 	if note.Content != "" {
 		content.WriteString(note.Content)
 	} else {
-		content.WriteString(fmt.Sprintf("# %s\n\n(Empty note)\n", note.Title))
+		fmt.Fprintf(&content, "# %s\n\n(Empty note)\n", note.Title)
 	}
 
 	return os.WriteFile(filepath, []byte(content.String()), 0644)
@@ -300,8 +300,8 @@ func (e *ExportEnhancedConfig) exportHTML(note ExportedNote, dir string) error {
 	var html strings.Builder
 
 	html.WriteString("<!DOCTYPE html>\n<html>\n<head>\n")
-	html.WriteString(fmt.Sprintf("  <meta charset=\"utf-8\">\n"))
-	html.WriteString(fmt.Sprintf("  <title>%s</title>\n", escapeHTML(note.Title)))
+	fmt.Fprintf(&html, "  <meta charset=\"utf-8\">\n")
+	fmt.Fprintf(&html, "  <title>%s</title>\n", escapeHTML(note.Title))
 	html.WriteString("  <style>\n")
 	html.WriteString("    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }\n")
 	html.WriteString("    h1 { color: #333; }\n")
@@ -312,17 +312,17 @@ func (e *ExportEnhancedConfig) exportHTML(note ExportedNote, dir string) error {
 	html.WriteString("  </style>\n")
 	html.WriteString("</head>\n<body>\n")
 
-	html.WriteString(fmt.Sprintf("  <h1>%s</h1>\n", escapeHTML(note.Title)))
+	fmt.Fprintf(&html, "  <h1>%s</h1>\n", escapeHTML(note.Title))
 
 	if e.WithMetadata {
 		html.WriteString("  <div class=\"metadata\">\n")
-		html.WriteString(fmt.Sprintf("    <div>Created: %s</div>\n", formatDate(note.CreatedAt)))
-		html.WriteString(fmt.Sprintf("    <div>Updated: %s</div>\n", formatDate(note.UpdatedAt)))
+		fmt.Fprintf(&html, "    <div>Created: %s</div>\n", formatDate(note.CreatedAt))
+		fmt.Fprintf(&html, "    <div>Updated: %s</div>\n", formatDate(note.UpdatedAt))
 
 		if len(note.Tags) > 0 {
 			html.WriteString("    <div class=\"tags\">Tags: ")
 			for _, tag := range note.Tags {
-				html.WriteString(fmt.Sprintf("<span class=\"tag\">%s</span>", escapeHTML(tag)))
+				fmt.Fprintf(&html, "<span class=\"tag\">%s</span>", escapeHTML(tag))
 			}
 			html.WriteString("</div>\n")
 		}
@@ -331,7 +331,7 @@ func (e *ExportEnhancedConfig) exportHTML(note ExportedNote, dir string) error {
 
 	// Convert markdown to HTML (simple conversion)
 	contentHTML := simpleMarkdownToHTML(note.Content)
-	html.WriteString(fmt.Sprintf("  <div class=\"content\">%s</div>\n", contentHTML))
+	fmt.Fprintf(&html, "  <div class=\"content\">%s</div>\n", contentHTML)
 
 	html.WriteString("</body>\n</html>")
 
@@ -433,15 +433,15 @@ func simpleMarkdownToHTML(md string) string {
 
 		// Headers
 		if strings.HasPrefix(line, "### ") {
-			result.WriteString(fmt.Sprintf("<h3>%s</h3>\n", strings.TrimPrefix(line, "### ")))
+			fmt.Fprintf(&result, "<h3>%s</h3>\n", strings.TrimPrefix(line, "### "))
 		} else if strings.HasPrefix(line, "## ") {
-			result.WriteString(fmt.Sprintf("<h2>%s</h2>\n", strings.TrimPrefix(line, "## ")))
+			fmt.Fprintf(&result, "<h2>%s</h2>\n", strings.TrimPrefix(line, "## "))
 		} else if strings.HasPrefix(line, "# ") {
-			result.WriteString(fmt.Sprintf("<h1>%s</h1>\n", strings.TrimPrefix(line, "# ")))
+			fmt.Fprintf(&result, "<h1>%s</h1>\n", strings.TrimPrefix(line, "# "))
 		} else if line == "" {
 			result.WriteString("<br>\n")
 		} else {
-			result.WriteString(fmt.Sprintf("<p>%s</p>\n", line))
+			fmt.Fprintf(&result, "<p>%s</p>\n", line)
 		}
 	}
 

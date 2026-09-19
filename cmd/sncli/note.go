@@ -170,8 +170,8 @@ func captureInputFromEditor(title, text, editor string) ([]byte, error) {
 }
 
 func processEditNote(c *cli.Context, opts configOptsOutput) (err error) {
-	inUUID := c.String("uuid")
-	inTitle := c.String("title")
+	inUUID := c.String(flagUUIDName)
+	inTitle := c.String(flagTitleName)
 	inEditor := c.String("editor")
 
 	if inTitle == "" && inUUID == "" || inTitle != "" && inUUID != "" {
@@ -300,8 +300,8 @@ func parseEditorOutput(in []byte) (title, text string, err error) {
 }
 
 func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
-	uuid := c.String("uuid")
-	title := c.String("title")
+	uuid := c.String(flagUUIDName)
+	title := c.String(flagTitleName)
 	text := c.String("text")
 	editor := c.String("editor")
 	count := c.Bool("count")
@@ -328,7 +328,7 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 	if uuid != "" {
 		titleFilter := items.Filter{
 			Type:       common.SNItemTypeNote,
-			Key:        "uuid",
+			Key:        filterKeyUUID,
 			Comparison: "==",
 			Value:      uuid,
 		}
@@ -402,8 +402,8 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 }
 
 func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
-	uuid := c.String("uuid")
-	title := c.String("title")
+	uuid := c.String(flagUUIDName)
+	title := c.String(flagTitleName)
 	text := c.String("text")
 	count := c.Bool("count")
 	output := c.String("output")
@@ -427,7 +427,7 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 	if uuid != "" {
 		titleFilter := items.Filter{
 			Type:       common.SNItemTypeNote,
-			Key:        "uuid",
+			Key:        filterKeyUUID,
 			Comparison: "==",
 			Value:      uuid,
 		}
@@ -637,7 +637,7 @@ func outputNotes(c *cli.Context, count bool, output string, getNoteConfig sncli.
 
 func processAddNotes(c *cli.Context, opts configOptsOutput) (err error) {
 	// get input
-	title := strings.TrimSpace(c.String("title"))
+	title := strings.TrimSpace(c.String(flagTitleName))
 	text := strings.TrimSpace(c.String("text"))
 	filePath := strings.TrimSpace(c.String("file"))
 
@@ -688,8 +688,8 @@ func processAddNotes(c *cli.Context, opts configOptsOutput) (err error) {
 }
 
 func processDeleteNote(c *cli.Context, opts configOptsOutput) (err error) {
-	title := strings.TrimSpace(c.String("title"))
-	uuid := strings.TrimSpace(c.String("uuid"))
+	title := strings.TrimSpace(c.String(flagTitleName))
+	uuid := strings.TrimSpace(c.String(flagUUIDName))
 
 	if title == "" && uuid == "" {
 		_ = cli.ShowSubcommandHelp(c)
@@ -736,7 +736,7 @@ func processDeleteNote(c *cli.Context, opts configOptsOutput) (err error) {
 }
 
 func processDeleteItems(c *cli.Context, opts configOptsOutput) (err error) {
-	uuid := strings.TrimSpace(c.String("uuid"))
+	uuid := strings.TrimSpace(c.String(flagUUIDName))
 
 	sess, _, err := cache.GetSession(common.NewHTTPClient(), opts.useSession, opts.sessKey, opts.server, opts.debug)
 	if err != nil {

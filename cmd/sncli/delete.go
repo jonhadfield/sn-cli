@@ -34,11 +34,11 @@ func cmdDelete() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "title of note to delete (separate multiple with commas)",
 					},
 					&cli.StringFlag{
-						Name:  "uuid",
+						Name:  flagUUIDName,
 						Usage: "unique id of note to delete (separate multiple with commas)",
 					},
 				},
@@ -62,11 +62,11 @@ func cmdDelete() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "title",
+						Name:  flagTitleName,
 						Usage: "title of note to delete (separate multiple with commas)",
 					},
 					&cli.StringFlag{
-						Name:  "uuid",
+						Name:  flagUUIDName,
 						Usage: "unique id of note to delete (separate multiple with commas)",
 					},
 				},
@@ -90,7 +90,7 @@ func cmdDelete() *cli.Command {
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "uuid",
+						Name:  flagUUIDName,
 						Usage: "unique id of item to delete (separate multiple with commas)",
 					},
 				},
