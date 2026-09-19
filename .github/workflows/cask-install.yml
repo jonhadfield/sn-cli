@@ -1,0 +1,99 @@
+# Installs sn-cli the way the README tells a macOS user to, and checks the
+# result runs.
+#
+# The cask clears com.apple.quarantine so gatekeeper does not kill the
+# installed binary. That used to be a postflight block, which homebrew has
+# deprecated. Goreleaser still emits the old stanza from hooks.post.install
+# (https://github.com/goreleaser/goreleaser/issues/6870), so the cask config
+# injects postflight_steps through custom_block instead.
+#
+# If homebrew removes postflight, the strip stops running, gatekeeper kills the
+# installed binary, and it exits 137 printing nothing. No release would fail
+# and no test here would notice: the change is homebrew's, not ours. So this
+# asks on a schedule rather than on a push, and the question it asks is the one
+# a user would - does the thing I just installed run.
+name: cask install
+
+on:
+  schedule:
+    # monday morning, so a week's worth of homebrew releases is covered by the
+    # time anyone is installing
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/cask-install.yml
+
+permissions:
+  contents: read
+
+jobs:
+  install-from-tap:
+    runs-on: macos-latest
+    steps:
+      -
+        name: what homebrew is this
+        run: brew --version
+      -
+        # The command from the README. Naming the cask in full taps
+        # jonhadfield/tap and counts as trusting it, so no separate tap or
+        # trust step is needed; if that stops being true, this is where it
+        # shows.
+        name: install
+        run: brew install jonhadfield/tap/sn-cli
+      -
+        # Reported rather than asserted. A runner that does not apply the
+        # attribute at all would make an assertion here pass for the wrong
+        # reason, and the answer is worth reading in the log either way.
+        name: what landed
+        run: |
+          brew list --cask --versions sn-cli
+          binary="$(readlink -f "$(command -v sn)")"
+          echo "binary: $binary"
+          if quarantine="$(xattr -p com.apple.quarantine "$binary" 2>/dev/null)"; then
+            echo "quarantine attribute present: $quarantine"
+          else
+            echo "no quarantine attribute, which is the postflight strip having run"
+          fi
+      -
+        # Whether this check can fail at all. The attribute arrives on the
+        # downloaded archive and reaches the binary from there, so a runner
+        # that does not quarantine downloads would pass the step below however
+        # broken the cask was. Say so rather than let a green tick imply
+        # something it does not.
+        name: can this runner observe the failure
+        run: |
+          quarantined=""
+          for archive in "$(brew --cache)"/downloads/*sn-cli*; do
+            [ -e "$archive" ] || continue
+            if value="$(xattr -p com.apple.quarantine "$archive" 2>/dev/null)"; then
+              echo "$(basename "$archive" | cut -c1-16)...: quarantined ($value)"
+              quarantined=yes
+            else
+              echo "$(basename "$archive" | cut -c1-16)...: not quarantined"
+            fi
+          done
+          if [ -z "$quarantined" ]; then
+            echo "::warning::nothing downloaded here carried com.apple.quarantine, so the step that follows would pass even if the cask's strip had stopped running. This check is watching for a failure it cannot currently see."
+          else
+            echo "the archive was quarantined, so the strip is doing real work and its absence would be caught"
+          fi
+      -
+        # The point of the whole file. Gatekeeper kills rather than refuses, so
+        # the symptom is signal 9 and an empty stdout.
+        name: the installed binary runs
+        run: |
+          set +e
+          output="$(sn --help 2>&1)"
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "$output"
+            if [ "$status" -eq 137 ]; then
+              echo "::error::sn was killed (exit 137), which is gatekeeper refusing a quarantined binary. The cask's quarantine strip has stopped running: see https://github.com/goreleaser/goreleaser/issues/6870"
+            else
+              echo "::error::sn exited $status when asked for its help text"
+            fi
+            exit 1
+          fi
+          echo "sn ran"
