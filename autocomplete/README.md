@@ -1,10 +1,15 @@
-# Shell Completion for sncli
+# Shell Completion for sn
 
-This directory contains shell completion scripts for the Standard Notes CLI (`sncli`).
+This directory contains shell completion scripts for the Standard Notes CLI.
+The binary is called `sn`, and that name matters: the Bash and PowerShell
+scripts take the command they complete from their own filename, so a script
+installed under any other name completes a command that does not exist.
 
 ## Overview
 
-The completion scripts use the CLI's built-in `--generate-bash-completion` flag to dynamically generate completions, which means they automatically stay in sync with all available commands and options.
+The completion scripts use the CLI's built-in `--generate-bash-completion` flag
+to generate completions dynamically, which means they stay in step with the
+available commands and options automatically.
 
 ## Installation
 
@@ -12,26 +17,33 @@ The completion scripts use the CLI's built-in `--generate-bash-completion` flag 
 
 #### macOS with Homebrew
 
+<!-- markdownlint-disable MD013 -->
+
 ```bash
 # Install bash-completion if not already installed
 brew install bash-completion@2
 
-# Copy the completion script
-sudo cp bash_autocomplete /usr/local/etc/bash_completion.d/sncli
+# Copy the completion script, named for the binary
+sudo cp bash_autocomplete "$(brew --prefix)/etc/bash_completion.d/sn"
 
 # Add to your ~/.bash_profile or ~/.bashrc
-echo '[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion' >> ~/.bash_profile
+echo '[ -f "$(brew --prefix)/etc/bash_completion" ] && . "$(brew --prefix)/etc/bash_completion"' >> ~/.bash_profile
 source ~/.bash_profile
 ```
+
+<!-- markdownlint-enable MD013 -->
+
+`$(brew --prefix)` is `/usr/local` on Intel Macs and `/opt/homebrew` on Apple
+Silicon.
 
 #### Linux
 
 ```bash
 # Copy to system completion directory
-sudo cp bash_autocomplete /etc/bash_completion.d/sncli
+sudo cp bash_autocomplete /etc/bash_completion.d/sn
 
 # Source in your ~/.bashrc (usually automatic on next login)
-echo 'source /etc/bash_completion.d/sncli' >> ~/.bashrc
+echo 'source /etc/bash_completion.d/sn' >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -39,64 +51,59 @@ source ~/.bashrc
 
 ```bash
 # Add to your ~/.bashrc or ~/.bash_profile
-export PROG=sncli
+export PROG=sn
 source /path/to/sn-cli/autocomplete/bash_autocomplete
 ```
 
 ### Zsh
 
+The zsh script reads the command name from `$PROG`, so set it before sourcing
+the script:
+
 ```bash
-# Create completion directory if it doesn't exist
-mkdir -p ~/.zsh/completion
-
-# Copy the completion script
-cp zsh_autocomplete ~/.zsh/completion/_sncli
-
-# Add to your ~/.zshrc (if not already present)
-fpath=(~/.zsh/completion $fpath)
+# Add to your ~/.zshrc
 autoload -U compinit && compinit
+export PROG=sn
+source /path/to/sn-cli/autocomplete/zsh_autocomplete
 
 # Reload your shell
 source ~/.zshrc
 ```
 
-### Fish
-
-```bash
-# Fish automatically loads completions from this directory
-mkdir -p ~/.config/fish/completions
-
-# Copy the completion script
-cp fish_autocomplete.fish ~/.config/fish/completions/sncli.fish
-
-# Reload completions (or restart fish)
-fish_update_completions
-```
-
 ### PowerShell
 
-```powershell
-# Add to your PowerShell profile
-# Find profile location with: $PROFILE
+Like the Bash script, this one takes the command name from its filename, so
+save it as `sn.ps1`:
 
-# Copy the script to a permanent location
-Copy-Item powershell_autocomplete.ps1 ~\Documents\WindowsPowerShell\
+```powershell
+# Find your profile location with: $PROFILE
+
+# Copy the script to a permanent location, named for the binary
+Copy-Item powershell_autocomplete.ps1 ~\Documents\WindowsPowerShell\sn.ps1
 
 # Add to your profile
-Add-Content $PROFILE ". ~\Documents\WindowsPowerShell\powershell_autocomplete.ps1"
+Add-Content $PROFILE ". ~\Documents\WindowsPowerShell\sn.ps1"
 
 # Reload profile
 . $PROFILE
 ```
+
+### Fish
+
+`fish_autocomplete.fish` does not work as shipped: it registers completions for
+a command named `sncli`, which is not what the binary is called, and the name is
+hardcoded in the script rather than taken from the filename. Renaming the file
+is not enough to fix it. This is tracked as a bug; until it is fixed, fish users
+have no working completion.
 
 ## Usage
 
 Once installed, you can use Tab completion:
 
 ```bash
-sncli <TAB>              # Shows all commands
-sncli add <TAB>          # Shows add subcommands (note, tag, task)
-sncli get --<TAB>        # Shows available flags
+sn <TAB>              # Shows all commands
+sn add <TAB>          # Shows add subcommands (note, tag)
+sn get --<TAB>        # Shows available flags
 ```
 
 ## Verification
@@ -105,7 +112,7 @@ Test if completions are working:
 
 ```bash
 # Type this and press TAB
-sncli a<TAB>
+sn a<TAB>
 
 # Should show: add
 ```
@@ -115,19 +122,17 @@ sncli a<TAB>
 ### Bash: "command not found: _get_comp_words_by_ref"
 
 Install the bash-completion package:
+
 - **macOS**: `brew install bash-completion@2`
 - **Ubuntu/Debian**: `sudo apt-get install bash-completion`
 - **Fedora/RHEL**: `sudo dnf install bash-completion`
 
 ### Completions not appearing
 
-1. Make sure the completion script is in the correct location
-2. Reload your shell: `exec $SHELL` or open a new terminal
-3. Check that `sncli` is in your PATH: `which sncli`
-
-### Fish shell not finding completions
-
-Make sure the file is named correctly: `~/.config/fish/completions/sncli.fish`
+1. Check the script is installed under the name `sn`, not `sncli`. The Bash and
+   PowerShell scripts derive the command they complete from their own filename.
+2. Reload your shell: `exec $SHELL`, or open a new terminal.
+3. Check that `sn` is on your PATH: `which sn`.
 
 ## References
 
