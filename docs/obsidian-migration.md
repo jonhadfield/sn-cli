@@ -88,25 +88,42 @@ Standard Notes, and to match them back up if you migrate again.
 ## Maps of Content
 
 A Map of Content is an index note: rather than foldering your notes, you link
-to them from a page that gives them context. `sn` builds these two ways at
-once:
+to them from a page that gives them context. Every layout writes a `Home.md`
+linking to the rest.
 
-- **By tag.** Your most-used top-level tags each get a MOC.
-- **By theme.** The content of your notes is analysed for recurring themes, and
-  any theme covering two or more notes gets a MOC as well. This picks up
-  groupings you never tagged.
+### `--moc-style`
 
-### A note on `--moc-style` and `--moc-depth`
+**`flat`** (the default) builds MOCs two ways at once: your most-used
+top-level tags each get one, and the content of your notes is analysed for
+recurring themes, so groupings you never tagged get one too.
 
-`--moc-style` accepts five values, and they all currently produce the flat
-layout described above: `hierarchical`, `para` and `topic` are declared but not
-yet implemented, and `auto` resolves to flat deliberately, because the flat
-generator already runs the content analysis. `--moc-depth` is accepted and
-carried through the config, but nothing reads it yet.
+**`hierarchical`** mirrors your Standard Notes tag tree. Each tag's MOC links
+to the MOCs of its child tags as well as to its own notes, and `Home.md` lists
+only the tags that have no parent. If none of your tags are nested there is no
+tree to follow, so this falls back to `flat`.
 
-They are documented here because the flags exist and are validated — passing an
-invalid style is an error — not because they change the result today. Use the
-defaults until that changes.
+**`topic`** ignores tags and builds MOCs only from the themes found by content
+analysis. This suits a vault whose notes are barely tagged. Themes with fewer
+notes than `MinNotesPerMOC` are left out, and if nothing is found, `Home.md`
+says so rather than being silently empty.
+
+**`para`** sorts your tags into the four
+[PARA](https://fortelabs.com/blog/para/) categories — Projects, Areas,
+Resources and Archive. The sorting is a guess based on the tag's name
+(`sprint-14` reads as a project, `archived-2024` as archive), and anything that
+matches nothing lands in Resources. Each MOC says as much at the top, so treat
+it as a starting point to rearrange rather than a judgement about your notes.
+
+**`auto`** picks for you: `hierarchical` if any of your tags are nested,
+`topic` if you have at least 20 notes and few tags relative to that, otherwise
+`flat`.
+
+### `--moc-depth`
+
+How many levels of MOC `hierarchical` creates, defaulting to 2. Tags below the
+limit do not get their own MOC; their notes are listed on the deepest MOC
+above them, under a "Notes from sub-categories" heading, so no note becomes
+unreachable. Depth must be between 1 and 10. The other layouts ignore it.
 
 ## Afterwards
 

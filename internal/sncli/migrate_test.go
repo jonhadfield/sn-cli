@@ -252,3 +252,204 @@ func TestMOCBuilder_Generate(t *testing.T) {
 	assert.Equal(t, "Home", mocs[0].Title)
 	assert.Contains(t, mocs[0].Content, "# 🏠 Home")
 }
+
+// nestedTagFixture builds work > work-clients > work-clients-acme, each with
+// one note, plus an untagged-parent tag "reading" with one note.
+func nestedTagFixture(t *testing.T) items.Items {
+	t.Helper()
+
+	work, err := items.NewTag("work", nil)
+	require.NoError(t, err)
+
+	clients, err := items.NewTag("clients", nil)
+	require.NoError(t, err)
+	clients.Content.UpsertReferences(items.ItemReferences{
+		{UUID: work.UUID, ContentType: "Tag", ReferenceType: "TagToParentTag"},
+	})
+
+	acme, err := items.NewTag("acme", nil)
+	require.NoError(t, err)
+	acme.Content.UpsertReferences(items.ItemReferences{
+		{UUID: clients.UUID, ContentType: "Tag", ReferenceType: "TagToParentTag"},
+	})
+
+	reading, err := items.NewTag("reading", nil)
+	require.NoError(t, err)
+
+	allItems := items.Items{&work, &clients, &acme, &reading}
+
+	for tagUUID, title := range map[string]string{
+		work.UUID:    "Work Note",
+		clients.UUID: "Clients Note",
+		acme.UUID:    "Acme Note",
+		reading.UUID: "Reading Note",
+	} {
+		note, nErr := items.NewNote(title, "Content", nil)
+		require.NoError(t, nErr)
+		note.Content.UpsertReferences(items.ItemReferences{
+			{UUID: tagUUID, ContentType: "Tag"},
+		})
+		allItems = append(allItems, &note)
+	}
+
+	return allItems
+}
+
+func mocByTitle(mocs []MOCFile, title string) (MOCFile, bool) {
+	for _, moc := range mocs {
+		if moc.Title == title {
+			return moc, true
+		}
+	}
+
+	return MOCFile{}, false
+}
+
+func TestMOCBuilder_HierarchicalFollowsTagTree(t *testing.T) {
+	builder := NewMOCBuilder(nestedTagFixture(t), MOCConfig{
+		Style:    MOCStyleHierarchical,
+		MaxDepth: 3,
+	})
+
+	mocs, err := builder.Generate()
+	require.NoError(t, err)
+
+	// Home lists only the roots, not the nested tags
+	home, ok := mocByTitle(mocs, "Home")
+	require.True(t, ok)
+	assert.Contains(t, home.Content, "[[Work MOC]]")
+	assert.Contains(t, home.Content, "[[Reading MOC]]")
+	assert.NotContains(t, home.Content, "[[Clients MOC]]")
+
+	// a parent links to its child's MOC, and counts the whole subtree
+	work, ok := mocByTitle(mocs, "Work MOC")
+	require.True(t, ok)
+	assert.Contains(t, work.Content, "Sub-categories")
+	assert.Contains(t, work.Content, "[[Clients MOC]]")
+	assert.Contains(t, work.Content, "[[Work Note]]")
+
+	// every level of the tree got its own MOC
+	for _, title := range []string{"Clients MOC", "Acme MOC"} {
+		_, found := mocByTitle(mocs, title)
+		assert.True(t, found, "expected a MOC for %s", title)
+	}
+}
+
+func TestMOCBuilder_HierarchicalRespectsDepth(t *testing.T) {
+	builder := NewMOCBuilder(nestedTagFixture(t), MOCConfig{
+		Style:    MOCStyleHierarchical,
+		MaxDepth: 2,
+	})
+
+	mocs, err := builder.Generate()
+	require.NoError(t, err)
+
+	// depth 2 stops at clients, so acme gets no MOC of its own
+	_, found := mocByTitle(mocs, "Acme MOC")
+	assert.False(t, found, "acme is below the depth limit and should not have a MOC")
+
+	// but its note is still reachable, listed on the deepest MOC
+	clients, ok := mocByTitle(mocs, "Clients MOC")
+	require.True(t, ok)
+	assert.Contains(t, clients.Content, "[[Acme Note]]")
+	assert.NotContains(t, clients.Content, "[[Acme MOC]]")
+}
+
+func TestMOCBuilder_HierarchicalFallsBackWithoutTree(t *testing.T) {
+	tag, err := items.NewTag("work", nil)
+	require.NoError(t, err)
+
+	allItems := items.Items{&tag}
+
+	for i := 0; i < 3; i++ {
+		note, nErr := items.NewNote("Work Note", "Content", nil)
+		require.NoError(t, nErr)
+		note.Content.UpsertReferences(items.ItemReferences{
+			{UUID: tag.UUID, ContentType: "Tag"},
+		})
+		allItems = append(allItems, &note)
+	}
+
+	builder := NewMOCBuilder(allItems, MOCConfig{
+		Style:          MOCStyleHierarchical,
+		MaxDepth:       3,
+		MinNotesPerMOC: 1,
+	})
+
+	mocs, err := builder.Generate()
+	require.NoError(t, err)
+
+	home, ok := mocByTitle(mocs, "Home")
+	require.True(t, ok)
+	assert.Contains(t, home.Content, "[[work MOC]]")
+}
+
+func TestClassifyPARATag(t *testing.T) {
+	cases := map[string]string{
+		"project-apollo": "Projects",
+		"sprint-14":      "Projects",
+		"health":         "Areas",
+		"finance":        "Areas",
+		"archived-2024":  "Archive",
+		"done":           "Archive",
+		"reading":        "Resources",
+		"kubernetes":     "Resources", // no keyword match falls back to Resources
+	}
+
+	for tag, want := range cases {
+		t.Run(tag, func(t *testing.T) {
+			assert.Equal(t, want, classifyPARATag(tag))
+		})
+	}
+}
+
+func TestMOCBuilder_PARASortsTagsIntoBuckets(t *testing.T) {
+	var allItems items.Items
+
+	for _, title := range []string{"project-apollo", "health", "archived-2024", "kubernetes"} {
+		tag, err := items.NewTag(title, nil)
+		require.NoError(t, err)
+
+		allItems = append(allItems, &tag)
+
+		note, nErr := items.NewNote(title+" note", "Content", nil)
+		require.NoError(t, nErr)
+		note.Content.UpsertReferences(items.ItemReferences{
+			{UUID: tag.UUID, ContentType: "Tag"},
+		})
+		allItems = append(allItems, &note)
+	}
+
+	builder := NewMOCBuilder(allItems, MOCConfig{Style: MOCStylePARA})
+
+	mocs, err := builder.Generate()
+	require.NoError(t, err)
+
+	for _, title := range []string{"Projects MOC", "Areas MOC", "Archive MOC", "Resources MOC"} {
+		_, found := mocByTitle(mocs, title)
+		assert.True(t, found, "expected %s", title)
+	}
+
+	projects, ok := mocByTitle(mocs, "Projects MOC")
+	require.True(t, ok)
+	assert.Contains(t, projects.Content, "[[project-apollo note]]")
+	assert.NotContains(t, projects.Content, "[[health note]]")
+
+	resources, ok := mocByTitle(mocs, "Resources MOC")
+	require.True(t, ok)
+	assert.Contains(t, resources.Content, "[[kubernetes note]]")
+}
+
+func TestMOCBuilder_AutoPicksHierarchicalWhenTreeExists(t *testing.T) {
+	builder := NewMOCBuilder(nestedTagFixture(t), MOCConfig{
+		Style:    MOCStyleAuto,
+		MaxDepth: 3,
+	})
+
+	mocs, err := builder.Generate()
+	require.NoError(t, err)
+
+	work, ok := mocByTitle(mocs, "Work MOC")
+	require.True(t, ok)
+	assert.Contains(t, work.Content, "Sub-categories")
+}
