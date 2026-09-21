@@ -109,7 +109,6 @@ func appSetup() (app *cli.App) {
 			Email: "jon@lessknown.co.uk",
 		},
 	}
-	app.HelpName = "-"
 	app.Usage = "Standard Notes CLI"
 	app.Description = ""
 	app.BashComplete = func(c *cli.Context) {
