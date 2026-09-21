@@ -90,11 +90,16 @@ Add-Content $PROFILE ". ~\Documents\WindowsPowerShell\sn.ps1"
 
 ### Fish
 
-`fish_autocomplete.fish` does not work as shipped: it registers completions for
-a command named `sncli`, which is not what the binary is called, and the name is
-hardcoded in the script rather than taken from the filename. Renaming the file
-is not enough to fix it. This is tracked as a bug; until it is fixed, fish users
-have no working completion.
+Fish loads completions from its completions directory automatically, so the
+file only needs to be named after the binary:
+
+```fish
+mkdir -p ~/.config/fish/completions
+cp fish_autocomplete.fish ~/.config/fish/completions/sn.fish
+```
+
+Open a new shell, or `source ~/.config/fish/completions/sn.fish` in the current
+one, and `sn <TAB>` completes.
 
 ## Usage
 
