@@ -146,6 +146,26 @@ the key to an end-to-end encrypted account — in plaintext in your environment,
 and in your shell history if you export it interactively. Prefer `sn session
 --add` for day-to-day use, and a secret manager for automation.
 
+### Sessions on headless servers
+
+`sn session --add` stores the session in the system keychain, which a headless
+Linux server usually does not have. Point `sn` at a file instead, sign in once
+over SSH — entering your 2FA code if you have it enabled — and later commands
+refresh the session and write it back to that file:
+
+```bash
+export SN_SESSION_FILE=~/.config/sncli/session
+export SN_USE_SESSION=true
+
+sn session --add
+sn get notes
+```
+
+The file is written with `0600` permissions, so only you can read it. It holds
+a session rather than your password, and `--session-key` encrypts it just as it
+does a keychain session. The path can also be given with `--session-file`, or
+as `session_file` in the config file.
+
 ## Commands
 
 Run `sn <command> --help` for the flags of any command.

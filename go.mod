@@ -10,13 +10,14 @@ require (
 	github.com/divan/num2words v1.0.3
 	github.com/dustin/go-humanize v1.1.0
 	github.com/gookit/color v1.6.1
-	github.com/jonhadfield/gosn-v2 v0.0.0-20260919161733-b6212050711e
+	github.com/jonhadfield/gosn-v2 v0.0.0-20260919171233-83a1c125b118
 	github.com/pterm/pterm v0.12.83
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/sahilm/fuzzy v0.1.3
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	github.com/urfave/cli/v2 v2.27.7
+	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/crypto v0.57.0
 	golang.org/x/term v0.46.0
 	google.golang.org/genai v1.71.0
@@ -86,7 +87,6 @@ require (
 	github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 // indirect
 	github.com/yuin/goldmark v1.8.6 // indirect
 	github.com/yuin/goldmark-emoji v1.0.6 // indirect
-	github.com/zalando/go-keyring v0.2.8 // indirect
 	go.etcd.io/bbolt v1.5.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0 // indirect

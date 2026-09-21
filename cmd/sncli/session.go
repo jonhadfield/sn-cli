@@ -1,11 +1,15 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/jonhadfield/gosn-v2/session"
 	"github.com/urfave/cli/v2"
+	"github.com/zalando/go-keyring"
 )
 
 func cmdSession() *cli.Command {
@@ -15,11 +19,11 @@ func cmdSession() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "add",
-				Usage: "add session to keychain",
+				Usage: "add session to keychain, or to the file given by --session-file",
 			},
 			&cli.BoolFlag{
 				Name:  "remove",
-				Usage: "remove session from keychain",
+				Usage: "remove session from keychain, or from the file given by --session-file",
 			},
 			&cli.BoolFlag{
 				Name:  "status",
@@ -48,6 +52,32 @@ func cmdSession() *cli.Command {
 	}
 }
 
+// useSessionFile makes the session commands, and every command run with
+// --use-session, store the session in path instead of the system keyring. An
+// empty path leaves the system keyring in use.
+func useSessionFile(path string) error {
+	if path == "" {
+		session.SetDefaultKeyring(nil)
+
+		return nil
+	}
+
+	// expand ~ ourselves, as the shell does not when the path comes from
+	// SN_SESSION_FILE or the config file
+	if path == "~" || strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to expand session file path: %w", err)
+		}
+
+		path = filepath.Join(home, strings.TrimPrefix(path, "~"))
+	}
+
+	session.SetDefaultKeyring(session.NewFileKeyring(path))
+
+	return nil
+}
+
 func processSession(c *cli.Context, opts configOptsOutput) (err error) {
 	sAdd := c.Bool("add")
 	sRemove := c.Bool("remove")
@@ -56,6 +86,10 @@ func processSession(c *cli.Context, opts configOptsOutput) (err error) {
 
 	if sStatus || sRemove {
 		if err = session.SessionExists(nil); err != nil {
+			if sessionFile := c.String("session-file"); sessionFile != "" && errors.Is(err, keyring.ErrNotFound) {
+				return fmt.Errorf("no session found in %s, add one with: sn --session-file %s session --add", sessionFile, sessionFile)
+			}
+
 			return err
 		}
 	}
