@@ -8,13 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testNote(uuid, title, duplicateOf string, deleted bool) *items.Note {
+func testNote(uuid, title, duplicateOf string, updatedAt int64, deleted bool) *items.Note {
 	note := &items.Note{
 		ItemCommon: items.ItemCommon{
-			UUID:        uuid,
-			ContentType: common.SNItemTypeNote,
-			DuplicateOf: duplicateOf,
-			Deleted:     deleted,
+			UUID:               uuid,
+			ContentType:        common.SNItemTypeNote,
+			DuplicateOf:        duplicateOf,
+			UpdatedAtTimestamp: updatedAt,
+			Deleted:            deleted,
 		},
 	}
 	note.Content.SetTitle(title)
@@ -22,78 +23,154 @@ func testNote(uuid, title, duplicateOf string, deleted bool) *items.Note {
 	return note
 }
 
-func TestFindDuplicateNotesMarkedOnly(t *testing.T) {
+func TestFindDuplicateGroupsKeepsNewerCopy(t *testing.T) {
+	// the copy was edited after it was made, so it holds the latest work
 	in := items.Items{
-		testNote("original", "Shopping", "", false),
-		testNote("copy", "Shopping copy", "original", false),
-		testNote("unrelated", "Ideas", "", false),
+		testNote("original", "Shopping", "", 100, false),
+		testNote("copy", "Shopping copy", "original", 200, false),
 	}
 
-	dups := FindDuplicateNotes(in)
+	groups, kept := FindDuplicateGroups(in)
 
-	require.Len(t, dups, 1)
-	require.Equal(t, "copy", dups[0].UUID)
-	require.Equal(t, "Shopping copy", dups[0].Title)
-	require.Equal(t, "original", dups[0].OriginalUUID)
-	require.True(t, dups[0].OriginalPresent)
+	require.Empty(t, kept)
+	require.Len(t, groups, 1)
+	require.Equal(t, "copy", groups[0].Keep.UUID)
+	require.Len(t, groups[0].Delete, 1)
+	require.Equal(t, "original", groups[0].Delete[0].UUID)
 }
 
-// A duplicate whose original is gone is the only copy of that content left,
-// so it must not be treated as safe to delete.
-func TestFindDuplicateNotesOriginalMissing(t *testing.T) {
+func TestFindDuplicateGroupsKeepsNewerOriginal(t *testing.T) {
+	// the usual case: the copy was never touched after being made
 	in := items.Items{
-		testNote("copy", "Shopping copy", "gone", false),
+		testNote("original", "Shopping", "", 300, false),
+		testNote("copy", "Shopping copy", "original", 200, false),
 	}
 
-	dups := FindDuplicateNotes(in)
+	groups, _ := FindDuplicateGroups(in)
 
-	require.Len(t, dups, 1)
-	require.False(t, dups[0].OriginalPresent)
+	require.Len(t, groups, 1)
+	require.Equal(t, "original", groups[0].Keep.UUID)
+	require.Equal(t, "copy", groups[0].Delete[0].UUID)
 }
 
-func TestFindDuplicateNotesOriginalDeleted(t *testing.T) {
+func TestFindDuplicateGroupsTiePrefersOriginal(t *testing.T) {
+	// identical timestamps: keep the note that is not marked as a copy
 	in := items.Items{
-		testNote("original", "Shopping", "", true),
-		testNote("copy", "Shopping copy", "original", false),
+		testNote("original", "Shopping", "", 100, false),
+		testNote("copy", "Shopping copy", "original", 100, false),
 	}
 
-	dups := FindDuplicateNotes(in)
+	groups, _ := FindDuplicateGroups(in)
 
-	require.Len(t, dups, 1)
-	require.False(t, dups[0].OriginalPresent, "a deleted original should not count as present")
+	require.Len(t, groups, 1)
+	require.Equal(t, "original", groups[0].Keep.UUID)
 }
 
-func TestFindDuplicateNotesSkipsDeletedDuplicates(t *testing.T) {
+// A copy whose original is gone is the only note holding that content, so it
+// must not be deleted.
+func TestFindDuplicateGroupsOriginalMissing(t *testing.T) {
 	in := items.Items{
-		testNote("original", "Shopping", "", false),
-		testNote("copy", "Shopping copy", "original", true),
+		testNote("copy", "Shopping copy", "gone", 100, false),
 	}
 
-	require.Empty(t, FindDuplicateNotes(in))
+	groups, kept := FindDuplicateGroups(in)
+
+	require.Empty(t, groups)
+	require.Len(t, kept, 1)
+	require.Equal(t, "copy", kept[0].UUID)
 }
 
-func TestFindDuplicateNotesNone(t *testing.T) {
+func TestFindDuplicateGroupsOriginalDeleted(t *testing.T) {
 	in := items.Items{
-		testNote("a", "One", "", false),
-		testNote("b", "Two", "", false),
+		testNote("original", "Shopping", "", 100, true),
+		testNote("copy", "Shopping copy", "original", 200, false),
 	}
 
-	require.Empty(t, FindDuplicateNotes(in))
+	groups, kept := FindDuplicateGroups(in)
+
+	require.Empty(t, groups, "a deleted original is not a live duplicate")
+	require.Len(t, kept, 1)
 }
 
-func TestFindDuplicateNotesChain(t *testing.T) {
-	// a copy of a copy: both are duplicates, and both originals are present
+func TestFindDuplicateGroupsSkipsDeletedCopies(t *testing.T) {
 	in := items.Items{
-		testNote("original", "Shopping", "", false),
-		testNote("copy", "Shopping copy", "original", false),
-		testNote("copy2", "Shopping copy 2", "copy", false),
+		testNote("original", "Shopping", "", 100, false),
+		testNote("copy", "Shopping copy", "original", 200, true),
 	}
 
-	dups := FindDuplicateNotes(in)
+	groups, kept := FindDuplicateGroups(in)
 
-	require.Len(t, dups, 2)
+	require.Empty(t, groups)
+	require.Empty(t, kept)
+}
 
-	for _, dup := range dups {
-		require.True(t, dup.OriginalPresent)
+func TestFindDuplicateGroupsNone(t *testing.T) {
+	in := items.Items{
+		testNote("a", "One", "", 100, false),
+		testNote("b", "Two", "", 200, false),
 	}
+
+	groups, kept := FindDuplicateGroups(in)
+
+	require.Empty(t, groups)
+	require.Empty(t, kept)
+}
+
+// A copy of a copy belongs to one set, so only the newest of the three is
+// kept.
+func TestFindDuplicateGroupsChain(t *testing.T) {
+	in := items.Items{
+		testNote("original", "Shopping", "", 100, false),
+		testNote("copy", "Shopping copy", "original", 400, false),
+		testNote("copy2", "Shopping copy 2", "copy", 200, false),
+	}
+
+	groups, kept := FindDuplicateGroups(in)
+
+	require.Empty(t, kept)
+	require.Len(t, groups, 1)
+	require.Equal(t, "copy", groups[0].Keep.UUID)
+	require.Len(t, groups[0].Delete, 2)
+	require.Equal(t, []string{"copy2", "original"},
+		[]string{groups[0].Delete[0].UUID, groups[0].Delete[1].UUID})
+}
+
+// Two unrelated sets of duplicates stay separate.
+func TestFindDuplicateGroupsSeparateSets(t *testing.T) {
+	in := items.Items{
+		testNote("a", "One", "", 100, false),
+		testNote("a-copy", "One copy", "a", 200, false),
+		testNote("b", "Two", "", 300, false),
+		testNote("b-copy", "Two copy", "b", 100, false),
+	}
+
+	groups, _ := FindDuplicateGroups(in)
+
+	require.Len(t, groups, 2)
+
+	keep := map[string]string{}
+	for _, g := range groups {
+		keep[g.Keep.UUID] = g.Delete[0].UUID
+	}
+
+	require.Equal(t, map[string]string{"a-copy": "a", "b": "b-copy"}, keep)
+}
+
+func TestDeleteDuplicateNotesOutputDeleted(t *testing.T) {
+	out := DeleteDuplicateNotesOutput{
+		Groups: []DuplicateGroup{
+			{Keep: NoteSummary{UUID: "a"}, Delete: []NoteSummary{{UUID: "a-copy"}}},
+			{Keep: NoteSummary{UUID: "b"}, Delete: []NoteSummary{{UUID: "b-copy"}, {UUID: "b-copy2"}}},
+		},
+	}
+
+	require.Len(t, out.Deleted(), 3)
+}
+
+func TestNoteSummaryUpdatedDate(t *testing.T) {
+	require.Equal(t, "2026-09-21 14:30",
+		NoteSummary{UpdatedAtText: "2026-09-21T14:30:00.000Z"}.UpdatedDate())
+
+	// an unparseable value is shown as it came from the API
+	require.Equal(t, "not a time", NoteSummary{UpdatedAtText: "not a time"}.UpdatedDate())
 }

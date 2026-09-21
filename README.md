@@ -224,7 +224,7 @@ sn get notes --title "Meeting Notes" --rich
 # Edit a note in $EDITOR
 sn edit note --title "Meeting Notes"
 
-# See which notes the app marked as copies, then delete them
+# Review duplicate notes, then delete all but the newest of each set
 sn delete duplicates --dry-run
 sn delete duplicates
 
