@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-09-21
+
+### Added
+
+- `sn delete duplicates`, which removes notes Standard Notes marked as copies
+  of another note. It lists what it will delete and asks for confirmation;
+  `--dry-run` lists them and stops, `--yes` skips the prompt
+- Within each set of duplicates the most recently updated note is kept, so
+  editing a copy after duplicating it does not lose that work. A copy whose
+  original is no longer in the account is kept and reported, since it holds
+  the only remaining copy of that content
+
+### Fixed
+
+- Help output now shows the program's name
+
+### Changed
+
+- CI runs the test matrix in parallel, keys the concurrency group by branch
+  and platform so jobs no longer cancel each other, and no longer fails when
+  a token is unavailable
+
 ## [0.6.0] - 2026-09-21
 
 ### Added
