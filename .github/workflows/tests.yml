@@ -53,6 +53,10 @@ jobs:
         with:
           coverage-reports: cover.out
           force-coverage-parser: go
+        # Uploading coverage is best-effort. Dependabot pull requests run
+        # without repository secrets, so CODACY_PROJECT_TOKEN is empty there
+        # and the action fails; that should not turn a passing test run red.
+        continue-on-error: true
         if: runner.os != 'Windows'
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
