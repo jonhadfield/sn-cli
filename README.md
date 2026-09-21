@@ -175,7 +175,7 @@ Run `sn <command> --help` for the flags of any command.
 | `add` | Add notes or tags |
 | `backup` | Create, inspect and restore zip backups (alias: `bak`) |
 | `debug` | Debugging tools, such as decrypting a single string |
-| `delete` | Delete notes, tags or arbitrary items by title or UUID |
+| `delete` | Delete notes, tags or items by title or UUID, or clear duplicates |
 | `edit` | Edit a note or tag in your `$EDITOR` |
 | `editor` | Show or set the editor Standard Notes associates with new notes |
 | `export` | Export notes to Markdown, HTML or JSON (alias: `exp`) |
@@ -223,6 +223,10 @@ sn get notes --title "Meeting Notes" --rich
 
 # Edit a note in $EDITOR
 sn edit note --title "Meeting Notes"
+
+# See which notes the app marked as copies, then delete them
+sn delete duplicates --dry-run
+sn delete duplicates
 
 # Tag every note whose title matches, in one go
 sn tag --find-title "invoice" --title finance --ignore-case
