@@ -383,9 +383,9 @@ export SN_SERVER="https://your-standardnotes-server.com"
 
 ### Shell completion
 
-Tab completion is available for Bash, Zsh and PowerShell. The scripts call the
-binary's built-in `--generate-bash-completion` flag, so they stay in step with
-the commands and flags automatically.
+Tab completion is available for Bash, Zsh, Fish and PowerShell. The scripts call
+the binary's built-in `--generate-bash-completion` flag, so they stay in step
+with the commands and flags automatically.
 
 The completion script has to be installed under the name of the binary, which
 is `sn`:
