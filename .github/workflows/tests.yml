@@ -7,16 +7,19 @@ on:
     branches: [ master, main ]
 jobs:
   test:
-    # Keyed by branch: a new run supersedes that branch's own earlier run, and
-    # branches do not cancel each other. These tests run offline (the live
-    # ones are opt-in via SN_INTEGRATION_TESTS), so there is no shared account
-    # to serialise against.
+    # Keyed by branch and platform: a new run supersedes that branch's own
+    # earlier run, and branches do not cancel each other. These tests run
+    # offline (the live ones are opt-in via SN_INTEGRATION_TESTS), so there is
+    # no shared account to serialise against.
+    #
+    # The matrix leg has to be in the key. This block is per job, so without it
+    # the three platforms share one group and, now that they run in parallel,
+    # cancel each other as they start.
     concurrency:
-      group: test-${{ github.ref }}
+      group: test-${{ github.ref }}-${{ matrix.os }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
-      max-parallel: 1
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
