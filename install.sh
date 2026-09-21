@@ -101,8 +101,18 @@ if [ "$asset_os" = "Darwin" ] && command -v xattr >/dev/null 2>&1; then
     xattr -d com.apple.quarantine "$tmp/sn" 2>/dev/null || true
 fi
 
+# A missing BIN_DIR does not mean sudo is needed: creating it only needs write
+# access to the nearest directory that does exist, which for the likes of
+# $HOME/.local/bin is the user's own.
+existing="$BIN_DIR"
+while [ ! -d "$existing" ]; do
+    parent="$(dirname "$existing")"
+    [ "$parent" = "$existing" ] && break
+    existing="$parent"
+done
+
 sudo=""
-if [ ! -d "$BIN_DIR" ] || [ ! -w "$BIN_DIR" ]; then
+if [ ! -w "$existing" ]; then
     if [ "$(id -u)" -ne 0 ]; then
         command -v sudo >/dev/null 2>&1 || fail "$BIN_DIR is not writable and sudo is not available"
         sudo="sudo"
