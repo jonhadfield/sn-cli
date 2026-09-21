@@ -11,7 +11,7 @@ func cmdDelete() *cli.Command {
 		Name:  "delete",
 		Usage: "delete items",
 		BashComplete: func(c *cli.Context) {
-			addTasks := []string{"tag", "note"}
+			addTasks := []string{"tag", "note", "duplicates"}
 			if c.NArg() > 0 {
 				return
 			}
@@ -98,6 +98,34 @@ func cmdDelete() *cli.Command {
 					opts := getOpts(c)
 
 					return processDeleteItems(c, opts)
+				},
+			},
+			{
+				Name:  "duplicates",
+				Usage: "delete notes that Standard Notes marked as copies of another note",
+				BashComplete: func(c *cli.Context) {
+					delDupeOpts := []string{"--dry-run", "--yes"}
+					if c.NArg() > 0 {
+						return
+					}
+					for _, t := range delDupeOpts {
+						fmt.Println(t)
+					}
+				},
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "dry-run",
+						Usage: "list the duplicates without deleting them",
+					},
+					&cli.BoolFlag{
+						Name:  "yes",
+						Usage: "delete without asking for confirmation",
+					},
+				},
+				Action: func(c *cli.Context) error {
+					opts := getOpts(c)
+
+					return processDeleteDuplicates(c, opts)
 				},
 			},
 		},
