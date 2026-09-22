@@ -20,6 +20,10 @@ type NoteSummary struct {
 	// Marked reports whether the note carries duplicate_of, meaning Standard
 	// Notes created it by duplicating another note.
 	Marked bool
+	// Identical reports whether this note's title and text match the note
+	// being kept in its set. It is only meaningful for notes being deleted:
+	// when true, deleting the note loses nothing.
+	Identical bool
 }
 
 // UpdatedDate returns the note's last-updated time as a date and time for
@@ -49,6 +53,15 @@ func summariseNote(note *items.Note) NoteSummary {
 		UpdatedAtText: note.GetUpdatedAt(),
 		Marked:        note.GetDuplicateOf() != "",
 	}
+}
+
+// sameContent reports whether two notes hold the same title and text.
+func sameContent(a, b *items.Note) bool {
+	if a == nil || b == nil {
+		return false
+	}
+
+	return a.Content.GetTitle() == b.Content.GetTitle() && a.Content.GetText() == b.Content.GetText()
 }
 
 // newerThan reports whether a should be kept in preference to b. The most
@@ -133,10 +146,15 @@ func FindDuplicateGroups(in items.Items) (groups []DuplicateGroup, keptNoOrigina
 
 		var toDelete []NoteSummary
 
+		kept := live[keep.UUID]
+
 		for _, candidate := range group {
-			if candidate.UUID != keep.UUID {
-				toDelete = append(toDelete, candidate)
+			if candidate.UUID == keep.UUID {
+				continue
 			}
+
+			candidate.Identical = sameContent(live[candidate.UUID], kept)
+			toDelete = append(toDelete, candidate)
 		}
 
 		sort.Slice(toDelete, func(i, j int) bool { return toDelete[i].UUID < toDelete[j].UUID })
@@ -150,13 +168,43 @@ func FindDuplicateGroups(in items.Items) (groups []DuplicateGroup, keptNoOrigina
 	return groups, keptNoOriginal
 }
 
+// KeepOnlyIdentical drops notes whose content differs from the note being kept,
+// returning the remaining groups and the notes left alone. A group with
+// nothing left to delete is dropped.
+func KeepOnlyIdentical(groups []DuplicateGroup) (filtered []DuplicateGroup, skipped []NoteSummary) {
+	for _, group := range groups {
+		var identical []NoteSummary
+
+		for _, dup := range group.Delete {
+			if dup.Identical {
+				identical = append(identical, dup)
+
+				continue
+			}
+
+			skipped = append(skipped, dup)
+		}
+
+		if len(identical) == 0 {
+			continue
+		}
+
+		filtered = append(filtered, DuplicateGroup{Keep: group.Keep, Delete: identical})
+	}
+
+	return filtered, skipped
+}
+
 // DeleteDuplicateNotesConfig deletes the superseded notes in each set of
 // duplicates.
 type DeleteDuplicateNotesConfig struct {
 	Session *cache.Session
 	// DryRun reports what would be deleted without deleting anything.
 	DryRun bool
-	Debug  bool
+	// IdenticalOnly restricts deletion to notes whose title and text match the
+	// note being kept, leaving those that have diverged.
+	IdenticalOnly bool
+	Debug         bool
 }
 
 // DeleteDuplicateNotesOutput describes what was, or would be, deleted.
@@ -167,6 +215,9 @@ type DeleteDuplicateNotesOutput struct {
 	// KeptNoOriginal holds copies left alone because the note they were made
 	// from is no longer in the account.
 	KeptNoOriginal []NoteSummary
+	// KeptDiffering holds notes left alone under IdenticalOnly, because their
+	// content differs from the note being kept.
+	KeptDiffering []NoteSummary
 }
 
 // Deleted returns every note deleted, across all groups.
@@ -211,6 +262,10 @@ func (i *DeleteDuplicateNotesConfig) Run() (DeleteDuplicateNotesOutput, error) {
 	}
 
 	out.Groups, out.KeptNoOriginal = FindDuplicateGroups(all)
+
+	if i.IdenticalOnly {
+		out.Groups, out.KeptDiffering = KeepOnlyIdentical(out.Groups)
+	}
 
 	toDelete := out.Deleted()
 

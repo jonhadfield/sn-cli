@@ -23,6 +23,13 @@ func testNote(uuid, title, duplicateOf string, updatedAt int64, deleted bool) *i
 	return note
 }
 
+func testNoteWithText(uuid, title, text, duplicateOf string, updatedAt int64) *items.Note {
+	note := testNote(uuid, title, duplicateOf, updatedAt, false)
+	note.Content.SetText(text)
+
+	return note
+}
+
 func TestFindDuplicateGroupsKeepsNewerCopy(t *testing.T) {
 	// the copy was edited after it was made, so it holds the latest work
 	in := items.Items{
@@ -173,4 +180,77 @@ func TestNoteSummaryUpdatedDate(t *testing.T) {
 
 	// an unparseable value is shown as it came from the API
 	require.Equal(t, "not a time", NoteSummary{UpdatedAtText: "not a time"}.UpdatedDate())
+}
+
+func TestFindDuplicateGroupsFlagsIdenticalContent(t *testing.T) {
+	in := items.Items{
+		testNoteWithText("original", "Shopping", "milk", "", 100),
+		testNoteWithText("copy", "Shopping", "milk", "original", 200),
+	}
+
+	groups, _ := FindDuplicateGroups(in)
+
+	require.Len(t, groups, 1)
+	require.Equal(t, "copy", groups[0].Keep.UUID)
+	require.True(t, groups[0].Delete[0].Identical)
+}
+
+func TestFindDuplicateGroupsFlagsDifferingText(t *testing.T) {
+	in := items.Items{
+		testNoteWithText("original", "Shopping", "milk", "", 100),
+		testNoteWithText("copy", "Shopping", "milk and eggs", "original", 200),
+	}
+
+	groups, _ := FindDuplicateGroups(in)
+
+	require.Len(t, groups, 1)
+	require.False(t, groups[0].Delete[0].Identical)
+}
+
+// A note with the same text under a different title has not been left
+// untouched, so it does not count as identical.
+func TestFindDuplicateGroupsFlagsDifferingTitle(t *testing.T) {
+	in := items.Items{
+		testNoteWithText("original", "Shopping", "milk", "", 100),
+		testNoteWithText("copy", "Shopping copy", "milk", "original", 200),
+	}
+
+	groups, _ := FindDuplicateGroups(in)
+
+	require.Len(t, groups, 1)
+	require.False(t, groups[0].Delete[0].Identical)
+}
+
+func TestKeepOnlyIdentical(t *testing.T) {
+	groups := []DuplicateGroup{
+		{
+			Keep: NoteSummary{UUID: "a"},
+			Delete: []NoteSummary{
+				{UUID: "a-same", Identical: true},
+				{UUID: "a-diff"},
+			},
+		},
+		{
+			// nothing identical, so the whole set is dropped
+			Keep:   NoteSummary{UUID: "b"},
+			Delete: []NoteSummary{{UUID: "b-diff"}},
+		},
+	}
+
+	filtered, skipped := KeepOnlyIdentical(groups)
+
+	require.Len(t, filtered, 1)
+	require.Equal(t, "a", filtered[0].Keep.UUID)
+	require.Len(t, filtered[0].Delete, 1)
+	require.Equal(t, "a-same", filtered[0].Delete[0].UUID)
+
+	require.Len(t, skipped, 2)
+	require.Equal(t, []string{"a-diff", "b-diff"}, []string{skipped[0].UUID, skipped[1].UUID})
+}
+
+func TestKeepOnlyIdenticalNoGroups(t *testing.T) {
+	filtered, skipped := KeepOnlyIdentical(nil)
+
+	require.Empty(t, filtered)
+	require.Empty(t, skipped)
 }

@@ -224,9 +224,13 @@ sn get notes --title "Meeting Notes" --rich
 # Edit a note in $EDITOR
 sn edit note --title "Meeting Notes"
 
-# Review duplicate notes, then delete all but the newest of each set
+# Review duplicate notes, then delete all but the newest of each set.
+# The listing flags whether each note's content is identical to the one kept.
 sn delete duplicates --dry-run
 sn delete duplicates
+
+# Only delete exact copies, leaving any that have been edited since
+sn delete duplicates --identical-only
 
 # Tag every note whose title matches, in one go
 sn tag --find-title "invoice" --title finance --ignore-case

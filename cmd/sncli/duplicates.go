@@ -25,10 +25,16 @@ func processDeleteDuplicates(c *cli.Context, opts configOptsOutput) error {
 	}
 
 	dryRun := c.Bool("dry-run")
+	identicalOnly := c.Bool("identical-only")
 
 	// find the duplicates first, so they can be shown before anything is
 	// deleted
-	find := sncli.DeleteDuplicateNotesConfig{Session: &sess, DryRun: true, Debug: opts.debug}
+	find := sncli.DeleteDuplicateNotesConfig{
+		Session:       &sess,
+		DryRun:        true,
+		IdenticalOnly: identicalOnly,
+		Debug:         opts.debug,
+	}
 
 	found, err := find.Run()
 	if err != nil {
@@ -36,6 +42,7 @@ func processDeleteDuplicates(c *cli.Context, opts configOptsOutput) error {
 	}
 
 	writeDuplicatesKept(c, found.KeptNoOriginal)
+	writeDuplicatesDiffering(c, found.KeptDiffering)
 
 	toDelete := found.Deleted()
 
@@ -55,7 +62,7 @@ func processDeleteDuplicates(c *cli.Context, opts configOptsOutput) error {
 		return nil
 	}
 
-	del := sncli.DeleteDuplicateNotesConfig{Session: &sess, Debug: opts.debug}
+	del := sncli.DeleteDuplicateNotesConfig{Session: &sess, IdenticalOnly: identicalOnly, Debug: opts.debug}
 
 	out, err := del.Run()
 	if err != nil {
@@ -86,9 +93,39 @@ func writeDuplicateGroups(c *cli.Context, groups []sncli.DuplicateGroup, numToDe
 			group.Keep.UpdatedDate(), group.Keep.UUID, group.Keep.Title)
 
 		for _, dup := range group.Delete {
-			_, _ = fmt.Fprintf(c.App.Writer, "  %s  %s  %s  %s\n",
-				color.Red.Sprint("delete"), dup.UpdatedDate(), dup.UUID, dup.Title)
+			_, _ = fmt.Fprintf(c.App.Writer, "  %s  %s  %s  %s  %s\n",
+				color.Red.Sprint("delete"), dup.UpdatedDate(), dup.UUID, dup.Title, contentLabel(dup))
 		}
+	}
+}
+
+// contentLabel says whether a note about to be deleted holds the same content
+// as the one being kept, so an identical copy can be told from one that has
+// been edited since.
+func contentLabel(dup sncli.NoteSummary) string {
+	if dup.Identical {
+		return color.Gray.Sprint("identical")
+	}
+
+	return color.Yellow.Sprint("differs")
+}
+
+func writeDuplicatesDiffering(c *cli.Context, kept []sncli.NoteSummary) {
+	if len(kept) == 0 {
+		return
+	}
+
+	_, _ = fmt.Fprintln(c.App.Writer, color.Yellow.Sprintf(
+		"%d notes kept, as their content differs from the note being kept:", len(kept)))
+
+	for x, dup := range kept {
+		if x == maxDuplicateGroupsListed {
+			_, _ = fmt.Fprintln(c.App.Writer, color.Gray.Sprintf("  ... and %d more", len(kept)-maxDuplicateGroupsListed))
+
+			break
+		}
+
+		_, _ = fmt.Fprintf(c.App.Writer, "  %s  %s\n", dup.UUID, dup.Title)
 	}
 }
 

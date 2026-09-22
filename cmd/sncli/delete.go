@@ -104,7 +104,7 @@ func cmdDelete() *cli.Command {
 				Name:  "duplicates",
 				Usage: "delete notes that Standard Notes marked as copies of another note",
 				BashComplete: func(c *cli.Context) {
-					delDupeOpts := []string{"--dry-run", "--yes"}
+					delDupeOpts := []string{"--dry-run", "--identical-only", "--yes"}
 					if c.NArg() > 0 {
 						return
 					}
@@ -116,6 +116,10 @@ func cmdDelete() *cli.Command {
 					&cli.BoolFlag{
 						Name:  "dry-run",
 						Usage: "list the duplicates without deleting them",
+					},
+					&cli.BoolFlag{
+						Name:  "identical-only",
+						Usage: "only delete notes whose title and text match the note being kept",
 					},
 					&cli.BoolFlag{
 						Name:  "yes",
