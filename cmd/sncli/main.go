@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jonhadfield/gosn-v2/session"
 	sncli "github.com/jonhadfield/sn-cli/internal/sncli"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
@@ -88,6 +89,11 @@ func getOpts(c *cli.Context) (out configOptsOutput) {
 }
 
 func appSetup() (app *cli.App) {
+	// Keep sn-cli sessions out of any slot claimed by sibling tools such as
+	// sn-dotfiles. A one-time fallback still reads the legacy StandardNotesCLI
+	// entry and copies it into this app's slot.
+	session.SetKeyringIdentity(snAppName, "Session")
+
 	viper.SetEnvPrefix("sn")
 	viper.AutomaticEnv()
 

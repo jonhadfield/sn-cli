@@ -86,7 +86,9 @@ you@example.com` will create it, but read [Known issues](#known-issues) first.
 
 The recommended way to sign in is to store a session in your system keychain,
 so your password is neither typed for every command nor left in your
-environment:
+environment. `sn` stores that session under its own keyring identity (`sn-cli`),
+separate from `sn-dotfiles`. An existing legacy `StandardNotesCLI` session is
+copied into the `sn-cli` slot on first use.
 
 ```bash
 # Prompts for your email, password and 2FA code if you have it enabled,
