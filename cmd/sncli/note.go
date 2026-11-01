@@ -30,25 +30,30 @@ func getNoteByUUID(sess cache.Session, uuid string) (tag items.Note, err error) 
 		return tag, errors.New("uuid not supplied")
 	}
 
-	var so cache.SyncOutput
+	// reuse the caller's open DB: opening it again would wait on its lock forever
+	if sess.CacheDB == nil {
+		var so cache.SyncOutput
 
-	si := cache.SyncInput{
-		Session: &sess,
-		Close:   false,
+		si := cache.SyncInput{
+			Session: &sess,
+			Close:   false,
+		}
+
+		so, err = sncli.SyncQuiet(si)
+		if err != nil {
+			return
+		}
+
+		sess.CacheDB = so.DB
+
+		defer func() {
+			_ = so.DB.Close()
+		}()
 	}
-
-	so, err = sncli.SyncQuiet(si)
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		_ = so.DB.Close()
-	}()
 
 	var encNotes cache.Items
 
-	query := so.DB.Select(q.And(q.Eq("UUID", uuid), q.Eq("Deleted", false)))
+	query := sess.CacheDB.Select(q.And(q.Eq("UUID", uuid), q.Eq("Deleted", false)))
 	if err = query.Find(&encNotes); err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return tag, errors.New(fmt.Sprintf("could not find note with inUUID %s", uuid))
