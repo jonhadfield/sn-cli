@@ -95,8 +95,8 @@ func processSearch(c *cli.Context, opts configOptsOutput) error {
 	if c.String("tag") != "" {
 		tagFilter := items.Filter{
 			Type:       common.SNItemTypeNote,
-			Key:        common.SNItemTypeTag,
-			Comparison: "contains",
+			Key:        "TagTitle",
+			Comparison: "==",
 			Value:      c.String("tag"),
 		}
 		filters = append(filters, tagFilter)
