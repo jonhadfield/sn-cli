@@ -371,8 +371,8 @@ func processGetNotes(c *cli.Context, opts configOptsOutput) (err error) {
 		for _, t := range processedTags {
 			titleFilter := items.Filter{
 				Type:       common.SNItemTypeNote,
-				Key:        common.SNItemTypeTag,
-				Comparison: "contains",
+				Key:        "TagTitle",
+				Comparison: "==",
 				Value:      t,
 			}
 			getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
@@ -460,8 +460,8 @@ func processGetTrash(c *cli.Context, opts configOptsOutput) (err error) {
 		for _, t := range processedTags {
 			titleFilter := items.Filter{
 				Type:       common.SNItemTypeNote,
-				Key:        common.SNItemTypeTag,
-				Comparison: "contains",
+				Key:        "TagTitle",
+				Comparison: "==",
 				Value:      t,
 			}
 			getNotesIF.Filters = append(getNotesIF.Filters, titleFilter)
