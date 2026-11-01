@@ -85,6 +85,41 @@ func TestReplaceNote(t *testing.T) {
 	t.Log("Note replacement configuration logic verified successfully")
 }
 
+func TestReplaceNoteWithTag(t *testing.T) {
+	requireIntegration(t)
+
+	testDelay()
+
+	defer cleanUp(*testSession)
+
+	require.NoError(t, (&AddNoteInput{Session: testSession, Title: "ReplaceMe", Text: "one"}).Run())
+	require.NoError(t, (&AddNoteInput{
+		Session: testSession,
+		Title:   "ReplaceMe",
+		Text:    "two",
+		Tags:    []string{"ReplaceTag"},
+		Replace: true,
+	}).Run())
+
+	gnc := GetNoteConfig{
+		Session: testSession,
+		Filters: items.ItemFilters{
+			MatchAny: true,
+			Filters: []items.Filter{{
+				Type:       common.SNItemTypeNote,
+				Key:        "TagTitle",
+				Comparison: "==",
+				Value:      "ReplaceTag",
+			}},
+		},
+	}
+
+	retNotes, err := gnc.Run()
+	require.NoError(t, err)
+	require.Len(t, retNotes.Notes(), 1)
+	require.Equal(t, "two", retNotes.Notes()[0].Content.Text)
+}
+
 func TestCreateNotesWithSimplifiedSync(t *testing.T) {
 	requireIntegration(t)
 

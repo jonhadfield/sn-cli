@@ -14,9 +14,6 @@ import (
 )
 
 func (i *AddNoteInput) Run() error {
-	// get DB
-	var syncToken string
-
 	ani := addNoteInput{
 		noteTitle: i.Title,
 		noteText:  i.Text,
@@ -26,24 +23,10 @@ func (i *AddNoteInput) Run() error {
 		replace:   i.Replace,
 	}
 
-	newNoteUUID, err := addNote(ani)
-	if err != nil {
-		return err
-	}
+	// addNote also tags the note
+	_, err := addNote(ani)
 
-	if len(ani.tagTitles) > 0 {
-		if err = tagNotes(tagNotesInput{
-			matchNoteUUIDs: []string{newNoteUUID},
-			syncToken:      syncToken,
-			session:        i.Session,
-			newTags:        i.Tags,
-			replace:        i.Replace,
-		}); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return err
 }
 
 type addNoteInput struct {
