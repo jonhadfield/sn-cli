@@ -23,19 +23,31 @@ func Sync(si cache.SyncInput, useStdErr bool) (cache.SyncOutput, error) {
 		s.Prefix = prefix
 		s.Start()
 
-		so, err := sync(si)
+		so, err := SyncQuiet(si)
 
 		s.Stop()
 
 		return so, err
 	}
 
-	return sync(si)
+	return SyncQuiet(si)
 }
 
-func sync(si cache.SyncInput) (cache.SyncOutput, error) {
-	return cache.Sync(cache.SyncInput{
-		Session: si.Session,
-		Close:   si.Close,
+// syncedWithServer records whether this process has synced with the server yet.
+var syncedWithServer bool
+
+// SyncQuiet syncs without a spinner. The first sync in each process always calls
+// the API, so changes made in other clients since the last run are seen; later
+// syncs in the same run may skip the call when nothing has changed locally.
+func SyncQuiet(si cache.SyncInput) (cache.SyncOutput, error) {
+	so, err := cache.Sync(cache.SyncInput{
+		Session:    si.Session,
+		Close:      si.Close,
+		AlwaysSync: si.AlwaysSync || !syncedWithServer,
 	})
+	if err == nil {
+		syncedWithServer = true
+	}
+
+	return so, err
 }

@@ -34,7 +34,7 @@ func getTagByUUID(sess *cache.Session, uuid string) (tag items.Tag, err error) {
 		Close:   false,
 	}
 
-	so, err = cache.Sync(si)
+	so, err = sncli.SyncQuiet(si)
 	if err != nil {
 		return
 	}
@@ -68,7 +68,7 @@ func getTagsByTitle(sess cache.Session, title string) (tags items.Tags, err erro
 		Close:   false,
 	}
 
-	so, err = cache.Sync(si)
+	so, err = sncli.SyncQuiet(si)
 	if err != nil {
 		return
 	}
@@ -185,7 +185,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (err error) {
 
 	var so cache.SyncOutput
 
-	so, err = cache.Sync(si)
+	so, err = sncli.SyncQuiet(si)
 	if err != nil {
 		return
 	}
@@ -196,7 +196,7 @@ func processEditTag(c *cli.Context, opts configOptsOutput) (err error) {
 		return
 	}
 
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = sncli.SyncQuiet(si); err != nil {
 		return
 	}
 

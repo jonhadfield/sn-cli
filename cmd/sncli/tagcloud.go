@@ -12,6 +12,7 @@ import (
 	"github.com/jonhadfield/gosn-v2/common"
 	"github.com/jonhadfield/gosn-v2/items"
 	"github.com/jonhadfield/gosn-v2/session"
+	"github.com/jonhadfield/sn-cli/internal/sncli"
 	"github.com/pterm/pterm"
 )
 
@@ -31,7 +32,7 @@ func getItemsViaSync(session *cache.Session, debug bool) (items.Items, items.Ite
 		Close:   false,
 	}
 
-	so, syncErr := cache.Sync(si)
+	so, syncErr := sncli.SyncQuiet(si)
 
 	// Check if we got a database connection even if sync failed
 	if so.DB == nil {
