@@ -429,7 +429,7 @@ func (ci *AddTaskInput) Run() error {
 		Close:   false,
 	}
 
-	_, err = cache.Sync(si)
+	_, err = SyncQuiet(si)
 	if err != nil {
 		return err
 	}
@@ -444,7 +444,7 @@ func (ci *AddTaskInput) Run() error {
 		Session: ci.Session,
 		Close:   true,
 	}
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = SyncQuiet(si); err != nil {
 		return err
 	}
 	return nil
@@ -494,7 +494,7 @@ func (ci *AddAdvancedChecklistTaskInput) Run() error {
 		return err
 	}
 
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = SyncQuiet(si); err != nil {
 		return err
 	}
 
@@ -517,7 +517,7 @@ func getNoteByUUID(sess *cache.Session, uuid string) (items.Note, error) {
 		Close:   false,
 	}
 
-	so, err := cache.Sync(si)
+	so, err := SyncQuiet(si)
 	if err != nil {
 		return items.Note{}, err
 	}
@@ -1107,7 +1107,7 @@ func (ci *DeleteTaskInput) Run() error {
 		return err
 	}
 
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = SyncQuiet(si); err != nil {
 		return err
 	}
 	return nil
@@ -1157,7 +1157,7 @@ func (ci *DeleteAdvancedChecklistTaskInput) Run() error {
 		return err
 	}
 
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = SyncQuiet(si); err != nil {
 		return err
 	}
 
@@ -1245,7 +1245,7 @@ func (ci *CompleteTaskInput) Run() error {
 		return err
 	}
 
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = SyncQuiet(si); err != nil {
 		return err
 	}
 	return nil
@@ -1295,7 +1295,7 @@ func (ci *CompleteAdvancedTaskInput) Run() error {
 		return err
 	}
 
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = SyncQuiet(si); err != nil {
 		return err
 	}
 
@@ -1363,7 +1363,7 @@ func (ci *ReopenTaskInput) Run() error {
 		return err
 	}
 
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = SyncQuiet(si); err != nil {
 		return err
 	}
 	return nil
@@ -1413,7 +1413,7 @@ func (ci *ReopenAdvancedTaskInput) Run() error {
 		return err
 	}
 
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = SyncQuiet(si); err != nil {
 		return err
 	}
 

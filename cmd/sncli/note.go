@@ -37,7 +37,7 @@ func getNoteByUUID(sess cache.Session, uuid string) (tag items.Note, err error) 
 		Close:   false,
 	}
 
-	so, err = cache.Sync(si)
+	so, err = sncli.SyncQuiet(si)
 	if err != nil {
 		return
 	}
@@ -72,7 +72,7 @@ func getNotesByTitle(sess cache.Session, title string, close bool) (notes items.
 			Close:   false,
 		}
 
-		so, err = cache.Sync(si)
+		so, err = sncli.SyncQuiet(si)
 		if err != nil {
 			return
 		}
@@ -205,7 +205,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (err error) {
 
 	var cso cache.SyncOutput
 
-	cso, err = cache.Sync(si)
+	cso, err = sncli.SyncQuiet(si)
 	if err != nil {
 		return
 	}
@@ -274,7 +274,7 @@ func processEditNote(c *cli.Context, opts configOptsOutput) (err error) {
 	}
 
 	si.Close = false
-	if _, err = cache.Sync(si); err != nil {
+	if _, err = sncli.SyncQuiet(si); err != nil {
 		return
 	}
 
