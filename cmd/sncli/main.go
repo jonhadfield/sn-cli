@@ -76,10 +76,8 @@ func getOpts(c *cli.Context) (out configOptsOutput) {
 		out.server = viper.GetString("server")
 	}
 
-	out.cacheDBDir = viper.GetString("cachedb_dir")
-	if out.cacheDBDir != "" {
-		out.cacheDBDir = c.String("cachedb-dir")
-	}
+	// the flag defaults to SN_CACHEDB_DIR
+	out.cacheDBDir = c.String("cachedb-dir")
 
 	if c.Bool("debug") {
 		out.debug = true
