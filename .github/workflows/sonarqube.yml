@@ -34,6 +34,6 @@ jobs:
         # cannot authenticate would fail the check for a reason unrelated to
         # the change.
         if: env.SONAR_TOKEN != ''
-        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8
+        uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
