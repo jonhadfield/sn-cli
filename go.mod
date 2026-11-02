@@ -9,18 +9,18 @@ require (
 	github.com/charmbracelet/glamour v1.0.0
 	github.com/divan/num2words v1.0.3
 	github.com/dustin/go-humanize v1.1.0
-	github.com/gookit/color v1.6.1
-	github.com/jonhadfield/gosn-v2 v0.0.0-20260927092733-d8be686e94c3
-	github.com/pterm/pterm v0.12.83
+	github.com/gookit/color v1.6.3
+	github.com/jonhadfield/gosn-v2 v0.1.1-0.20261102073236-6387103cbc26
+	github.com/pterm/pterm v0.12.84
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/sahilm/fuzzy v0.1.3
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/zalando/go-keyring v0.2.8
-	golang.org/x/crypto v0.57.0
-	golang.org/x/term v0.46.0
-	google.golang.org/genai v1.71.0
+	golang.org/x/crypto v0.58.0
+	golang.org/x/term v0.47.0
+	google.golang.org/genai v1.75.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -94,9 +94,9 @@ require (
 	go.opentelemetry.io/otel/metric v1.46.0 // indirect
 	go.opentelemetry.io/otel/trace v1.46.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/net v0.59.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 	google.golang.org/api v0.298.0 // indirect
 	google.golang.org/genproto v0.0.0-20260831171406-18b4a7587f8a // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260831171406-18b4a7587f8a // indirect
