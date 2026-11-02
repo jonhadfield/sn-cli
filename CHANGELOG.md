@@ -6,11 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-02
+
+### Added
+
+- `sn backup restore` now writes notes and tags back to the account (it
+  previously only read the archive and reported success). Matching UUIDs are
+  overwritten; use `--dry-run` to preview, and `--yes` to skip the confirmation
+  prompt
+
 ### Changed
 
 - Stored sessions use a dedicated keyring identity (`sn-cli`) instead of
   sharing the legacy `StandardNotesCLI` slot with `sn-dotfiles`. An existing
   shared session is copied into the new slot on first use
+- Each run syncs with the server at least once, so notes changed in other
+  clients show up immediately instead of waiting up to five minutes
+- `--cachedb-dir` is honoured when `SN_CACHEDB_DIR` is not set
+- Updated gosn-v2 (tag-title filters now match regardless of tag order),
+  pterm, gookit/color, golang.org/x/term, google.golang.org/genai, and the
+  goreleaser and SonarQube GitHub Actions
+
+### Fixed
+
+- `get notes`, `get trash` and `search` with `--tag` now filter by tag title
+  instead of matching every note
+- `edit note --uuid` no longer fails with a network error caused by opening
+  the cache database twice
+- `add note --replace --tag` tags the replaced note instead of failing with
+  "note not found"
 
 ## [0.7.1] - 2026-09-22
 
