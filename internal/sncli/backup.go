@@ -19,6 +19,15 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
+// backupTimeLayouts are the timestamp formats seen on Standard Notes items and
+// in older sn-cli archives. Try them in order when reconstructing items.
+var backupTimeLayouts = []string{
+	common.TimeLayout,
+	common.TimeLayout2,
+	time.RFC3339,
+	time.RFC3339Nano,
+}
+
 const (
 	// backupFormatVersion is written into the manifest. Version 1.0 sealed the
 	// manifest itself, which made encrypted backups impossible to restore, and
@@ -433,10 +442,248 @@ func (r *RestoreConfig) Run() (RestoreResult, error) {
 
 	result.TagsCount = len(tags)
 
-	// TODO: Implement actual restore logic (not in dry-run mode)
-	// This would involve creating notes and tags in the session
+	notesToRestore, err := notesFromBackupItems(notes)
+	if err != nil {
+		return result, fmt.Errorf("failed to reconstruct notes: %w", err)
+	}
+
+	tagsToRestore, err := tagsFromBackupItems(tags)
+	if err != nil {
+		return result, fmt.Errorf("failed to reconstruct tags: %w", err)
+	}
+
+	if r.DryRun {
+		return result, nil
+	}
+
+	if r.Session == nil {
+		return result, fmt.Errorf("session required to restore a backup")
+	}
+
+	if err := r.writeItems(notesToRestore, tagsToRestore); err != nil {
+		return result, err
+	}
+
+	result.NotesRestored = len(notesToRestore)
+	result.TagsRestored = len(tagsToRestore)
 
 	return result, nil
+}
+
+// writeItems persists reconstructed notes and tags to the local cache and
+// syncs them to the account. Notes go first so tags that reference them land
+// against items that already exist.
+func (r *RestoreConfig) writeItems(notes items.Notes, tags items.Tags) error {
+	so, err := Sync(cache.SyncInput{
+		Session: r.Session,
+		Close:   false,
+	}, true)
+	if err != nil {
+		return fmt.Errorf("failed to sync before restore: %w", err)
+	}
+
+	if len(notes) > 0 {
+		if err = notes.Validate(r.Session.Session); err != nil {
+			_ = so.DB.Close()
+
+			return fmt.Errorf("invalid notes in backup: %w", err)
+		}
+
+		if err = cache.SaveNotes(r.Session, so.DB, notes, false); err != nil {
+			_ = so.DB.Close()
+
+			return fmt.Errorf("failed to save notes: %w", err)
+		}
+	}
+
+	if len(tags) > 0 {
+		if err = tags.Validate(); err != nil {
+			_ = so.DB.Close()
+
+			return fmt.Errorf("invalid tags in backup: %w", err)
+		}
+
+		if err = cache.SaveTags(so.DB, r.Session, tags, false); err != nil {
+			_ = so.DB.Close()
+
+			return fmt.Errorf("failed to save tags: %w", err)
+		}
+	}
+
+	if err = so.DB.Close(); err != nil {
+		return fmt.Errorf("failed to close cache after restore: %w", err)
+	}
+
+	if _, err = Sync(cache.SyncInput{
+		Session: r.Session,
+		Close:   true,
+	}, true); err != nil {
+		return fmt.Errorf("failed to sync restored items: %w", err)
+	}
+
+	return nil
+}
+
+// notesFromBackupItems rebuilds Note values from the archive payload.
+func notesFromBackupItems(backupNotes []BackupItem) (items.Notes, error) {
+	out := make(items.Notes, 0, len(backupNotes))
+
+	for i, bi := range backupNotes {
+		note, err := noteFromBackupItem(bi)
+		if err != nil {
+			return nil, fmt.Errorf("note %d (%s): %w", i, bi.UUID, err)
+		}
+
+		out = append(out, note)
+	}
+
+	return out, nil
+}
+
+// tagsFromBackupItems rebuilds Tag values from the archive payload.
+func tagsFromBackupItems(backupTags []BackupItem) (items.Tags, error) {
+	out := make(items.Tags, 0, len(backupTags))
+
+	for i, bi := range backupTags {
+		tag, err := tagFromBackupItem(bi)
+		if err != nil {
+			return nil, fmt.Errorf("tag %d (%s): %w", i, bi.UUID, err)
+		}
+
+		out = append(out, tag)
+	}
+
+	return out, nil
+}
+
+func noteFromBackupItem(bi BackupItem) (items.Note, error) {
+	if bi.UUID == "" {
+		return items.Note{}, fmt.Errorf("missing uuid")
+	}
+
+	var content items.NoteContent
+	if err := json.Unmarshal([]byte(bi.Content), &content); err != nil {
+		return items.Note{}, fmt.Errorf("parse content: %w", err)
+	}
+
+	if content.ItemReferences == nil {
+		content.ItemReferences = items.ItemReferences{}
+	}
+
+	ensureContentUpdateTime(&content, bi)
+
+	note := items.Note{
+		ItemCommon: items.ItemCommon{
+			UUID:        bi.UUID,
+			ContentType: common.SNItemTypeNote,
+			CreatedAt:   bi.CreatedAt,
+			UpdatedAt:   bi.UpdatedAt,
+		},
+		Content: content,
+	}
+
+	applyBackupTimestamps(&note.ItemCommon, bi)
+
+	return note, nil
+}
+
+func tagFromBackupItem(bi BackupItem) (items.Tag, error) {
+	if bi.UUID == "" {
+		return items.Tag{}, fmt.Errorf("missing uuid")
+	}
+
+	var content items.TagContent
+	if err := json.Unmarshal([]byte(bi.Content), &content); err != nil {
+		return items.Tag{}, fmt.Errorf("parse content: %w", err)
+	}
+
+	if content.ItemReferences == nil {
+		content.ItemReferences = items.ItemReferences{}
+	}
+
+	ensureContentUpdateTime(&content, bi)
+
+	tag := items.Tag{
+		ItemCommon: items.ItemCommon{
+			UUID:        bi.UUID,
+			ContentType: common.SNItemTypeTag,
+			CreatedAt:   bi.CreatedAt,
+			UpdatedAt:   bi.UpdatedAt,
+		},
+		Content: content,
+	}
+
+	applyBackupTimestamps(&tag.ItemCommon, bi)
+
+	return tag, nil
+}
+
+// contentUpdateTimer is satisfied by NoteContent and TagContent.
+type contentUpdateTimer interface {
+	GetUpdateTime() (time.Time, error)
+	SetUpdateTime(time.Time)
+}
+
+// ensureContentUpdateTime sets ClientUpdatedAt when the archived content lacks
+// one, so Notes.Validate / Tags.Validate accept the reconstructed item.
+func ensureContentUpdateTime(content contentUpdateTimer, bi BackupItem) {
+	if t, err := content.GetUpdateTime(); err == nil && !t.IsZero() {
+		return
+	}
+
+	if updated, ok := parseBackupTime(bi.UpdatedAt); ok {
+		content.SetUpdateTime(updated)
+
+		return
+	}
+
+	if created, ok := parseBackupTime(bi.CreatedAt); ok {
+		content.SetUpdateTime(created)
+
+		return
+	}
+
+	content.SetUpdateTime(time.Now().UTC())
+}
+
+// applyBackupTimestamps fills CreatedAtTimestamp / UpdatedAtTimestamp from the
+// string forms stored in the archive. Missing or unparseable values fall back
+// to "now" so validation still passes for older archives.
+func applyBackupTimestamps(ic *items.ItemCommon, bi BackupItem) {
+	now := time.Now().UTC()
+
+	if created, ok := parseBackupTime(bi.CreatedAt); ok {
+		ic.CreatedAt = created.Format(common.TimeLayout)
+		ic.CreatedAtTimestamp = created.UnixMicro()
+	} else {
+		if ic.CreatedAt == "" {
+			ic.CreatedAt = now.Format(common.TimeLayout)
+		}
+
+		ic.CreatedAtTimestamp = now.UnixMicro()
+	}
+
+	if updated, ok := parseBackupTime(bi.UpdatedAt); ok {
+		ic.UpdatedAt = updated.Format(common.TimeLayout)
+		ic.UpdatedAtTimestamp = updated.UnixMicro()
+	} else if bi.UpdatedAt == "" {
+		ic.UpdatedAt = ic.CreatedAt
+		ic.UpdatedAtTimestamp = ic.CreatedAtTimestamp
+	}
+}
+
+func parseBackupTime(value string) (time.Time, bool) {
+	if value == "" {
+		return time.Time{}, false
+	}
+
+	for _, layout := range backupTimeLayouts {
+		if t, err := time.Parse(layout, value); err == nil {
+			return t.UTC(), true
+		}
+	}
+
+	return time.Time{}, false
 }
 
 // readZipFile reads a member of the archive verbatim. Whether it is encrypted
@@ -480,10 +727,12 @@ func (r *RestoreConfig) decrypt(data []byte, gcm cipher.AEAD) ([]byte, error) {
 
 // RestoreResult contains the result of a restore operation
 type RestoreResult struct {
-	DryRun     bool
-	Manifest   BackupManifest
-	NotesCount int
-	TagsCount  int
+	DryRun        bool
+	Manifest      BackupManifest
+	NotesCount    int
+	TagsCount     int
+	NotesRestored int
+	TagsRestored  int
 }
 
 // GetBackupInfo reads backup metadata without restoring. No password is needed:

@@ -291,9 +291,10 @@ sn backup create --output ./sn-backup.zip --encrypt --incremental
 # Look inside a backup before trusting it
 sn backup info --file ./sn-backup.zip
 
-# Restore, with a dry run first
+# Restore, with a dry run first. Matching UUIDs are overwritten.
 sn backup restore --input ./sn-backup.zip --dry-run
 sn backup restore --input ./sn-backup.zip
+sn backup restore --input ./sn-backup.zip --yes
 ```
 
 ### Export

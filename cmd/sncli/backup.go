@@ -51,7 +51,7 @@ func cmdBackup() *cli.Command {
 			},
 			{
 				Name:  "restore",
-				Usage: "restore from a backup file",
+				Usage: "restore notes and tags from a backup file (overwrites matching UUIDs)",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:     "input",
@@ -62,6 +62,11 @@ func cmdBackup() *cli.Command {
 					&cli.BoolFlag{
 						Name:  "dry-run",
 						Usage: "preview restore without making changes",
+					},
+					&cli.BoolFlag{
+						Name:    "yes",
+						Aliases: []string{"y"},
+						Usage:   "restore without asking for confirmation",
 					},
 				},
 				Action: func(c *cli.Context) error {
@@ -197,17 +202,19 @@ func runBackupRestore(c *cli.Context, opts configOptsOutput) error {
 		password = string(passwordBytes)
 	}
 
+	dryRun := c.Bool("dry-run")
+
 	// Create restore config
 	restoreConfig := sncli.RestoreConfig{
 		Session:   &session,
 		InputFile: c.String("input"),
-		DryRun:    c.Bool("dry-run"),
+		DryRun:    dryRun,
 		Password:  password,
 		Debug:     opts.debug,
 	}
 
 	// Show header
-	if restoreConfig.DryRun {
+	if dryRun {
 		pterm.DefaultHeader.WithBackgroundStyle(pterm.NewStyle(pterm.BgYellow)).
 			WithMargin(5).
 			Println("🔍 Preview Restore (Dry Run)")
@@ -218,16 +225,23 @@ func runBackupRestore(c *cli.Context, opts configOptsOutput) error {
 	}
 	pterm.Println()
 
-	// Run restore
+	pterm.Info.Println("Notes and tags in the backup are written back with their original UUIDs.")
+	pterm.Info.Println("Any existing item with the same UUID will be overwritten.")
+	pterm.Println()
+
+	// Preview first so the user sees counts before confirming a real restore.
+	previewConfig := restoreConfig
+	previewConfig.DryRun = true
+
 	spinner, _ := pterm.DefaultSpinner.Start("Reading backup...")
 
-	result, err := restoreConfig.Run()
+	result, err := previewConfig.Run()
 	if err != nil {
 		spinner.Fail("Restore failed")
 		return err
 	}
 
-	spinner.Success("Restore completed")
+	spinner.Success("Backup read")
 	pterm.Println()
 
 	// Show results
@@ -255,16 +269,52 @@ func runBackupRestore(c *cli.Context, opts configOptsOutput) error {
 		WithBoxed(true).
 		Render()
 
-	if restoreConfig.DryRun {
+	if dryRun {
 		pterm.Println()
 		pterm.Info.Println("This was a dry run. No changes were made.")
 		pterm.Info.Println("To perform the actual restore, run without --dry-run flag")
-	} else {
-		pterm.Println()
-		pterm.Success.Println("Restore completed successfully")
+
+		return nil
 	}
 
+	if result.NotesCount == 0 && result.TagsCount == 0 {
+		pterm.Println()
+		pterm.Warning.Println("Backup contains no notes or tags to restore")
+
+		return nil
+	}
+
+	if !c.Bool("yes") && !confirmBackupRestore(c, result.NotesCount, result.TagsCount) {
+		pterm.Println()
+		pterm.Info.Println("Restore cancelled")
+
+		return nil
+	}
+
+	spinner, _ = pterm.DefaultSpinner.Start("Restoring notes and tags...")
+
+	result, err = restoreConfig.Run()
+	if err != nil {
+		spinner.Fail("Restore failed")
+		return err
+	}
+
+	spinner.Success("Restore completed")
+	pterm.Println()
+	pterm.Success.Printf("Restored %d notes and %d tags\n", result.NotesRestored, result.TagsRestored)
+
 	return nil
+}
+
+func confirmBackupRestore(c *cli.Context, notes, tags int) bool {
+	_, _ = fmt.Fprintf(c.App.Writer, "restore %d notes and %d tags (overwriting matching UUIDs)? ", notes, tags)
+
+	var input string
+	if _, err := fmt.Scanln(&input); err != nil {
+		return false
+	}
+
+	return sncli.StringInSlice(input, []string{"y", "yes"}, false)
 }
 
 func runBackupInfo(c *cli.Context) error {
