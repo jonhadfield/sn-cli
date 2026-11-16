@@ -3,7 +3,7 @@ module github.com/jonhadfield/sn-cli
 go 1.27.1
 
 require (
-	github.com/alexeyco/simpletable v1.0.0
+	github.com/alexeyco/simpletable v1.1.0
 	github.com/asdine/storm/v3 v3.2.1
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/glamour v1.0.0
@@ -69,7 +69,7 @@ require (
 	github.com/matryer/try v0.0.0-20161228173917-9ac251b645a2 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
-	github.com/mattn/go-runewidth v0.0.30 // indirect
+	github.com/mattn/go-runewidth v0.0.31 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
