@@ -18,8 +18,8 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/zalando/go-keyring v0.2.8
-	golang.org/x/crypto v0.58.0
-	golang.org/x/term v0.47.0
+	golang.org/x/crypto v0.59.0
+	golang.org/x/term v0.48.0
 	google.golang.org/genai v1.75.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -94,9 +94,9 @@ require (
 	go.opentelemetry.io/otel/metric v1.46.0 // indirect
 	go.opentelemetry.io/otel/trace v1.46.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/net v0.60.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	google.golang.org/api v0.298.0 // indirect
 	google.golang.org/genproto v0.0.0-20260831171406-18b4a7587f8a // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260831171406-18b4a7587f8a // indirect
